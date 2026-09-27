@@ -98,9 +98,9 @@
     <nav>
         <h1 class="logo">AURE<span>LIUS</span></h1>
         <ul class="menu-horizontal-top">
-                <li><a href="Principal.html" onclick="alternarTela('view-login')">🏪 Home</a></li>
-            <li><a href="#" onclick="alternarTela('view-login')">🏫 Login</a></li>
-            <li><a href="#" onclick="alternarTela('view-cadastro')" style="color: var(--brand-blue);">🆕 Inscrição Nacional</a></li>
+                <li><a href="Principal.html" onclick="alternarTela('view-login')">Home</a></li>
+            <li><a href="#" onclick="alternarTela('view-login')">Login</a></li>
+            <li><a href="#" onclick="alternarTela('view-cadastro')" style="color: var(--brand-blue);">Inscrição </a></li>
             <li id="menu-logout" style="display: none;"><a href="#" onclick="fazerLogout(event)" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">Sair 🚪</a></li>
         </ul>
     </nav>
@@ -125,14 +125,14 @@
                         <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
                             ID do Estudante ou Nº de Telefone:
                         </label>
-                        <input type="text" id="login-identificador" class="form-input" placeholder="Ex: AUR-182764 ou 925347372" required>
+                        <input type="text" id="login-identificador" class="form-input" required>
                     </div>
                 
                     <div style="margin-bottom: 10px;"> <!-- Reduzido ligeiramente a margem inferior -->
                         <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
                             Código de Validação / Senha:
                         </label>
-                        <input type="password" id="login-senha" class="form-input" style="font-family: monospace; letter-spacing: 2px;" placeholder="••••••••" required>
+                        <input type="password" id="login-senha" class="form-input" style="font-family: monospace; letter-spacing: 2px;"  required>
                     </div>
                 
                     <!-- 🔑 BOTÃO / LINK DE RECUPERAÇÃO DE SENHA ADICIONADO -->
@@ -156,11 +156,11 @@
                 <form id="form-cadastro" onsubmit="cadastrarEstudanteAutomatico(event)">
                     <div style="margin-bottom: 12px;">
                         <label style="font-size: 11px; font-weight: bold;">Nome Completo do Estudante:</label>
-                        <input type="text" id="cad-nome" class="form-input" placeholder="Ex: Mariano Alfredo" required>
+                        <input type="text" id="cad-nome" class="form-input" required>
                     </div>
                     <div style="margin-bottom: 12px;">
-                        <label style="font-size: 11px; font-weight: bold;">Telemóvel (Sincronização):</label>
-                        <input type="text" id="cad-telefone" class="form-input" placeholder="Ex: 925347372" required>
+                        <label style="font-size: 11px; font-weight: bold;">Telemóvel:</label>
+                        <input type="text" id="cad-telefone" class="form-input"  required>
                     </div>
                     <div style="margin-bottom: 12px;">
                         <label style="font-size: 11px; font-weight: bold;">Nível/Curso:</label>

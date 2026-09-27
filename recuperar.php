@@ -110,19 +110,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 14px;
             transition: background 0.2s;
         }
-        .btn:hover {
-            background: #facc15;
-        }
-        .link-voltar {
-            color: var(--ouro); 
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 600;
-        }
-        .link-voltar:hover {
-            text-underline-position: under;
-            text-decoration: underline;
-        }
+        .btn:hover { background: #facc15; }
+        .link-voltar { color: var(--ouro); text-decoration: none; font-size: 13px; font-weight: 600; }
+        .link-voltar:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -156,9 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script>
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js')
-              .then(reg => console.log('PWA Aurélius: Recuperação Sincronizada!'))
-              .catch(err => console.error('Erro no PWA:', err));
+            navigator.serviceWorker.register('sw.js');
           });
         }
     </script>

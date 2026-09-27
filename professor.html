@@ -87,12 +87,12 @@
             
                 <!-- Centro: Link de Navegação Rápida -->
                 <div>
-                    <a href="Principal.html" style="color: #cbd5e1; text-decoration: none; font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s;" onmouseover="this.style.background='rgba(234, 179, 8, 0.15)'; this.style.color='var(--brand-gold)';" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.color='#cbd5e1';">🏪 Home</a>
+                    <a href="Principal.html" style="color: #cbd5e1; text-decoration: none; font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s;" onmouseover="this.style.background='rgba(234, 179, 8, 0.15)'; this.style.color='var(--brand-gold)';" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.color='#cbd5e1';">Home</a>
                 </div>
             
                 <!-- Direita: Status da Sessão (Gerido por JS) -->
                 <div id="status-sessao" style="font-size: 12px; color: var(--text-muted); font-weight: bold; letter-spacing: 0.5px;">
-                    🔒 Acesso Restrito
+                     Acesso Restrito
                 </div>
             </nav>
 
@@ -112,7 +112,7 @@
                 <div style="text-align: center; margin-bottom: 25px;">
                     <span style="font-size: 32px; display: block; margin-bottom: 5px;">🛡️</span>
                     <h2 style="color: #fff; font-weight: 900; letter-spacing: 0.5px; font-size: 20px; text-transform: uppercase;">ÁREA DO DOCENTE </h2>
-                    <p style="color: var(--text-muted); font-size: 12.5px; margin-top: 4px;">Autenticação obrigatória com credenciais sincronizadas.</p>
+                    <p style="color: var(--text-muted); font-size: 12.5px; margin-top: 4px;">Autenticação obrigatória.</p>
                 </div>
 
                 <div id="mensagem-erro-prof" style="display: none; background: rgba(239, 68, 68, 0.15); color: #f87171; padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 15px; border: 1px solid rgba(239, 68, 68, 0.3); text-align: center;">
@@ -131,7 +131,7 @@
                         <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
                             Código de Validação:
                         </label>
-                        <input type="password" id="prof-codigo" class="form-input" style="font-family: monospace; letter-spacing: 2px;" placeholder="Ex: AURE-PROF-2026" required>
+                        <input type="password" id="prof-codigo" class="form-input" style="font-family: monospace; letter-spacing: 2px;"  required>
                     </div>
 
                     <button type="submit" class="btn">Autenticar no Sistema ➔</button>
@@ -155,9 +155,9 @@
             <!-- FILTRO DE TURMA -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px;">
-                    <div class="titulo" style="margin-bottom: 0;">👨‍🏫 Escolha a Turma para Trabalho</div>
+                    <div class="titulo" style="margin-bottom: 0;">Escolha a Turma para Trabalho</div>
                     <li style="list-style: none;">
-                        <a href="Principal.html" style="color: var(--brand-gold); text-decoration: none; font-size: 13px; font-weight: bold; background: rgba(234, 179, 8, 0.1); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(234, 179, 8, 0.2);">🏪 Home</a>
+                        <a href="Principal.html" style="color: var(--brand-gold); text-decoration: none; font-size: 13px; font-weight: bold; background: rgba(234, 179, 8, 0.1); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(234, 179, 8, 0.2);">Home</a>
                     </li>
                 </div>
                 <select id="filtro-classe" class="form-select" onchange="carregarPautaGlobalProf()">
