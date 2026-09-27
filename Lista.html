@@ -1,274 +1,92 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#060b19">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pauta Operacional Dinâmica - Academia Aurélius</title>
+    <title>Horário de Turmas Ocupadas - Academia Aurélius</title>
     <style>
-        :root {
-            --bg-principal: #060b19;
-            --bg-card: #0d1527;
-            --texto: #f8fafc;
-            --ouro: #eab308;
-            --verde: #10b981;
-            --vermelho: #ef4444;
-            --borda: #1e293b;
-        }
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--bg-principal);
-            color: var(--texto);
-            margin: 0;
-            padding: 20px;
-        }
-        h1, h3 { text-align: center; color: var(--ouro); }
-        .container { max-width: 1200px; margin: 0 auto; }
-        
-        /* Formulário de Gestão */
-        .form-box {
-            background: var(--bg-card);
-            border: 1px solid var(--borda);
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-        }
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-        }
-        label { font-size: 13px; color: #94a3b8; display: block; margin-bottom: 5px; }
-        input, select {
-            width: 100%;
-            padding: 10px;
-            background: var(--bg-principal);
-            border: 1px solid var(--borda);
-            color: var(--texto);
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-        button {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .btn-salvar { background: var(--ouro); color: #000; width: 100%; margin-top: 22px; }
-        
-        /* Tabela Responsiva */
-        .table-responsive { overflow-x: auto; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--borda); }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 14px; border-bottom: 1px solid var(--borda); font-size: 14px; }
-        th { background-color: #111c35; color: var(--ouro); }
-        
-        /* Badges de Estado */
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
-        .badge-pendente { background: #f59e0b; color: #000; }
-        .badge-aprovado { background: var(--verde); color: #000; }
-        .badge-rejeitado { background: var(--vermelho); color: var(--texto); }
-
-        /* Botões de Ação */
-        .actions-btn { display: flex; gap: 5px; flex-wrap: wrap; }
-        .btn-action { font-size: 12px; padding: 5px 8px; color: #000; }
-        .btn-aprove { background: var(--verde); }
-        .btn-reject { background: #f97316; color: white; }
-        .btn-edit { background: #38bdf8; }
-        .btn-delete { background: var(--vermelho); color: white; }
+        body { font-family: sans-serif; background: #060b19; color: #fff; padding: 20px; text-align: center; }
+        h1 { color: #eab308; }
+        table { width: 90%; max-width: 1000px; margin: 30px auto; border-collapse: collapse; background: #0d1527; text-align: center; }
+        th, td { padding: 12px; border: 1px solid #1e293b; }
+        th { background: #111c35; color: #eab308; }
+        .badge { padding: 3px 6px; font-size: 11px; font-weight: bold; border-radius: 3px; text-transform: uppercase; color: #000; }
     </style>
 </head>
+
 <body>
 
-<div class="container">
-    <h1>Alocação de Estudantes & Aprovação</h1>
+    <nav style="margin-bottom: 20px;">
+        <a href="Principal.html" style="
+            display: inline-block;
+            color: #eab308;
+            border: 1px solid #1e293b;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            background-color: #0d1527;
+            transition: all 0.3s ease;
+        " onmouseover="this.style.backgroundColor='#111c35'; this.style.borderColor='#eab308';" 
+          onmouseout="this.style.backgroundColor='#0d1527'; this.style.borderColor='#1e293b';">
+            Home
+        </a>
+    </nav>
     
-    <!-- Formulário para Criar/Editar Registos -->
-    <div class="form-box">
-        <h3>Manipular Direcionamento de Aluno</h3>
-        <form id="pautaForm">
-            <input type="hidden" id="id_matricula">
-            <div class="form-grid">
-                <div>
-                    <label>Nome do Aluno</label>
-                    <input type="text" id="nome_aluno" required placeholder="Ex: João">
-                </div>
-                <div>
-                    <label>Classe/Turma</label>
-                    <input type="text" id="classe" required placeholder="Ex: 1/A ou 3ª">
-                </div>
-                <div>
-                    <label>Período</label>
-                    <select id="periodo">
-                        <option value="Manhã">Manhã</option>
-                        <option value="Tarde">Tarde</option>
-                        <option value="Noite">Noite</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Horário</label>
-                    <input type="text" id="hora" required placeholder="Ex: 10:00-11:00">
-                </div>
-                <div>
-                    <label>Disciplina / Curso</label>
-                    <input type="text" id="disciplina" required placeholder="Ex: Língua Portuguesa">
-                </div>
-                <div>
-                    <label>Professor Responsável</label>
-                    <input type="text" id="professor" required placeholder="Ex: Professor X">
-                </div>
-                <div>
-                    <label>Estado Inicial</label>
-                    <select id="estado">
-                        <option value="pendente">Pendente (Esperar)</option>
-                        <option value="aprovado">Aprovado (Direto)</option>
-                    </select>
-                </div>
-                <div>
-                    <button type="submit" class="btn-salvar">Salvar na Pauta</button>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <!-- Tabela Dinâmica -->
-    <div class="table-responsive">
-        <table>
-            <thead>
-                <tr>
-                    <th>Aluno</th>
-                    <th>Classe/Turma</th>
-                    <th>Período</th>
-                    <th>Hora</th>
-                    <th>Disciplina</th>
-                    <th>Professor</th>
-                    <th>Estado</th>
-                    <th>Ações de Administração</th>
-                </tr>
-            </thead>
-            <tbody id="dadosPauta">
-                <!-- Inserido dinamicamente via JavaScript -->
-            </tbody>
-        </table>
-    </div>
-</div>
+    <main>
+        <h1>Distribuição Geral de Aulas</h1>
+        <p style="color: #94a3b8;">Consulte a listagem atualizada das turmas operacionais e horários dos docentes.</p>
+    </main>
+    <table>
+        <thead>
+            <tr>
+                <th>Nome do Aluno</th>
+                <th>Classe</th>
+                <th>Período</th>
+                <th>Hora</th>
+                <th>Disciplina</th>
+                <th>Professor</th>
+                <th>Estatuto</th>
+            </tr>
+        </thead>
+        <tbody id="listaPublica">
+            <!-- Dados puros carregados da base de dados aqui -->
+        </tbody>
+    </table>
 
 <script>
-    const form = document.getElementById('pautaForm');
-    const tbody = document.getElementById('dadosPauta');
-
-    // Carregar dados automaticamente da base de dados ao abrir a página
-    document.addEventListener("DOMContentLoaded", carregarPauta);
-
-    function carregarPauta() {
+    document.addEventListener("DOMContentLoaded", () => {
         fetch('gerir_pauta.php')
             .then(res => res.json())
             .then(res => {
                 if(res.sucesso) {
+                    const tbody = document.getElementById('listaPublica');
                     tbody.innerHTML = "";
                     res.dados.forEach(row => {
+                        let badgeColor = row.estado === 'aprovado' ? '#10b981' : (row.estado === 'rejeitado' ? '#ef4444' : '#f59e0b');
                         tbody.innerHTML += `
                             <tr>
-                                <td><strong>${row.nome_aluno}</strong></td>
+                                <td><b>${row.nome_aluno}</b></td>
                                 <td>${row.classe}</td>
                                 <td>${row.periodo}</td>
                                 <td><code>${row.hora}</code></td>
                                 <td>${row.disciplina}</td>
                                 <td>${row.professor}</td>
-                                <td><span class="badge badge-${row.estado}">${row.estado}</span></td>
-                                <td class="actions-btn">
-                                    ${row.estado === 'pendente' ? `
-                                        <button class="btn-action btn-aprove" onclick="alterarEstado(${row.id_matricula}, 'aprovado')">Aprovar</button>
-                                        <button class="btn-action btn-reject" onclick="alterarEstado(${row.id_matricula}, 'rejeitado')">Rejeitar</button>
-                                    ` : ''}
-                                    <button class="btn-action btn-edit" onclick="prepararEdicao(${JSON.stringify(row).replace(/"/g, '&quot;')})">Editar</button>
-                                    <button class="btn-action btn-delete" onclick="eliminarRegisto(${row.id_matricula})">Eliminar</button>
-                                </td>
+                                <td><span class="badge" style="background:${badgeColor};">${row.estado}</span></td>
                             </tr>
                         `;
                     });
                 }
             });
-    }
-
-    // Submeter formulário (Criar ou Editar)
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const payload = {
-            acao: 'salvar',
-            id_matricula: document.getElementById('id_matricula').value,
-            nome_aluno: document.getElementById('nome_aluno').value,
-            classe: document.getElementById('classe').value,
-            periodo: document.getElementById('periodo').value,
-            hora: document.getElementById('hora').value,
-            disciplina: document.getElementById('disciplina').value,
-            professor: document.getElementById('professor').value,
-            estado: document.getElementById('estado').value
-        };
-
-        fetch('gerir_pauta.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        }).then(res => res.json()).then(res => {
-            alert(res.mensagem);
-            form.reset();
-            document.getElementById('id_matricula').value = "";
-            carregarPauta();
-        });
     });
-
-    // Alterar o estado (Aprovar / Rejeitar)
-    function alterarEstado(id, novoEstado) {
-        fetch('gerir_pauta.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ acao: 'alterar_estado', id_matricula: id, novo_estado: novoEstado })
-        }).then(res => res.json()).then(res => {
-            carregarPauta();
-        });
-    }
-
-    // Carregar dados de volta no formulário superior para editar
-    function prepararEdicao(obj) {
-        document.getElementById('id_matricula').value = obj.id_matricula;
-        document.getElementById('nome_aluno').value = obj.nome_aluno;
-        document.getElementById('classe').value = obj.classe;
-        document.getElementById('periodo').value = obj.periodo;
-        document.getElementById('hora').value = obj.hora;
-        document.getElementById('disciplina').value = obj.disciplina; // <-- Continua aqui
-        document.getElementById('professor').value = obj.professor;
-        document.getElementById('estado').value = obj.estado;
-        
-        // Foca automaticamente no primeiro campo para facilitar a edição
-        document.getElementById('nome_aluno').focus();
-        
-        // Rola a página suavemente até ao formulário
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-     // Eliminar registo do banco
-     function eliminarRegisto(id) {
-        if(confirm("Tem a certeza que deseja remover este estudante desta turma?")) {
-            fetch('gerir_pauta.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ acao: 'eliminar', id_matricula: id })
-            }).then(res => res.json()).then(res => {
-                alert(res.mensagem);
-                carregarPauta();
-            });
-        }
-    }
 </script>
 
-<!-- Ativação e Registo do PWA Aurélius -->
 <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-          .then(reg => console.log('PWA Aurélius: Service Worker Ativo!', reg.scope))
-          .catch(err => console.error('Erro ao ativar o PWA:', err));
+        navigator.serviceWorker.register('sw.js').then(reg => console.log('PWA Lista Ativo!'));
       });
     }
 </script>

@@ -1,4 +1,4 @@
-const CACHE_NAME = "aurelius-cache-v1";
+const CACHE_NAME = "aurelius-cache-v2"; // <-- Mude aqui para forçar a limpeza
 const ASSETS = [
   "Principal.html",
   "estudante.html",

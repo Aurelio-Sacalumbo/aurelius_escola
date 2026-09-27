@@ -96,6 +96,177 @@
                 </div>
             </nav>
 
+
+            <!-- Cole isto na secção onde deseja gerir as turmas dentro do professor.html -->
+<div class="container-gestao" style="padding: 20px; font-family: sans-serif; background: #0d1527; color: #fff; border-radius: 8px;">
+    <h3 style="color: #eab308; text-align: center;">Painel de Administração: Direcionamento & Aprovação</h3>
+    
+    <!-- Formulário Exclusivo do Professor -->
+    <form id="pautaForm" style="margin-bottom: 25px; background: #060b19; padding: 20px; border-radius: 6px;">
+        <input type="hidden" id="id_matricula">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+            <div>
+                <label style="color:#94a3b8; font-size:12px;">Nome do Aluno</label>
+                <input type="text" id="nome_aluno" required style="width:100%; padding:8px; background:#0d1527; border:1px solid #1e293b; color:#fff; border-radius:4px;">
+            </div>
+            <div>
+                <label style="color:#94a3b8; font-size:12px;">Classe/Turma</label>
+                <input type="text" id="classe" required style="width:100%; padding:8px; background:#0d1527; border:1px solid #1e293b; color:#fff; border-radius:4px;">
+            </div>
+            <div>
+                <label style="color:#94a3b8; font-size:12px;">Período</label>
+                <select id="periodo" style="width:100%; padding:8px; background:#0d1527; border:1px solid #1e293b; color:#fff; border-radius:4px;">
+                    <option value="Manhã">Manhã</option>
+                    <option value="Tarde">Tarde</option>
+                    <option value="Noite">Noite</option>
+                </select>
+            </div>
+            <div>
+                <label style="color:#94a3b8; font-size:12px;">Horário</label>
+                <input type="text" id="hora" required placeholder="07:00-08:00" style="width:100%; padding:8px; background:#0d1527; border:1px solid #1e293b; color:#fff; border-radius:4px;">
+            </div>
+            <div>
+                <label style="color:#94a3b8; font-size:12px;">Disciplina / Curso</label>
+                <input type="text" id="disciplina" required style="width:100%; padding:8px; background:#0d1527; border:1px solid #1e293b; color:#fff; border-radius:4px;">
+            </div>
+            <div>
+                <label style="color:#94a3b8; font-size:12px;">Professor Responsável</label>
+                <input type="text" id="professor" required style="width:100%; padding:8px; background:#0d1527; border:1px solid #1e293b; color:#fff; border-radius:4px;">
+            </div>
+            <div>
+                <label style="color:#94a3b8; font-size:12px;">Estado</label>
+                <select id="estado" style="width:100%; padding:8px; background:#0d1527; border:1px solid #1e293b; color:#fff; border-radius:4px;">
+                    <option value="pendente">Pendente (Esperar)</option>
+                    <option value="aprovado">Aprovado (Direto)</option>
+                </select>
+            </div>
+            <div>
+                <button type="submit" style="background:#eab308; color:#000; width:100%; padding:9px; font-weight:bold; border:none; border-radius:4px; margin-top:20px; cursor:pointer;">Salvar Registo</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Tabela Operacional com Controlos Totais -->
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="background: #111c35; color: #eab308;">
+                    <th style="padding:10px;">Aluno</th>
+                    <th style="padding:10px;">Classe</th>
+                    <th style="padding:10px;">Período</th>
+                    <th style="padding:10px;">Hora</th>
+                    <th style="padding:10px;">Disciplina</th>
+                    <th style="padding:10px;">Professor</th>
+                    <th style="padding:10px;">Estado</th>
+                    <th style="padding:10px;">Ações de Controlo</th>
+                </tr>
+            </thead>
+            <tbody id="dadosPautaProfessor"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Toda a lógica JavaScript de carregamento, submissão (POST), 
+    // alteração de estado (Aprovar/Rejeitar) e eliminação fica aqui dentro do professor.html!
+    const form = document.getElementById('pautaForm');
+    const tbodyProf = document.getElementById('dadosPautaProfessor');
+
+    document.addEventListener("DOMContentLoaded", carregarPautaGerencial);
+
+    function carregarPautaGerencial() {
+        fetch('gerir_pauta.php')
+            .then(res => res.json())
+            .then(res => {
+                if(res.sucesso) {
+                    tbodyProf.innerHTML = "";
+                    res.dados.forEach(row => {
+                        let badgeColor = row.estado === 'aprovado' ? '#10b981' : (row.estado === 'rejeitado' ? '#ef4444' : '#f59e0b');
+                        tbodyProf.innerHTML += `
+                            <tr style="border-bottom: 1px solid #1e293b;">
+                                <td style="padding:10px;"><b>${row.nome_aluno}</b></td>
+                                <td style="padding:10px;">${row.classe}</td>
+                                <td style="padding:10px;">${row.periodo}</td>
+                                <td style="padding:10px;"><code>${row.hora}</code></td>
+                                <td style="padding:10px;">${row.disciplina}</td>
+                                <td style="padding:10px;">${row.professor}</td>
+                                <td style="padding:10px;"><span style="background:${badgeColor}; color:#000; padding:3px 6px; font-size:11px; font-weight:bold; border-radius:3px; text-transform:uppercase;">${row.estado}</span></td>
+                                <td style="padding:10px;">
+                                    ${row.estado === 'pendente' ? `
+                                        <button style="background:#10b981; border:none; padding:4px 8px; border-radius:3px; font-size:12px; cursor:pointer;" onclick="alterarEstado(\${row.id_matricula}, 'aprovado')">Aprovar</button>
+                                        <button style="background:#f97316; border:none; padding:4px 8px; border-radius:3px; font-size:12px; color:#fff; cursor:pointer;" onclick="alterarEstado(\${row.id_matricula}, 'rejeitado')">Rejeitar</button>
+                                    ` : ''}
+                                    <button style="background:#38bdf8; border:none; padding:4px 8px; border-radius:3px; font-size:12px; cursor:pointer;" onclick="prepararEdicao(${JSON.stringify(row).replace(/"/g, '&quot;')})">Editar</button>
+                                    <button style="background:#ef4444; border:none; padding:4px 8px; border-radius:3px; font-size:12px; color:#fff; cursor:pointer;" onclick="eliminarRegisto(${row.id_matricula})">Eliminar</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+            });
+    }
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        fetch('gerir_pauta.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                acao: 'salvar',
+                id_matricula: document.getElementById('id_matricula').value,
+                nome_aluno: document.getElementById('nome_aluno').value,
+                classe: document.getElementById('classe').value,
+                periodo: document.getElementById('periodo').value,
+                hora: document.getElementById('hora').value,
+                disciplina: document.getElementById('disciplina').value,
+                professor: document.getElementById('professor').value,
+                estado: document.getElementById('estado').value
+            })
+        }).then(res => res.json()).then(res => {
+            alert(res.mensagem);
+            form.reset();
+            document.getElementById('id_matricula').value = "";
+            carregarPautaGerencial();
+        });
+    });
+
+    function alterarEstado(id, novoEstado) {
+        fetch('gerir_pauta.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ acao: 'alterar_estado', id_matricula: id, novo_estado: novoEstado })
+        }).then(res => res.json()).then(() => carregarPautaGerencial());
+    }
+
+    function prepararEdicao(obj) {
+        document.getElementById('id_matricula').value = obj.id_matricula;
+        document.getElementById('nome_aluno').value = obj.nome_aluno;
+        document.getElementById('classe').value = obj.classe;
+        document.getElementById('periodo').value = obj.periodo;
+        document.getElementById('hora').value = obj.hora;
+        document.getElementById('disciplina').value = obj.disciplina;
+        document.getElementById('professor').value = obj.professor;
+        document.getElementById('estado').value = obj.estado;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function eliminarRegisto(id) {
+        if(confirm("Tem a certeza que deseja remover este estudante?")) {
+            fetch('gerir_pauta.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ acao: 'eliminar', id_matricula: id })
+            }).then(res => res.json()).then(res => {
+                alert(res.mensagem);
+                carregarPautaGerencial();
+            });
+        }
+    }
+</script>
+
+
+
+
     <div class="container">
 
         <!-- =========================================================================
