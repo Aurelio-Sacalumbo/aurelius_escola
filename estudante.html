@@ -127,14 +127,21 @@
                         </label>
                         <input type="text" id="login-identificador" class="form-input" placeholder="Ex: AUR-182764 ou 925347372" required>
                     </div>
-
-                    <div style="margin-bottom: 20px;">
+                
+                    <div style="margin-bottom: 10px;"> <!-- Reduzido ligeiramente a margem inferior -->
                         <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
                             Código de Validação / Senha:
                         </label>
                         <input type="password" id="login-senha" class="form-input" style="font-family: monospace; letter-spacing: 2px;" placeholder="••••••••" required>
                     </div>
-
+                
+                    <!-- 🔑 BOTÃO / LINK DE RECUPERAÇÃO DE SENHA ADICIONADO -->
+                    <div style="text-align: right; margin-bottom: 20px;">
+                        <a href="recuperar.html" style="font-size: 12px; color: var(--brand-gold, #eab308); text-decoration: none; font-weight: 600; transition: color 0.2s;" onmouseover="this.style.color='#facc15'" onmouseout="this.style.color='var(--brand-gold, #eab308)'">
+                            Esqueceu a password?
+                        </a>
+                    </div>
+                
                     <button type="submit" class="btn">Aceder à Plataforma ➔</button>
                 </form>
             </div>

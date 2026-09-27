@@ -383,6 +383,136 @@
                 </main>
             </div> <!-- Fim do Container Principal SPA -->
 
+
+
+
+<!-- Ficheiro do motor da IA -->
+<script src="alana_ia.js"></script>
+
+<!-- Interface Visual Flutuante do Chat da Alana IA -->
+<div id="chat-alana-container" style="position: fixed; bottom: 85px; right: 20px; width: 320px; background: #0f1423; border: 1px solid #1e293b; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); font-family: sans-serif; display: none; z-index: 10000; overflow: hidden;">
+    <div style="background: #111c35; padding: 12px; color: #eab308; font-weight: bold; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center;">
+        <span>🧠 Alana IA - Aurélius</span>
+        <button onclick="toggleChatAlana()" style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer;">X</button>
+    </div>
+    <div id="alana-logs" style="height: 200px; padding: 10px; overflow-y: auto; font-size: 13px; color: #f8fafc; line-height: 1.4;">
+        <div style="color: #eab308; margin-bottom: 5px;"><b>Alana:</b> Olá! Como estão os mambos dos estudos no Huambo? Podes perguntar-me sobre matemática, código ou matrículas!</div>
+    </div>
+    <div style="padding: 10px; border-top: 1px solid #1e293b; display: flex; gap: 5px;">
+        <input type="text" id="alana-input" placeholder="Escreve aqui a tua dúvida..." style="flex: 1; padding: 8px; background: #060b19; border: 1px solid #1e293b; color: #fff; border-radius: 4px; font-size: 12px;">
+        <button onclick="enviarParaAlana()" style="background: #eab308; color: #000; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px;">Enviar</button>
+    </div>
+</div>
+
+<!-- Botão Circular para Abrir/Fechar a IA -->
+<button onclick="toggleChatAlana()" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: #eab308; border: none; border-radius: 50%; font-size: 22px; cursor: pointer; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+    🧠
+</button>
+
+<script>
+    function toggleChatAlana() {
+        const container = document.getElementById('chat-alana-container');
+        container.style.display = container.style.display === 'none' || container.style.display === '' ? 'block' : 'none';
+    }
+
+    function enviarParaAlana() {
+        const input = document.getElementById('alana-input');
+        const logs = document.getElementById('alana-logs');
+        const mensagem = input.value.trim();
+
+        if (mensagem === "") return;
+
+        // Exibe a mensagem do estudante no log
+        logs.innerHTML += `<div style="margin-top:8px; color:#38bdf8;"><b>Tu:</b> ${mensagem}</div>`;
+        
+        // Alana processa a resposta inteligentemente usando o motor alana_ia.js
+        const respostaIA = AlanaIA.processarMensagem(mensagem);
+        
+        // Exibe a resposta filtrada e limpa no log
+        logs.innerHTML += `<div style="margin-top:8px; color:#eab308;"><b>Alana:</b> ${respostaIA}</div>`;
+        
+        input.value = "";
+        logs.scrollTop = logs.scrollHeight; // Auto-scroll para acompanhar a conversa
+    }
+
+    // Permite submeter pressionando a tecla Enter
+    document.getElementById('alana-input').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') enviarParaAlana();
+    });
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 📱 RODAPÉ DE REDES SOCIAIS EM CÍRCULOS COMPACTOS (100% HORIZONTAL SEM QUEBRAS) -->
+<footer class="div3 footer-aurelius" style="width: 100%; max-width: 440px; margin: 20px auto; padding: 0 10px; box-sizing: border-box;">
+    <ul class="lista-nav-footer" style="list-style: none; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 10px; margin: 0; background: #0f1423; border: 1px solid #1e293b; border-radius: 50px; box-sizing: border-box;"> 
+        
+        <!-- Canal Instagram -->
+        <li>
+            <a href="https://instagram.com" target="_blank" title="Instagram" class="link-social-footer" style="text-decoration: none; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.03); border: 1px solid #1e293b; border-radius: 50%; color: #f8fafc; font-size: 16px; box-sizing: border-box; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)';" onmouseout="this.style.background='rgba(255,255,255,0.03)';"> 
+                📸
+            </a>
+        </li>
+        
+        <!-- Canal Telegram (Mensagem Direta para o Número) -->
+        <li>
+            <a href="https://t.me" target="_blank" title="Telegram" class="link-social-footer" style="text-decoration: none; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.03); border: 1px solid #1e293b; border-radius: 50%; color: #f8fafc; font-size: 16px; box-sizing: border-box; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)';" onmouseout="this.style.background='rgba(255,255,255,0.03)';"> 
+                ✈️
+            </a>
+        </li>
+        
+        <!-- Canal Facebook -->
+        <li>
+            <a href="https://facebook.com" target="_blank" title="Facebook" class="link-social-footer" style="text-decoration: none; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.03); border: 1px solid #1e293b; border-radius: 50%; color: #f8fafc; font-size: 16px; box-sizing: border-box; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)';" onmouseout="this.style.background='rgba(255,255,255,0.03)';"> 
+                🔵
+            </a>
+        </li>
+        
+        <!-- Canal WhatsApp (Link de API Oficial com mensagem predefinida para a Escola) -->
+        <li>
+            <a href="https://wa.me!" target="_blank" title="WhatsApp" class="link-social-footer" style="text-decoration: none; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.15); border-radius: 50%; color: #22c55e; font-size: 16px; box-sizing: border-box; transition: all 0.2s;" onmouseover="this.style.background='rgba(34,197,94,0.15)';" onmouseout="this.style.background='rgba(34,197,94,0.05)';"> 
+                💬
+            </a>
+        </li>
+        
+    </ul>
+</footer>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <!-- =========================================================================
          ⚙️ MOTOR LOGÍSTICO JAVASCRIPT UNIFICADO E COMPACTO (AURELIUS 2026)
          ========================================================================= -->
