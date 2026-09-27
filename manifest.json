@@ -1,0 +1,22 @@
+{
+  "name": "Portal Académico Aurélius",
+  "short_name": "Aurélius",
+  "description": "Ecossistema de Gestão e Estudo do Grupo Aurélius - Huambo",
+  "start_url": "Principal.html",
+  "display": "standalone",
+  "background_color": "#060b19",
+  "theme_color": "#eab308",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "ícone-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "ícone-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once __DIR__ . "/Banco.php";
+$mensagem = "";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = htmlspecialchars(trim($_POST['email']), ENT_QUOTES, 'UTF-8');
+    $id_escolar = htmlspecialchars(trim($_POST['id_unico']), ENT_QUOTES, 'UTF-8');
+    $nova_senha = trim($_POST['nova_senha']);
+    
+    if (!empty($email) && !empty($id_escolar) && !empty($nova_senha)) {
+        try {
+            // Verifica se o E-mail e o ID Único pertencem ao mesmo estudante
+            $stmt = $pdo->prepare("SELECT id_utilizador FROM utilizadores WHERE email = ? AND id_unico_escolar = ? LIMIT 1");
+            $stmt->execute([$email, $id_escolar]);
+            $user = $stmt->fetch();
+            
+            if ($user) {
+                // Atualiza a senha encriptando em MD5 conforme o teu padrão
+                $nova_senha_md5 = md5($nova_senha);
+                $update = $pdo->prepare("UPDATE utilizadores SET senha = ? WHERE id_utilizador = ?");
+                $update->execute([$nova_senha_md5, $user['id_utilizador']]);
+                
+                $mensagem = "<div style='color:#4ade80;'>✅ Senha redefinida com sucesso! Já pode fazer login.</div>";
+            } else {
+                $mensagem = "<div style='color:#f87171;'>❌ Os dados introduzidos não coincidem com nenhum registo.</div>";
+            }
+        } catch (PDOException $e) {
+            $mensagem = "<div style='color:#f87171;'>Erro: " . $e->getMessage() . "</div>";
+        }
+    } else {
+        $mensagem = "<div style='color:#f87171;'>Por favor, preencha todos os campos.</div>";
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Acesso</title>
+    <style>
+        body { background: #0b1a30; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: #1e293b; padding: 30px; border-radius: 12px; width: 100%; max-width: 380px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        input { width: 100%; padding: 12px; margin: 8px 0 15px 0; background: #0f172a; border: 1px solid #334155; color: #fff; border-radius: 6px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; background: #38bdf8; border: none; color: #000; font-weight: bold; border-radius: 6px; cursor: pointer; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2 style="color:#38bdf8; margin-top:0;">🔑 Recuperar Senha</h2>
+        <p style="font-size:13px; color:#94a3b8;">Confirme os seus dados oficiais para criar uma nova credencial.</p>
+        
+        <?= $mensagem ?>
+        
+        <form method="POST" action="">
+            <label style="font-size:12px; color:#94a3b8;">O seu E-mail Registado:</label>
+            <input type="email" name="email" required placeholder="exemplo@escola.com">
+            
+            <label style="font-size:12px; color:#94a3b8;">O seu ID Único Escolar:</label>
+            <input type="text" name="id_unico" required placeholder="Ex: 20260458">
+            
+            <label style="font-size:12px; color:#94a3b8;">Nova Senha Secreta:</label>
+            <input type="password" name="nova_senha" required placeholder="••••••••">
+            
+            <button type="submit" class="btn">Atualizar Senha</button>
+        </form>
+        <p style="text-align:center; margin-top:15px; font-size:13px;"><a href="login.php" style="color:#38bdf8; text-decoration:none;">← Voltar ao Login</a></p>
+    </div>
+
+
+
+    <script>
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+              .then(reg => console.log('PWA Aurélius: Service Worker Ativo!', reg.scope))
+              .catch(err => console.error('Erro ao ativar o PWA:', err));
+          });
+        }
+      </script>
+</body>
+</html>

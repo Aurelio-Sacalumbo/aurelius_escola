@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="/manifest.json">
+    <!-- Configurações extra para mobile -->
+    <meta name="theme-color" content="#007bff">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Academia Aurélius</title>
+    <style>
+        /* ═════════════════════════════════════════════════════════════════════
+           🎨 DESIGN SYSTEM PREMIUM GLASSMORPHISM (AURELIUS 2026)
+           ═════════════════════════════════════════════════════════════════════ */
+        :root {
+            --bg-main: #060b19;
+            --bg-surface: #111a2e;
+            --bg-surface-gradient: linear-gradient(135deg, #16223f 0%, #0f172a 100%);
+            --brand-gold: #eab308;
+            --brand-blue: #00d2ff;
+            --brand-blue-glow: #38bdf8;
+            --brand-success: #22c55e;
+            --border-slate-light: #334155;
+            --text-muted: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg-main); color: #fff; padding-bottom: 40px; }
+        
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 24px; background: linear-gradient(135deg, rgba(26, 36, 61, 0.9) 0%, rgba(11, 18, 36, 0.95) 100%);
+            border-bottom: 2px solid var(--brand-gold); backdrop-filter: blur(12px);
+            position: sticky; top: 0; z-index: 1000; margin-bottom: 20px;
+        }
+        nav .logo { font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; color: #fff; }
+        nav .logo span { color: var(--brand-gold); }
+        
+        .menu-horizontal-top { display: flex; list-style: none; gap: 15px; align-items: center; }
+        .menu-horizontal-top li a { 
+            color: #cbd5e1; text-decoration: none; font-size: 13px; font-weight: 700; 
+            padding: 8px 16px; border-radius: 20px; transition: all 0.3s; 
+            background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); 
+        }
+        .menu-horizontal-top li a:hover { background: rgba(234, 179, 8, 0.15); color: var(--brand-gold); }
+        
+        .container { max-width: 650px; margin: 0 auto; padding: 0 15px; }
+        
+        .card { 
+            background: var(--bg-surface-gradient); border: 1px solid var(--border-slate-light); 
+            border-radius: 14px; padding: 20px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .titulo { font-size: 16px; color: var(--brand-gold); font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .grid-metadados { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12.5px; color: var(--text-muted); }
+        .grid-metadados b { color: #fff; }
+        
+        .form-input { 
+            width: 100%; padding: 12px; background: #070b14; border: 1px solid var(--border-slate-light); 
+            border-radius: 8px; color: #fff; font-size: 14px; outline: none; margin-top: 6px;
+        }
+        .form-input:focus { border-color: var(--brand-blue); box-shadow: 0 0 8px rgba(0,210,255,0.2); }
+        
+        .btn { 
+            width: 100%; background: var(--brand-gold); color: #060b19; border: none; padding: 14px; 
+            border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; text-transform: uppercase; 
+            margin-top: 15px; box-shadow: 0 4px 12px rgba(234, 179, 8, 0.2); transition: 0.2s;
+        }
+        .btn:hover { background: #f59e0b; transform: translateY(-1px); }
+
+        .table-wrapper { width: 100%; overflow-x: auto; margin-top: 10px; border-radius: 8px; border: 1px solid var(--border-slate-light); }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; background: #070b14; }
+        th { color: var(--brand-blue-glow); padding: 12px 10px; background: rgba(56, 189, 248, 0.05); font-weight: bold; border-bottom: 2px solid var(--border-slate-light); }
+        td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        
+        .badge { background: var(--brand-success); color: #060b19; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+
+        .lista-livros { display: flex; flex-direction: column; gap: 8px; }
+        .livro-row { 
+            background: #070b14; padding: 12px; border-radius: 8px; display: flex; 
+            justify-content: space-between; align-items: center; border: 1px solid var(--border-slate-light);
+        }
+        .btn-baixar { 
+            background: var(--border-slate-light); color: #fff; text-decoration: none; padding: 6px 12px; 
+            border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;
+        }
+        .btn-baixar:hover { background: #475569; }
+
+        .chat-box { height: 160px; background: #070b14; border-radius: 8px; border: 1px solid var(--border-slate-light); padding: 10px; overflow-y: auto; font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
+        
+        .tela-view { display: none; }
+        .tela-view.active { display: block; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <h1 class="logo">AURE<span>LIUS</span></h1>
+        <ul class="menu-horizontal-top">
+                <li><a href="Principal.html" onclick="alternarTela('view-login')">🏪 Home</a></li>
+            <li><a href="#" onclick="alternarTela('view-login')">🏫 Login</a></li>
+            <li><a href="#" onclick="alternarTela('view-cadastro')" style="color: var(--brand-blue);">🆕 Inscrição Nacional</a></li>
+            <li id="menu-logout" style="display: none;"><a href="#" onclick="fazerLogout(event)" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">Sair 🚪</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+
+        <!-- 🚪 TELA 1: PORTAL ACADÉMICO (LOGIN) -->
+        <div class="tela-view active" id="view-login">
+            <div class="card" style="border-top: 4px solid var(--brand-gold);">
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <span style="font-size: 32px; display: block; margin-bottom: 5px;">🏫</span>
+                    <h2 style="color: #fff; font-weight: 900; letter-spacing: 0.5px; font-size: 20px; text-transform: uppercase;">PORTAL ACADÉMICO</h2>
+                    <p style="color: var(--text-muted); font-size: 12.5px; margin-top: 4px;">Insira os seus dados de inscrição para aceder localmente.</p>
+                </div>
+
+                <div id="mensagem-erro" style="display: none; background: rgba(239, 68, 68, 0.15); color: #f87171; padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 15px; border: 1px solid rgba(239, 68, 68, 0.3); text-align: center;">
+                    ⚠️ Acesso Rejeitado! O ID/Telefone ou o Código de Validação não estão sincronizados.
+                </div>
+
+                <form id="form-login" onsubmit="processarAcesso(event)">
+                    <div style="margin-bottom: 16px;">
+                        <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
+                            ID do Estudante ou Nº de Telefone:
+                        </label>
+                        <input type="text" id="login-identificador" class="form-input" placeholder="Ex: AUR-182764 ou 925347372" required>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
+                            Código de Validação / Senha:
+                        </label>
+                        <input type="password" id="login-senha" class="form-input" style="font-family: monospace; letter-spacing: 2px;" placeholder="••••••••" required>
+                    </div>
+
+                    <button type="submit" class="btn">Aceder à Plataforma ➔</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 🆕 TELA 2: INSCRIÇÃO DE ALUNOS (GERADOR DINÂMICO E AUTOMÁTICO) -->
+        <div class="tela-view" id="view-cadastro">
+            <div class="card" style="border-top: 4px solid var(--brand-blue);">
+                <div class="titulo">🆕 Inscrição Dinâmica (Simulador de Base de Dados)</div>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">Registe um aluno para simular a entrada automática de qualquer parte do país.</p>
+                
+                <form id="form-cadastro" onsubmit="cadastrarEstudanteAutomatico(event)">
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 11px; font-weight: bold;">Nome Completo do Estudante:</label>
+                        <input type="text" id="cad-nome" class="form-input" placeholder="Ex: Mariano Alfredo" required>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 11px; font-weight: bold;">Telemóvel (Sincronização):</label>
+                        <input type="text" id="cad-telefone" class="form-input" placeholder="Ex: 925347372" required>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 11px; font-weight: bold;">Nível/Curso:</label>
+                        <input type="text" id="cad-classe" class="form-input" placeholder="Ex: 3ª Classe" required>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 11px; font-weight: bold;">Período Letivo:</label>
+                        <input type="text" id="cad-periodo" class="form-input" placeholder="Ex: Manhã" required>
+                    </div>
+                    <button type="submit" class="btn" style="background: var(--brand-blue);">Emitir ID e Guardar na Base Local 💾</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- =========================================================================
+             🎓 TELA 3: SALA DE AULA INTERATIVA (PAINEL DO ESTUDANTE)
+             ========================================================================= -->
+        <div class="tela-view" id="view-dashboard">
+            <div class="card">
+                <span style="color: var(--brand-success); font-size: 11px; font-weight: bold; text-transform: uppercase;">● Aluno Sincronizado na Base Local</span>
+                <h2 style="font-size: 22px; font-weight: 800; margin-top: 5px;" id="txt-nome-aluno">---</h2>
+            </div>
+
+            <div class="card grid-metadados">
+                <div><b>Nº Inscrição:</b> <br><span id="txt-id-escolar" style="color: var(--brand-blue); font-weight: bold;">---</span></div>
+                <div><b>Turma Escolar:</b> <br><span id="txt-turma-aluno" style="color: #fff;">---</span></div>
+                <div><b>Classe/Nível:</b> <br><span id="txt-classe-aluno" style="color: #fff;">---</span></div>
+                <div><b>Período Letivo:</b> <br><span id="txt-periodo-aluno" style="color: #fff;">---</span></div>
+            </div>
+
+            <div class="card">
+                <div class="titulo">📊 Caderno de Notas e Assiduidade</div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Curso / Disciplinas Ativas</th>
+                                <th style="text-align: center;">N1</th>
+                                <th style="text-align: center;">N2</th>
+                                <th style="text-align: center;">N3</th>
+                                <th style="text-align: center;">Faltas</th>
+                                <th style="text-align: right;">Estatuto</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-tabela-pauta">
+                            <!-- Injetado Reativamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="titulo">📚 Minha Prateleira Inteligente de Livros</div>
+                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Manuais didáticos alocados automaticamente segundo as suas disciplinas:</p>
+                <div class="lista-livros" id="contentor-livros-aluno">
+                    <!-- Injetado Reativamente -->
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="titulo">💬 Chat Académico Rápido</div>
+                <div class="chat-box" id="caixa-mensagens-chat">
+                    <div style="color: var(--brand-blue-glow);" id="msg-boas-vindas"></div>
+                </div>
+                <form onsubmit="enviarMensagemEstudante(event)" style="display: flex; gap: 8px; margin-top: 10px;">
+                    <input type="text" id="campo-texto-chat" class="form-input" style="margin-top:0; flex: 1;" placeholder="Escreva a sua dúvida académica para a turma..." required>
+                    <button type="submit" class="btn" style="margin-top:0; width: auto; padding: 0 20px;">Enviar</button>
+                </form>
+            </div>
+        </div>
+
+    </div> <!-- Fim do Container -->
+
+    <script>
+    // ⚙️ BASE DE DADOS LOCAL DINÂMICA (localStorage)
+    // Inicializa a tabela como um array vazio pronto para receber qualquer estudante do país
+    if (!localStorage.getItem('bd_estudantes')) {
+        localStorage.setItem('bd_estudantes', JSON.stringify([]));
+    }
+
+    let estudanteLogado = null;
+
+    // Navegação Interna da Aplicação (SPA)
+    function alternarTela(idTela) {
+        document.querySelectorAll('.tela-view').forEach(t => t.classList.remove('active'));
+        document.getElementById(idTela).classList.add('active');
+    }
+
+    // 💾 INSCRIÇÃO 100% DINÂMICA E AUTOMÁTICA
+    function cadastrarEstudanteAutomatico(event) {
+        event.preventDefault();
+        
+        const numAleatorio = Math.floor(100000 + Math.random() * 900000);
+        const novoID = `AUR-${numAleatorio}`;
+        const novoCodigo = Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+        // Cria a estrutura padrão limpa. Sem dados, notas ou livros fixos!
+        const novoAluno = {
+            id: novoID,
+            telefone: document.getElementById('cad-telefone').value.trim(),
+            codigoValidacao: novoCodigo,
+            nome: document.getElementById('cad-nome').value.trim(),
+            classe: document.getElementById('cad-classe').value.trim(),
+            turma: "Aguardando Matrícula", 
+            periodo: document.getElementById('cad-periodo').value.trim(),
+            disciplinas: [], // Fica totalmente vazio até o encarregado pagar no index.html
+            livros: []       // Fica totalmente vazio até o encarregado pagar no index.html
+        };
+    
+        let lista = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
+        
+        // Bloqueia duplicação de número de telefone no país
+        const telefoneDuplicado = lista.some(aluno => aluno.telefone === novoAluno.telefone);
+        if (telefoneDuplicado) {
+            alert("⚠️ Erro: Este número de telefone já se encontra registado no sistema nacional!");
+            return;
+        }
+    
+        lista.push(novoAluno);
+        localStorage.setItem('bd_estudantes', JSON.stringify(lista));
+    
+        alert(`🎉 INSCRIÇÃO CONCLUÍDA!\n\nID ESTUDANTE: ${novoID}\nCÓDIGO VALIDAÇÃO: ${novoCodigo}\nTELEFONE: ${novoAluno.telefone}\n\nAgora use este telemóvel no ecrã de faturamento para carregar as disciplinas!`);
+        
+        document.getElementById('form-cadastro').reset();
+        alternarTela('view-login');
+        
+        document.getElementById('login-identificador').value = novoID;
+        document.getElementById('login-senha').value = novoCodigo;
+    }
+
+    // 🚀 PROCESSADOR DE LOGIN DINÂMICO AUTOMÁTICO
+    function processarAcesso(event) {
+        event.preventDefault();
+        
+        const identificador = document.getElementById('login-identificador').value.trim();
+        const senhaInserida = document.getElementById('login-senha').value.trim();
+        const erroDiv = document.getElementById('mensagem-erro');
+    
+        // Dispara a requisição para a nossa API em PHP ligada à Aiven
+        fetch('login_estudante.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ identificador: identificador, senha: senhaInserida })
+        })
+        .then(res => res.json())
+        .then(resposta => {
+            if (resposta.sucesso) {
+                if (erroDiv) erroDiv.style.display = "none";
+                
+                // Grava o estudante vindo da nuvem na sessão ativa da app
+                estudanteLogado = resposta.estudante;
+                
+                // Salva uma cópia local para o PWA rodar offline depois se necessário
+                localStorage.setItem('bd_estudante_sessao', JSON.stringify(estudanteLogado));
+                
+                // Ativa os painéis visuais normais do seu dashboard
+                carregarDadosDashboard();
+                alternarTela('view-dashboard');
+                document.getElementById('menu-logout').style.display = "block";
+            } else {
+                if (erroDiv) {
+                    erroDiv.style.display = "block";
+                    erroDiv.innerHTML = "⚠️ " + resposta.mensagem;
+                }
+            }
+        })
+        .catch(erro => {
+            console.error("Erro na ligação à API:", erro);
+            if (erroDiv) {
+                erroDiv.style.display = "block";
+                erroDiv.innerHTML = "⚠️ Falha de ligação ao servidor da nuvem.";
+            }
+        });
+    }
+
+    // 📊 PAINEL DINÂMICO DE RENDIMENTO DO ALUNO
+    function carregarDadosDashboard() {
+        if (!estudanteLogado) return;
+        
+        // Injeção direta e limpa dos dados armazenados
+        document.getElementById('txt-nome-aluno').innerText = estudanteLogado.nome;
+        document.getElementById('txt-id-escolar').innerText = estudanteLogado.id;
+        document.getElementById('txt-turma-aluno').innerText = estudanteLogado.turma;
+        document.getElementById('txt-classe-aluno').innerText = estudanteLogado.classe;
+        document.getElementById('txt-periodo-aluno').innerText = estudanteLogado.periodo;
+        
+        const primeiroNome = estudanteLogado.nome.split(' ')[0];
+        document.getElementById('msg-boas-vindas').innerHTML = `<b>[Coordenação]:</b> Olá ${primeiroNome}. Bem-vindo ao teu painel de estudos da ${estudanteLogado.classe}.`;
+
+        // 1. Tabela de Notas Dinâmica (Injetada automaticamente com base nas disciplinas do recibo)
+        const tabela = document.getElementById('corpo-tabela-pauta');
+        if (estudanteLogado.disciplinas && estudanteLogado.disciplinas.length > 0) {
+            tabela.innerHTML = estudanteLogado.disciplinas.map(d => `
+                <tr>
+                    <td><b>${d.nome}</b></td>
+                    <td style="text-align: center;">${Number(d.n1).toFixed(1)}</td>
+                    <td style="text-align: center;">${Number(d.n2).toFixed(1)}</td>
+                    <td style="text-align: center;">${Number(d.n3).toFixed(1)}</td>
+                    <td style="text-align: center;">${d.faltas}</td>
+                    <td style="text-align: right;"><span class="badge">${d.estatuto}</span></td>
+                </tr>
+            `).join('');
+        } else {
+            tabela.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding: 15px;">Nenhuma disciplina ativa. Complete o pagamento no painel principal.</td></tr>`;
+        }
+
+        // 2. Prateleira Inteligente
+        const prateleira = document.getElementById('contentor-livros-aluno');
+        if (estudanteLogado.livros && estudanteLogado.livros.length > 0) {
+            prateleira.innerHTML = estudanteLogado.livros.map((l, index) => {
+                return `
+                    <div class="livro-row">
+                        <div>
+                            <div style="font-size: 13px; font-weight: bold; color: #fff;">${l.titulo}</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">📖 ${l.autor}</div>
+                        </div>
+                        <button onclick="abrirManualEstudante(${index})" class="btn-baixar" style="background: var(--brand-blue); color: #060b19; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">Ler Agora ➔</button>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            prateleira.innerHTML = `<p style="font-size: 12px; color:var(--text-muted); text-align:center; padding: 10px;">Nenhum manual alocado para a sua conta.</p>`;
+        }
+
+        // 💬 Chamada reativa da central única de mensagens
+        carregarChatSincronizadoEstudante();
+    }
+
+    // 💬 GESTOR DE ATENDIMENTO DE DÚVIDAS DO ALUNO (CONVERSA SINCRONIZADA COM O PROFESSOR)
+    function carregarChatSincronizadoEstudante() {
+        const caixaChat = document.getElementById('caixa-mensagens-chat');
+        if (!caixaChat) return;
+        
+        const msgs = JSON.parse(localStorage.getItem('bd_chat_global')) || [];
+        caixaChat.innerHTML = ""; // Limpa a janela para evitar loops
+        
+        msgs.forEach(m => {
+            const div = document.createElement('div');
+            if (m.origem === 'prof') {
+                div.style.color = 'var(--brand-gold)';
+                div.innerHTML = `<b>[${m.autor}]:</b> ${m.texto}`;
+            } else {
+                div.style.color = '#fff';
+                const prefixo = (estudanteLogado && m.id_autor === estudanteLogado.id) ? 'Tu' : m.autor;
+                div.innerHTML = `<b>[${prefixo}]:</b> ${m.texto.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
+            }
+            caixaChat.appendChild(div);
+        });
+        caixaChat.scrollTop = caixaChat.scrollHeight;
+    }
+
+    // 🚀 ENVIO DE REQUISIÇÕES DO ALUNO PARA O REPOSITÓRIO DOCENTE
+    function enviarMensagemEstudante(event) {
+        event.preventDefault();
+        if (!estudanteLogado) return;
+        
+        const input = document.getElementById('campo-texto-chat');
+        if (input.value.trim() !== "") {
+            let msgs = JSON.parse(localStorage.getItem('bd_chat_global')) || [];
+            msgs.push({
+                origem: 'aluno',
+                id_autor: estudanteLogado.id,
+                autor: estudanteLogado.nome.split(' ')[0],
+                texto: input.value
+            });
+            localStorage.setItem('bd_chat_global', JSON.stringify(msgs));
+            input.value = "";
+            carregarChatSincronizadoEstudante();
+        }
+    }
+
+    // 📖 MOTOR DE VISUALIZAÇÃO INTERNA DE MANUAIS EM PDF
+    function abrirManualEstudante(indexLivro) {
+        if (!estudanteLogado || !estudanteLogado.livros || !estudanteLogado.livros[indexLivro]) {
+            alert("❌ Erro ao localizar o manual.");
+            return;
+        }
+
+        const livro = estudanteLogado.livros[indexLivro];
+
+        if (livro.dadosFicheiro) {
+            try {
+                const novaJanela = window.open();
+                if (!novaJanela) {
+                    alert("⚠️ Bloqueador de pop-ups ativo! Por favor, autorize pop-ups para ler o livro.");
+                    return;
+                }
+                
+                novaJanela.document.write(`
+                    <html lang="pt">
+                    <head>
+                        <title>${livro.titulo} - Leitor Aurélius</title>
+                        <style>
+                            body { margin: 0; background: #060b19; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: system-ui; color: #fff; }
+                            iframe, embed { width: 100%; height: 100%; border: none; }
+                            .aviso-loading { position: absolute; z-index: -1; font-size: 16px; font-weight: bold; color: #eab308; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="aviso-loading">A carregar o manual digital... ⏳</div>
+                        <embed src="${livro.dadosFicheiro}" type="application/pdf" width="100%" height="100%">
+                    </body>
+                    </html>
+                `);
+                novaJanela.document.close();
+            } catch (erro) {
+                alert("❌ Ocorreu um erro ao processar o ficheiro do livro no navegador.");
+            }
+        } else {
+            alert(`📖 Ficheiro Físico não Detetado!\nO manual "${livro.titulo}" está alocado à sua grade letiva, mas a secretaria digital ainda não anexou o arquivo PDF para este módulo.`);
+        }
+    }
+
+    function fazerLogout(event) {
+        if(event) event.preventDefault();
+        if(window.chatIntervaloEstudante) {
+            clearInterval(window.chatIntervaloEstudante);
+            window.chatIntervaloEstudante = null;
+        }
+        document.getElementById('form-login').reset();
+        document.getElementById('menu-logout').style.display = "none";
+        estudanteLogado = null;
+        alternarTela('view-login');
+    }
+    </script>
+
+
+
+<script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('PWA Aurélius: Service Worker Ativo!', reg.scope))
+          .catch(err => console.error('Erro ao ativar o PWA:', err));
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#eab308">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Academia Aurélius - Hub Educacional</title>
+    <style>
+        /* ═════════════════════════════════════════════════════════════════════
+           🎨 DESIGN SYSTEM INTEGRADO E COMPACTO PARA PWA (AURELIUS 2026)
+           ═════════════════════════════════════════════════════════════════════ */
+        :root {
+            --bg-main: #060b19;
+            --bg-surface: #111a2e;
+            --bg-surface-gradient: linear-gradient(135deg, #16223f 0%, #0f172a 100%);
+            --brand-gold: #eab308;
+            --brand-blue: #00d2ff;
+            --brand-blue-glow: #38bdf8;
+            --brand-success: #22c55e;
+            --border-slate-light: #334155;
+            --text-muted: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg-main); color: #fff; padding-bottom: 40px; }
+    
+        /* 🧭 NAV BAR */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 24px; background: linear-gradient(135deg, rgba(26, 36, 61, 0.9) 0%, rgba(11, 18, 36, 0.95) 100%);
+            border-bottom: 2px solid var(--brand-gold); backdrop-filter: blur(12px);
+            position: sticky; top: 0; z-index: 1000;
+        }
+        nav .logo { font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; color: #fff; }
+        nav .logo span { color: var(--brand-gold); }
+        
+        .menu-horizontal-top { display: flex; list-style: none; gap: 15px; align-items: center; }
+        .menu-horizontal-top li a { 
+            color: #cbd5e1; text-decoration: none; font-size: 13px; font-weight: 700; 
+            padding: 8px 16px; border-radius: 20px; transition: all 0.3s; 
+            background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); 
+        }
+        .menu-horizontal-top li a:hover { background: rgba(234, 179, 8, 0.15); color: var(--brand-gold); }
+    
+        /* 📱 VIEWPORTS SPA */
+        .app-main-viewport { max-width: 600px; margin: 20px auto; padding: 0 16px; }
+        .tela-view { display: none; animation: slideFade 0.3s ease-out; text-align: left; }
+        .tela-view.active { display: block; }
+        @keyframes slideFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    
+        /* 📋 BOTÕES E GRIDS */
+        .vertical-menu { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
+        .menu-btn { 
+            background: var(--bg-surface-gradient); border: 1px solid rgba(56, 189, 248, 0.25); 
+            color: #fff; padding: 16px; border-radius: 12px; font-size: 14px; font-weight: bold; 
+            cursor: pointer; display: flex; align-items: center; gap: 12px; transition: 0.2s; width: 100%;
+        }
+        .menu-btn:hover { border-color: var(--brand-blue); transform: translateX(3px); color: var(--brand-blue); }
+    
+        .barbearias-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 15px; }
+        .quadrado-card { 
+            background: var(--bg-surface); border: 2px solid #1e293b; border-radius: 16px; 
+            padding: 20px 12px; cursor: pointer; text-align: center; transition: all 0.2s; 
+        }
+        .quadrado-card:hover { border-color: var(--brand-gold); box-shadow: 0 0 15px rgba(234, 179, 8, 0.2); transform: scale(1.02); }
+        .quadrado-card strong { font-size: 14px; color: #fff; display: block; }
+        .quadrado-card p { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+    
+        /* 📑 RECIPIENTES DE INTERFACE (FORMULÁRIO, COMPONENTES E LI-CARDS) */
+        .btn-voltar { 
+            background: #1e293b; color: var(--text-muted); border: 1px solid var(--border-slate-light); 
+            padding: 8px 14px; border-radius: 20px; font-size: 11px; font-weight: bold; cursor: pointer; 
+            margin-bottom: 15px; display: inline-block; transition: 0.2s;
+        }
+        .btn-voltar:hover { background: var(--border-slate-light); color: #fff; }
+        .titulo-sessao { font-size: 18px; color: #fff; font-weight: bold; margin-bottom: 15px; }
+    
+        .selecao-top-box { background: rgba(0, 210, 255, 0.05); border: 1px dashed var(--brand-blue); padding: 12px; border-radius: 10px; margin-bottom: 15px; }
+        .selecao-top-box label { font-size: 10px; color: var(--brand-blue-glow); text-transform: uppercase; font-weight: bold; }
+        .select-fake { font-size: 15px; font-weight: bold; color: #fff; margin-top: 2px; }
+    
+        .subcategorias-lista { display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px; }
+        .servico-row-card { 
+            background: var(--bg-surface); border: 1px solid #1e293b; padding: 14px; border-radius: 12px; 
+            display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; 
+        }
+        .servico-row-card:hover { border-color: var(--brand-blue-glow); }
+        .servico-row-card.selected { border-color: var(--brand-success); background: rgba(34, 197, 94, 0.06); }
+    
+        /* 📦 CONTAINER DE MATRÍCULA E COMPONENTES MODERNOS */
+        .bloco-card { background: var(--bg-surface); border: 1px solid var(--border-slate-light); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+        .bloco-titulo { font-size: 12px; color: var(--brand-gold); text-transform: uppercase; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        
+        /* Radios de Modalidade Customizados estilo App */
+        .modalidade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .modalidade-option { 
+            background: #070b14; border: 1px solid var(--border-slate-light); border-radius: 8px; 
+            padding: 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600;
+        }
+        .modalidade-option input { accent-color: var(--brand-gold); }
+    
+        .form-select, .form-input { 
+            width: 100%; padding: 12px; background: #070b14; border: 1px solid var(--border-slate-light); 
+            border-radius: 8px; color: #fff; font-size: 14px; outline: none; margin-top: 4px;
+        }
+        .form-select:focus, .form-input:focus { border-color: var(--brand-blue); }
+    
+        .resumo-total-box { display: flex; justify-content: space-between; align-items: center; background: #070b14; padding: 14px; border-radius: 10px; border: 1px solid rgba(234, 179, 8, 0.2); }
+        .btn-submeter { 
+            width: 100%; background: var(--brand-success); color: #fff; border: none; padding: 14px; 
+            border-radius: 10px; font-size: 14px; font-weight: bold; cursor: pointer; text-transform: uppercase; 
+            margin-top: 15px; box-shadow: 0 4px 12px rgba(34,197,94,0.3); transition: 0.2s;
+        }
+        .btn-submeter:hover { background: #16a34a; transform: translateY(-1px); }
+    
+        /* 🧾 CARD SUCESSO / RECIBO TÉRMICO */
+        .card-sucesso { background: #fff; color: #000; padding: 25px; border-radius: 14px; font-family: monospace; border-top: 8px solid var(--brand-success); box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        .icone-sucesso { 
+            width: 44px; height: 44px; background: var(--brand-success); color: #fff;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: bold; margin: 0 auto 12px auto;
+        }
+
+        /* ⏱️ COMPONENTES ADICIONAIS: POMODORO & TIMERS */
+        .pomodoro-container { text-align: center; background: var(--bg-surface-gradient); }
+        .pomodoro-timer { font-size: 36px; font-weight: 900; color: #fff; margin: 10px 0; font-family: monospace; }
+        .btn-pomodoro { background: var(--brand-gold); color: #060b19; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-pomodoro:hover { background: #f59e0b; }
+    </style>
+</head>
+<body>
+     <!-- =========================================================================
+             🧭 PORTAL CORE NAV BAR (NIVELAMENTO DE FLUXOS)
+             ========================================================================= -->
+             <nav>
+                    <h1 class="logo">AURE<span>LIUS</span></h1>
+                    <ul class="menu-horizontal-top">
+                        <li><a href="Principal.html"> Home</a></li>
+                        <li><a href="Lista.html"> Lista</a></li>
+                        <li><a href="estudante.html"> Aluno</a></li>
+                        <li><a href="professor.html"> Docente</a></li>
+                    </ul>
+                </nav>
+        
+                <div class="app-main-viewport">
+                    <main>
+                
+                        <!-- =========================================================================
+                             🏫 TELA 1: HUB CENTRAL DE OPERAÇÕES (PORTAL ACADÉMICO)
+                             ========================================================================= -->
+                        <div class="tela-view active" id="tela-1">
+                            <div style="margin-bottom: 20px;">
+                                <span style="color: var(--brand-gold); font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Formação Presenciar e Domicíliar <hr></span>
+                                <h2 style="font-size: 22px; font-weight: 800; margin-top: 2px;">Academia Aurelius</h2>
+                                <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">Selecione o fluxo desejado para efetuar a sua matrícula académica no Huambo.</p>
+                            </div>
+                            
+                            <div class="vertical-menu">
+                                <!-- Botão 1: Ensino Regular -->
+                                <button class="menu-btn" onclick="iniciarFluxo('regular')">
+                                    <span style="font-size: 18px;">📋</span>
+                                    <div style="flex: 1; display: flex; flex-direction: column; text-align: left;">
+                                        <span>Nível Académico Base</span>
+                                        <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">Ensino Regular (1ª à 13ª Classe)</span>
+                                    </div>
+                                    <span>➔</span>
+                                </button>
+                                
+                                <!-- Botão 2: Ensino Superior -->
+                                <button class="menu-btn" onclick="iniciarFluxo('superior')">
+                                    <span style="font-size: 18px;">🎓</span>
+                                    <div style="flex: 1; display: flex; flex-direction: column; text-align: left;">
+                                        <span>Ensino Superior</span>
+                                        <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">Faculdades e Institutos (1º ao 5º Ano)</span>
+                                    </div>
+                                    <span>➔</span>
+                                </button>
+        
+                                <!-- Botão 3: Cursos de Férias -->
+                                <button class="menu-btn" onclick="iniciarFluxo('ferias')">
+                                    <span style="font-size: 18px;">📚</span>
+                                    <div style="flex: 1; display: flex; flex-direction: column; text-align: left;">
+                                        <span>Cursos de Férias</span>
+                                        <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">Artes, Ofícios e Módulos Técnicos</span>
+                                    </div>
+                                    <span>➔</span>
+                                </button>
+        
+                                <!-- Botão 4: Cadeiras Isoladas -->
+                                <button class="menu-btn" onclick="iniciarFluxo('cadeiras')">
+                                    <span style="font-size: 18px;">✒️</span>
+                                    <div style="flex: 1; display: flex; flex-direction: column; text-align: left;">
+                                        <span>Disciplinas Por Cadeiras</span>
+                                        <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">Inscrições Isoladas e Avançadas</span>
+                                    </div>
+                                    <span>➔</span>
+                                </button>
+        
+                                <!-- Botão 5: Preparatórios Escolares -->
+                                <button class="menu-btn" onclick="verificarPreparatorios()">
+                                    <span style="font-size: 18px;">📝</span>
+                                    <div style="flex: 1; display: flex; flex-direction: column; text-align: left;">
+                                        <span>Preparatórios Escolares</span>
+                                        <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">Exames de Admissão e Concursos</span>
+                                    </div>
+                                    <span>➔</span>
+                                </button>
+        
+                                <!-- Botão 6: Dicas de Estudos -->
+                                <button class="menu-btn" onclick="verCentralRendimento()">
+                                    <span style="font-size: 18px;">💡</span>
+                                    <div style="flex: 1; display: flex; flex-direction: column; text-align: left;">
+                                        <span>Dicas de Estudos</span>
+                                        <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">Central de Alto Rendimento Focado</span>
+                                    </div>
+                                    <span>➔</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- =========================================================================
+                     🎓 TELA 2: GRID DE SELEÇÃO DE CLASSES / CURSOS
+                     ========================================================================= -->
+                <div class="tela-view" id="tela-2">
+                        <button class="btn-voltar" onclick="voltarTela(1)">⬅ Voltar ao Painel</button>
+                        <h2 class="titulo-sessao" id="titulo-tela-2">Selecione o Nível Académico</h2>
+                        <div class="barbearias-grid" id="lista-barbearias"></div>
+                    </div>
+            
+                    <!-- =========================================================================
+                         📝 TELA 3: CONFIGURADOR DE MATRÍCULA
+                         ========================================================================= -->
+                    <div class="tela-view" id="tela-3">
+                        <button class="btn-voltar" onclick="voltarTela(2)">⬅ Alterar Seleção</button>
+                        <h2 class="titulo-sessao">Configurar Módulos da Matrícula</h2>
+                        
+                        <div class="selecao-top-box">
+                            <label>Nível/Curso Escolhido:</label>
+                            <div class="select-fake" id="nome-estabelecimento-atende">--</div>
+                        </div>
+    
+                        <h3 style="font-size: 13px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Selecione as Disciplinas:</h3>
+                        <div class="subcategorias-lista" id="lista-servicos"></div>
+    
+                        <!-- Bloco de Modalidade de Ensino -->
+                        <div class="bloco-card">
+                            <div class="bloco-titulo">🏠 Modalidade de Ensino</div>
+                            <div class="modalidade-grid">
+                                <label class="modalidade-option">
+                                    <input type="radio" name="modalidade" value="presencial" checked onchange="calcularPrecoTotal()">
+                                    <span>Presencial</span>
+                                </label>
+                                <label class="modalidade-option">
+                                    <input type="radio" name="modalidade" value="domicilio" onchange="calcularPrecoTotal()">
+                                    <span>Ao Domicílio <span style="color:var(--brand-gold)">(+50%)</span></span>
+                                </label>
+                            </div>
+                        </div>
+    
+                        <!-- Bloco de Identificação e Contacto Obrigatório -->
+                        <div class="bloco-card">
+                            <div class="bloco-titulo">👤 Dados Obrigatórios da Matrícula</div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <label style="font-size:11px; color:var(--text-muted); font-weight: bold; display: block; margin-bottom: 4px;">Nome Completo do Aluno *</label>
+                                <input type="text" id="input-nome-aluno" class="form-input" placeholder="Insira o nome completo do estudante">
+                            </div>
+    
+                            <div style="margin-bottom: 12px;">
+                                <label style="font-size:11px; color:var(--text-muted); font-weight: bold; display: block; margin-bottom: 4px;">Nome do Encarregado de Educação *</label>
+                                <input type="text" id="input-nome-encarregado" class="form-input" placeholder="Insira o nome do responsável">
+                            </div>
+    
+                            <div style="margin-bottom: 12px;">
+                                <label style="font-size:11px; color:var(--text-muted); font-weight: bold; display: block; margin-bottom: 4px;">Período da Formação:</label>
+                                <select id="select-periodo" class="form-input" style="cursor: pointer;">
+                                    <option value="Manhã">Manhã (08h - 12h)</option>
+                                    <option value="Tarde">Tarde (13h - 17h)</option>
+                                    <option value="Noite">Noite (18h - 21h)</option>
+                                </select>
+                            </div>
+    
+                            <div style="margin-bottom: 12px;">
+                                <label style="font-size:11px; color:var(--text-muted); font-weight: bold; display: block; margin-bottom: 4px;">Número de Telefone</label>
+                                <input type="tel" id="input-telefone" class="form-input" placeholder="Seu telefone" maxlength="9">
+                            </div>
+    
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div>
+                                    <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 4px;">Município (Huambo): *</label>
+                                    <select id="input-municipio" class="form-input" style="cursor: pointer;" required>
+                                        <option value="">-- Selecione --</option>
+                                        <option value="Huambo">Huambo (Sede)</option>
+                                        <option value="Caála">Caála</option>
+                                        <option value="Bailundo">Bailundo</option>
+                                        <option value="Ecunha">Ecunha</option>
+                                        <option value="Ukuma">Ukuma</option>
+                                        <option value="Longonjo">Longonjo</option>
+                                        <option value="Tchinjenje">Tchinjenje</option>
+                                        <option value="Mungo">Mungo</option>
+                                        <option value="Cachiungo">Cachiungo</option>
+                                        <option value="Chicala-Choloanga">Chicala-Choloanga</option>
+                                        <option value="Londuimbali">Londuimbali</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 4px;">Bairro / Rua Exata: *</label>
+                                    <input type="text" id="input-bairro" class="form-input" placeholder="Seu Bairro " required>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <!-- Caixa de Resumo de Preço -->
+                        <div class="resumo-total-box">
+                            <div>
+                                <span style="font-size: 13px; color: var(--text-muted); display: block;">Total Líquido Estimado:</span>
+                                <span id="desconto-aviso" style="font-size: 11px; color: var(--brand-success); font-weight: bold; display:none;">Desconto de 20% Aplicado!</span>
+                            </div>
+                            <strong style="font-size: 22px; color: var(--brand-gold);" id="preco-total-final">0.00 Kzs</strong>
+                        </div>
+    
+                        <button class="btn-submeter" onclick="submeterAgendamento()">Concluir Matrícula ✓</button>
+                    </div>
+            
+                    <!-- =========================================================================
+                         📋 TELA 4: EMISSÃO DE RECIBO TÉRMICO COMPACTO E UNIFICADO
+                         ========================================================================= -->
+                    <div class="tela-view" id="tela-4">
+                        <div class="card-sucesso">
+                            <div class="icone-sucesso">✓</div>
+                            <h3 style="text-align:center; font-size:14px; margin-bottom:12px; font-weight:bold; color:#000; letter-spacing:1px;">MATRÍCULA CONCLUÍDA</h3>
+                            
+                            <div style="margin-bottom:12px; font-size:11px; color:#333; line-height: 1.6;">
+                                <p><b>ID ESTUDANTE:</b> <span id="sucesso-id" style="color: #c2410c; font-weight:bold;">---</span></p>
+                                <p><b>CÓDIGO VALIDAÇÃO:</b> <span id="sucesso-codigo" style="background:#e2e8f0; padding:1px 4px; font-weight:bold;">---</span></p>
+                                <div style="border-top: 1px dashed #cbd5e1; margin: 6px 0;"></div>
+                                <p><b>ESTUDANTE:</b> <span id="sucesso-aluno" style="font-weight:bold; text-transform:uppercase;">---</span></p>
+                                <p><b>ENCARREGADO:</b> <span id="sucesso-encarregado" style="text-transform:uppercase;">---</span></p>
+                                <p><b>TELEFONE:</b> <span id="sucesso-telefone">---</span></p>
+                                <p><b>LOCALIZAÇÃO:</b> <span id="sucesso-endereco">---</span></p>
+                                <div style="border-top: 1px dashed #cbd5e1; margin: 6px 0;"></div>
+                                <p><b>NÍVEL/CURSO:</b> <span id="sucesso-nome-salao">---</span></p>
+                                <p><b>PERÍODO:</b> <span id="sucesso-periodo">---</span></p>
+                                <p><b>DATA EMISSÃO:</b> <span id="sucesso-data">---</span></p>
+                            </div>
+                            
+                            <div style="border-top:1px dashed #475569; padding-top:10px; display:flex; justify-content:space-between; font-weight:bold; font-size:13px; color:#15803d;">
+                                <span>VALOR TOTAL:</span>
+                                <span id="sucesso-valor-pago">0.00 Kzs</span>
+                            </div>
+                            
+                            <div style="background:#fef3c7; border:1px solid #fde68a; padding:8px; border-radius:6px; font-size:10px; text-align:center; margin-top:12px; color:#78350f; font-weight:bold;">
+                                Guarde o seu ID e Código para aceder à sua Pauta e Livros Digitais!
+                            </div>
+                            <button class="btn-submeter" style="background:#000; margin-top:15px; font-size:12px; padding:12px;" onclick="limparEVoltar()">Voltar ao Início</button>
+                        </div>
+                    </div>
+
+                    <!-- =========================================================================
+                         📊 TELA 5: CENTRAL DE ALTO RENDIMENTO (POMODORO)
+                         ========================================================================= -->
+                    <div class="tela-view" id="tela-5">
+                        <button class="btn-voltar" onclick="voltarTela(1)">⬅ Voltar ao Painel</button>
+                        <h2 class="titulo-sessao" style="color:var(--brand-gold);">EXERCITE COM O TEMPORIZADOR E SEM DISTRAÇÃO:</h2>
+                        
+                        <div class="bloco-card pomodoro-container" style="padding:20px; border-radius:12px; margin-bottom:16px; text-align:center;">
+                            <div class="bloco-titulo" style="justify-content:center; font-weight:bold; margin-bottom:10px;">⏱️ Temporizador Pomodoro</div>
+                            <div class="pomodoro-timer" id="pomodoro-display">25:00</div>
+                            <div style="display: flex; gap: 10px; justify-content: center;">
+                                <button onclick="togglePomodoro()" id="btn-pomodoro" class="btn-pomodoro">Iniciar Foco</button>
+                                <button onclick="reporPomodoro()" class="btn-pomodoro" style="background: #475569; color: #fff; border:none; padding:8px 16px; border-radius:6px; font-weight:bold; cursor:pointer;">Repor</button>
+                            </div>
+                        </div>
+                    
+                        <div id="contentor-dicas-dinamicas">
+                            <!-- Injetado Reativamente pelo JavaScript -->
+                        </div>
+                    </div>
+
+                </main>
+            </div> <!-- Fim do Container Principal SPA -->
+
+    <!-- =========================================================================
+         ⚙️ MOTOR LOGÍSTICO JAVASCRIPT UNIFICADO E COMPACTO (AURELIUS 2026)
+         ========================================================================= -->
+    <script>
+    let fluxoAtual = 'regular';
+    let itemSelecionado = null;
+
+    // 1. REPOSITÓRIO DE DADOS EXPANDIDO (HUAMBO 2026)
+    const dbAcademica = {
+        regular: [
+            { id: '1c', nome: '1ª Classe (Primário)', sala: 'Sala nº 1', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}] },
+            { id: '2c', nome: '2ª Classe (Primário)', sala: 'Sala nº 2', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}] },
+            { id: '3c', nome: '3ª Classe (Primário)', sala: 'Sala nº 3', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}] },
+            { id: '4c', nome: '4ª Classe (Primário)', sala: 'Sala nº 4', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 1000}] },
+            { id: '5c', nome: '5ª Classe (Primário)', sala: 'Sala nº 5', disciplinas: [{n: 'Língua Portuguesa', p: 1000}, {n: 'Matemática', p: 1000}, {n: 'Estudo do Meio', p: 1000}] },
+            { id: '6c', nome: '6ª Classe (Primário)', sala: 'Sala nº 6', disciplinas: [{n: 'Língua Portuguesa', p: 1000}, {n: 'Matemática', p: 1000}, {n: 'Ciências da Natureza', p: 1000}] },
+            { id: '7c', nome: '7ª Classe (I Ciclo)', sala: 'Sala nº 7', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'Química', p: 1500}, {n: 'Física', p: 1500}] },
+            { id: '8c', nome: '8ª Classe (I Ciclo)', sala: 'Sala nº 8', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'Química', p: 1500}, {n: 'Física', p: 1500}] },
+            { id: '9c', nome: '9ª Classe (I Ciclo)', sala: 'Sala nº 9', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'História', p: 1500}, {n: 'Geografia', p: 1500}] },
+            { id: '10c', nome: '10ª Classe (II Ciclo)', sala: 'Sala nº 10', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}, {n: 'Física', p: 2000}] },
+            { id: '11c', nome: '11ª Classe (II Ciclo)', sala: 'Sala nº 11', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}, {n: 'Química', p: 2000}] },
+            { id: '12c', nome: '12ª Classe (II Ciclo)', sala: 'Sala nº 12', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}, {n: 'Filosofia', p: 2000}] },
+            { id: '13c', nome: '13ª Classe (Técnico)', sala: 'Sala nº 13', disciplinas: [{n: 'Matemática Aplicada', p: 2500}, {n: 'Física Avançada', p: 2500}, {n: 'Estágio Prático', p: 2500}] }
+        ],
+        superior: {
+            Economia: [
+                { id: 'eco1', nome: 'Economia - 1º Ano', sala: 'Auditório de Economia A', disciplinas: [{n: 'Introdução à Economia', p: 5000}, {n: 'Análise Matemática I', p: 5500}] },
+                { id: 'eco2', nome: 'Economia - 2º Ano', sala: 'Auditório de Economia B', disciplinas: [{n: 'Microeconomia I', p: 9000}, {n: 'Estatística I', p: 6000}] },
+                { id: 'eco3', nome: 'Economia - 3º Ano', sala: 'Auditório de Economia C', disciplinas: [{n: 'Macroeconomia II', p: 9500}, {n: 'Contabilidade Geral', p: 9500}] },
+                { id: 'eco4', nome: 'Economia - 4º Ano', sala: 'Auditório de Economia D', disciplinas: [{n: 'Econometria I', p: 7000}, {n: 'Finanças Públicas', p: 8000}] },
+                { id: 'eco5', nome: 'Economia - 5º Ano', sala: 'Sala de Monografias', disciplinas: [{n: 'Política Económica', p: 8000}, {n: 'Seminário de Tese', p: 8000}] }
+            ],
+            Medicina: [
+                { id: 'med1', nome: 'Medicina - 1º Ano', sala: 'Laboratório de Anatomia 1', disciplinas: [{n: 'Anatomia Humana I', p: 8500}, {n: 'Biologia Celular', p: 7000}] },
+                { id: 'med2', nome: 'Medicina - 2º Ano', sala: 'Laboratório de Anatomia 2', disciplinas: [{n: 'Fisiologia Humana', p: 6500}, {n: 'Histologia', p: 8500}] },
+                { id: 'med3', nome: 'Medicina - 3º Ano', sala: 'Anfiteatro Clínico A', disciplinas: [{n: 'Farmacologia Geral', p: 7600}, {n: 'Patologia Geral', p: 9500}] },
+                { id: 'med4', nome: 'Medicina - 4º Ano', sala: 'Anfiteatro Clínico B', disciplinas: [{n: 'Semiologia Médica', p: 9000}, {n: 'Pediatria I', p: 10000}] },
+                { id: 'med5', nome: 'Medicina - 5º Ano', sala: 'Bloco de Estágio Hospitalar', disciplinas: [{n: 'Ginecologia e Obstetrícia', p: 9000}, {n: 'Cirurgia Geral', p: 16000}] }
+            ],
+            Direito: [
+                { id: 'dir1', nome: 'Direito - 1º Ano', sala: 'Auditório de Direito 1', disciplinas: [{n: 'Introdução ao Estudo do Direito', p: 8500}, {n: 'História do Direito', p: 8000}] },
+                { id: 'dir2', nome: 'Direito - 2º Ano', sala: 'Auditório de Direito 2', disciplinas: [{n: 'Direito Político e Constitucional', p: 9500}, {n: 'Teoria Geral do Direito Civil', p: 9500}] },
+                { id: 'dir3', nome: 'Direito - 3º Ano', sala: 'Auditório de Direito 3', disciplinas: [{n: 'Direito das Obrigações', p: 10500}, {n: 'Direito Penal I', p: 10500}] },
+                { id: 'dir4', nome: 'Direito - 4º Ano', sala: 'Auditório de Direito 4', disciplinas: [{n: 'Direito Processual Civil I', p: 11500}, {n: 'Direito do Trabalho', p: 11000}] },
+                { id: 'dir5', nome: 'Direito - 5º Ano', sala: 'Tribunal Simulado', disciplinas: [{n: 'Direito Internacional Público', p: 13000}, {n: 'Prática Jurídica', p: 14000}] }
+            ],
+            Informatica: [
+                { id: 'inf1', nome: 'Informática - 1º Ano', sala: 'Lab Informática 1', disciplinas: [{n: 'Algorítmo e Lógica de Programação', p: 6000},
+                 {n: ' Matemática Discreta', p: 6500},
+                 {n: 'Análise Matemática I', p: 6500},
+                 {n: 'Álgebra Linear', p: 6500},
+                 {n: 'Arquitetura de Computadores', p: 6500},
+                 {n: 'Física', p: 6500},
+                 {n: 'Química', p: 6500},
+                 {n: 'Inglês', p: 6500}] },
+
+                { id: 'inf2', nome: 'Informática - 2º Ano', sala: 'Lab Informática 2', disciplinas: [{n: 'Análise Matemática II', p: 6500}, {n: 'Programação I', p: 6000},
+                {n: 'Física I', p: 6000},
+                {n: 'Redes de Computadores', p: 6000},
+                {n: 'Estatística e .... ', p: 7000}] },
+                
+                { id: 'inf3', nome: 'Informática - 3º Ano', sala: 'Lab Redes', disciplinas: [{n: 'Engenharia de Software', p: 5000}, {n: 'Sistemas Operativos', p: 5000},
+                {n: 'Programação Web (html, css, e JS)', p: 5000}] },
+
+                { id: 'inf4', nome: 'Informática - 4º Ano', sala: 'Lab Redes Avançado', disciplinas: [{n: 'Segurança Informática', p: 9000}, {n: 'Programação Web ( html, css, JS, php/NodeJs)', p: 9000},
+                {n: 'Tipos de Bancos de Dado e sua integração', p: 9000}] }
+            ],
+            Enfermagem: [
+                { id: 'enf1', nome: 'Enfermagem - 1º Ano', sala: 'Sala de Enfermagem A', disciplinas: [{n: 'Fundamentos de Enfermagem', p: 8500}, {n: 'Anatomia Descritiva', p: 9000}] },
+                { id: 'enf2', nome: 'Enfermagem - 2º Ano', sala: 'Sala de Enfermagem B', disciplinas: [{n: 'Farmacologia Clínica', p: 9500}, {n: 'Enfermagem Médica', p: 9500}] },
+                { id: 'enf3', nome: 'Enfermagem - 3º Ano', sala: 'Laboratório Clínico 1', disciplinas: [{n: 'Enfermagem Cirúrgica', p: 10500}, {n: 'Saúde Comunitária', p: 10000}] },
+                { id: 'enf4', nome: 'Enfermagem - 4º Ano', sala: 'Hospital do Huambo (Estágio)', disciplinas: [{n: 'Ética Deontológica', p: 11000}, {n: 'Estágio Integrado', p: 13000}] }
+            ],
+            Veterinária: [
+                { id: 'ac1', nome: 'Veterinária - 1º Ano', sala: 'Lab de Biologia', disciplinas: [{n: 'Química Biológica', p: 9000}, {n: 'Citologia Humana', p: 9000}] },
+                { id: 'ac2', nome: 'Veterinária - 2º Ano', sala: 'Lab de Bioquímica', disciplinas: [{n: 'Bioquímica Clínica', p: 10000}, {n: 'Hematologia Geral', p: 10500}] },
+                { id: 'ac3', nome: 'Veterinária - 3º Ano', sala: 'Lab de Microbiologia', disciplinas: [{n: 'Microbiology Médica', p: 11500}, {n: 'Imunologia', p: 11500}] },
+                { id: 'ac4', nome: 'Veterinária - 4º Ano', sala: 'Centro Clínico Universitário', disciplinas: [{n: 'Parasitologia Humana', p: 12500}, {n: 'Controlo de Qualidade', p: 13000}] }
+            ],
+            Hidráulica: [
+                { id: 'derm1', nome: 'Hidráulica - 1º Ano', sala: 'Anfiteatro de Especialidades', disciplinas: [{n: 'Anatomia e Histologia Cutânea', p: 11000}, {n: 'Fisiopatologia da Pele', p: 11000}] },
+                { id: 'derm2', nome: 'Hidráulica - 2º Ano', sala: 'Gabinete Clínico Dermatológico', disciplinas: [{n: 'Semiologia Cutânea', p: 13000}, {n: 'Dermatologia Infeciosa', p: 14000}] },
+                { id: 'derm3', nome: 'Hidráulica - 3º Ano', sala: 'Sala de Pequenas Cirurgias', disciplinas: [{n: 'Terapêutica Dermatológica', p: 15000}, {n: 'Cirurgia Dermatológica Básica', p: 16000}] }
+            ],
+            Análises_Clínica: [
+                { id: 'fisio1', nome: 'Análises Clínica - 1º Ano', sala: 'Anfiteatro de Ciências Médicas', disciplinas: [{n: 'Fisiologia Celular Básica', p: 9000}, {n: 'Biofísica Geral', p: 9000}] },
+                { id: 'fisio2', nome: 'Análises Clínica - 2º Ano', sala: 'Lab de Fisiologia Aplicada', disciplinas: [{n: 'Fisiologia Neuro-Muscular', p: 10500}, {n: 'Fisiologia Cardiovascular', p: 11000}] },
+                { id: 'fisio3', nome: 'Análises Clínica - 3º Ano', sala: 'Centro de Reabilitação Universitário', disciplinas: [{n: 'Fisiologia do Exercício', p: 12000}, {n: 'Integração Fisiológica', p: 13500}] }
+            ],
+            Marketing: [
+                { id: 'mkt1', nome: 'Marketing - 1º Ano', sala: 'Sala de Redação e Criação', disciplinas: [{n: 'Fundamentos de Marketing', p: 7500}, {n: 'Comportamento do Consumidor', p: 8000}] },
+                { id: 'mkt2', nome: 'Marketing - 2º Ano', sala: 'Lab de Estratégia Digital', disciplinas: [{n: 'Marketing Digital e Redes Sociais', p: 9000}, {n: 'Pesquisa de Mercado', p: 8500}] },
+                { id: 'mkt3', nome: 'Marketing - 3º Ano', sala: 'Sala de Empreendedorismo', disciplinas: [{n: 'Gestão de Marcas (Branding)', p: 10000}, {n: 'Plano de Marketing Estratégico', p: 11000}] }
+            ],
+            Electrónica: [
+                { id: 'mkt1', nome: 'Eng. Electrónica - 1º Ano', sala: 'Sala de Redação e Criação', disciplinas: [{n: 'Fundamentos de Marketing', p: 7500}, {n: 'Comportamento do Consumidor', p: 8000}] },
+                { id: 'mkt2', nome: 'Eng. Electrónica - 2º Ano', sala: 'Lab de Estratégia Digital', disciplinas: [{n: 'Marketing Digital e Redes Sociais', p: 9000}, {n: 'Pesquisa de Mercado', p: 8500}] },
+                { id: 'mkt3', nome: 'Eng. Electrónica - 3º Ano', sala: 'Sala de Empreendedorismo', disciplinas: [{n: 'Gestão de Marcas (Branding)', p: 10000}, {n: 'Plano de Marketing Estratégico', p: 11000}] }
+            ],
+            Segurança_Pública: [
+                { id: 'mkt1', nome: 'Segurança_Pública - 1º Ano', sala: 'Sala de Redação e Criação', disciplinas: [{n: 'Fundamentos de Marketing', p: 7500}, {n: 'Comportamento do Consumidor', p: 8000}] },
+                { id: 'mkt2', nome: 'Segurança_Pública - 2º Ano', sala: 'Lab de Estratégia Digital', disciplinas: [{n: 'Marketing Digital e Redes Sociais', p: 9000}, {n: 'Pesquisa de Mercado', p: 8500}] },
+                { id: 'mkt3', nome: 'Segurança_Pública - 3º Ano', sala: 'Sala de Empreendedorismo', disciplinas: [{n: 'Gestão de Marcas (Branding)', p: 10000}, {n: 'Plano de Marketing Estratégico', p: 11000}] }
+            ],
+            Gest_Rec_Humanos: [
+                { id: 'mkt1', nome: 'Gest_Rec_Humanos - 1º Ano', sala: 'Sala de Redação e Criação', disciplinas: [{n: 'Fundamentos de Marketing', p: 7500}, {n: 'Comportamento do Consumidor', p: 8000}] },
+                { id: 'mkt2', nome: 'Gest_Rec_Humanos - 2º Ano', sala: 'Lab de Estratégia Digital', disciplinas: [{n: 'Marketing Digital e Redes Sociais', p: 9000}, {n: 'Pesquisa de Mercado', p: 8500}] },
+                { id: 'mkt3', nome: 'Gest_Rec_Humanos - 3º Ano', sala: 'Sala de Empreendedorismo', disciplinas: [{n: 'Gestão de Marcas (Branding)', p: 10000}, {n: 'Plano de Marketing Estratégico', p: 11000}] }
+            ]
+        },
+        ferias: [
+            { id: 'elec', nome: 'Curso de Electricidade', sala: 'Oficina Técnico-Profissional', disciplinas: [{n: 'Módulo Técnico Prático', p: 12000}] },
+            { id: 'cabelo', nome: 'Curso de Cortes de Cabelo', sala: 'Oficina Estética', disciplinas: [{n: 'Tipos e Prática', p: 10000},
+             {n: 'Design de Sobrancelas', p: 5000},
+            {n: 'Tipos e Prática', p: 10000}] },
+
+            { id: 'cabelo', nome: 'Curso de Cabelereiro', sala: 'Oficina Estética', disciplinas: [{n: 'Tipos e Prática', p: 10000},
+             {n: 'Design de Sobrancelas', p: 5000},
+            {n: 'Tipos e Prática', p: 10000}] },
+
+            { id: 'piano', nome: 'Curso de Piano e Guitarra', sala: 'Sala de Música', disciplinas: [{n: 'Módulo Instrumental', p: 15000}] },
+
+            { id: 'piano', nome: 'Curso de Manicuri/Pedicuri', sala: 'Gel, Gelinho', disciplinas: [{n: 'Módulo Instrumental', p: 15000}] },
+
+            { id: 'piano', nome: 'Curso de Corte e Costura', sala: 'Sala de Música', disciplinas: [{n: 'Módulo Instrumental', p: 15000}] },
+
+            { id: 'piano', nome: 'Serralharia Industrial', sala: 'Da Base ao avançado', disciplinas: [{n: 'Módulo Instrumental', p: 15000}] },
+
+            { id: 'piano', nome: 'Curso de Integração ao EMIS Angola', sala: 'UnitelMoney e Xpress MCX ', disciplinas: [{n: 'Módulo Instrumental', p: 15000}] },
+
+            { id: 'prog', nome: 'Curso de Programação', sala: 'Construção de um Site operacional', disciplinas: [{n: 'Lógica e Desenvolvimento Web', p: 25000}] }
+        ],
+        
+        cadeiras: [
+            { id: 'av-mat', nome: 'Matemática Completa', sala: 'Auditório 1', disciplinas: [{n: 'Álgebra Linear', p: 6000}, {n: 'Análise Matemática I', p: 6000}] },
+            { id: 'av-mat', nome: 'Física Completa', sala: 'Auditório 1', disciplinas: [{n: 'Álgebra Linear', p: 6000}, {n: 'Análise Matemática I', p: 6000}] }
+        ]
+    };
+    // =========================================================================
+    // 🎛️ 2. CONTROLADORES DE INTERFACE SPA (NAVEGAÇÃO COMPACTA)
+    // =========================================================================
+    function proximaTela(num) {
+        document.querySelectorAll('.tela-view').forEach(t => t.classList.remove('active'));
+        const t = document.getElementById(`tela-${num}`);
+        if (t) t.classList.add('active');
+    }
+    
+    function voltarTela(num) { 
+        proximaTela(num); 
+    }
+
+    // =========================================================================
+    // 🚀 3. MOTOR DE RENDERIZAÇÃO DE BOTÕES E GRID DE CURSOS
+    // =========================================================================
+    function iniciarFluxo(tipo) {
+        fluxoAtual = tipo;
+        const grid = document.getElementById('lista-barbearias');
+        if (!grid) return;
+        grid.innerHTML = '';
+        
+        const titulos = { 
+            regular: 'Selecione o Nível Académico Base', 
+            superior: 'Selecione a Faculdade Pretendida',
+            ferias: 'Selecione o Curso de Férias', 
+            cadeiras: 'Selecione as Cadeiras Isoladas' 
+        };
+        
+        const elementoTitulo = document.getElementById('titulo-tela-2');
+        if (elementoTitulo) elementoTitulo.innerText = titulos[tipo] || 'Selecione uma Opção';
+
+        // Filtro Secundário: Ensino Superior subdividido por Faculdades
+        if (tipo === 'superior') {
+            Object.keys(dbAcademica.superior).forEach(nomeFaculdade => {
+                const card = document.createElement('div');
+                card.className = "quadrado-card";
+                card.onclick = function() { carregarAnosFaculdade(nomeFaculdade); };
+                card.innerHTML = `
+                    <div style="font-size:30px; margin-bottom:6px;">🏛️</div>
+                    <strong>  ${nomeFaculdade}</strong>
+                    <p style="font-size:11px; margin-top:4px; opacity:0.8;">Huambo</p>
+                `;
+                grid.appendChild(card);
+            });
+        } else if (dbAcademica[tipo]) {
+            // Fluxo Regular, Férias e Cadeiras Isoladas
+            dbAcademica[tipo].forEach(item => {
+                const card = document.createElement('div');
+                card.className = "quadrado-card";
+                card.onclick = function() { carregarConfiguradorItem(item); };
+                card.innerHTML = `
+                    <div style="font-size:30px; margin-bottom:6px;">🎓</div>
+                    <strong>${item.nome}</strong>
+                    <p style="font-size:11px; margin-top:4px; opacity:0.8;">${item.sala}</p>
+                `;
+                grid.appendChild(card);
+            });
+        }
+        proximaTela(2);
+    }
+
+    // =========================================================================
+// 🏛️ 4. SELETOR DE ANOS LETIVOS E CONFIGURADOR DE DISCIPLINAS
+// =========================================================================
+function carregarAnosFaculdade(nomeFaculdade) {
+    const grid = document.getElementById('lista-barbearias');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const elTitulo = document.getElementById('titulo-tela-2');
+    if (elTitulo) elTitulo.innerText = `Faculdade de ${nomeFaculdade} - Selecione o Ano`;
+
+    dbAcademica.superior[nomeFaculdade].forEach(item => {
+        const card = document.createElement('div');
+        card.className = "quadrado-card";
+        card.onclick = function() { carregarConfiguradorItem(item); };
+        card.innerHTML = `
+            <div style="font-size:30px; margin-bottom:6px;">🎓</div>
+            <strong>${item.nome}</strong>
+            <p style="font-size:11px; margin-top:4px; opacity:0.8;">${item.sala}</p>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function carregarConfiguradorItem(item) {
+    itemSelecionado = item;
+    document.getElementById('nome-estabelecimento-atende').innerText = item.nome;
+    const lista = document.getElementById('lista-servicos');
+    if (!lista) return;
+    lista.innerHTML = '';
+
+    item.disciplinas.forEach(disc => {
+        const row = document.createElement('label');
+        row.className = "servico-row-card";
+        row.style.display = "flex"; row.style.justifyContent = "space-between"; row.style.alignItems = "center";
+        row.style.background = "#070b14"; row.style.padding = "12px"; row.style.borderRadius = "8px"; row.style.marginBottom = "8px";
+        row.innerHTML = `
+            <div style="display:flex; align-items:center; gap:10px;">
+                <input type="checkbox" class="disciplina-checkbox" data-preco="${disc.p}" onchange="atualizarEstilo(this)">
+                <span style="font-size:14px; font-weight:600;">${disc.n}</span>
+            </div>
+            <span style="font-size:13px; font-weight:700; color:var(--brand-gold);">${disc.p.toFixed(2)} Kzs ( Mensal)</span>
+        `;
+        lista.appendChild(row);
+    });
+    calcularPrecoTotal();
+    proximaTela(3);
+}
+
+function atualizarEstilo(cb) {
+    const card = cb.closest('.servico-row-card');
+    if (card) { 
+        if(cb.checked) card.classList.add('selected'); else card.classList.remove('selected'); 
+    }
+    calcularPrecoTotal();
+}
+
+function calcularPrecoTotal() {
+    const cbs = document.querySelectorAll('.disciplina-checkbox:checked');
+    let total = 0;
+    cbs.forEach(cb => total += parseFloat(cb.getAttribute('data-preco')));
+    
+    const aviso = document.getElementById('desconto-aviso');
+    if(cbs.length >= 4) { 
+        total *= 0.80; 
+        if(aviso) aviso.style.display = 'block'; 
+    } else { 
+        if(aviso) aviso.style.display = 'none'; 
+    }
+    
+    const modEl = document.querySelector('input[name="modalidade"]:checked');
+    const mod = modEl ? modEl.value : 'presencial';
+    if(mod === 'domicilio') total *= 1.50;
+    
+    const elPreco = document.getElementById('preco-total-final');
+    if (elPreco) elPreco.innerText = `${total.toFixed(2)} Kzs`;
+}
+
+function verificarPreparatorios() {
+    alert("📣 Preparatórios Grupo Aurélius:\nAs inscrições abrem brevemente para exames de admissão!");
+}
+
+// =========================================================================
+// 🚀 5. PROCESSADOR DE SUBMISSÃO DINÂMICA COMPLETO (ORDEM DE VARIÁVEIS SEGURA)
+// =========================================================================
+function submeterAgendamento() {
+    // Alerta de diagnóstico instantâneo para confirmar resposta
+    alert("🤖 Atenção: Botão acionado! Iniciando validações de matrícula...");
+
+    let bdEstudantes = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
+     // 1º: Captura rigorosa dos dados usando os IDs ORIGINAIS exatos do formulário HTML
+     const nomeAluno = document.getElementById('input-nome-aluno').value;
+    const nomeEncarregado = document.getElementById('input-nome-encarregado').value;
+    const fone = document.getElementById('input-telefone').value.trim();
+    const municipio = document.getElementById('input-municipio').value;
+    const bairro = document.getElementById('input-bairro').value.trim();
+    const cbs = document.querySelectorAll('.disciplina-checkbox:checked');
+    
+    
+    // 2º: Validações básicas de integridade e preenchimento obrigatório
+    if (nomeAluno.trim().length < 3) { alert("Erro: Por favor, insira o nome completo do estudante."); return null; }
+    if (nomeEncarregado.trim().length < 3) { alert("Erro: Por favor, insira o nome do encarregado de educação."); return null; }
+    if (cbs.length === 0) { alert("Erro: Selecione pelo menos uma disciplina."); return null; }
+    if (fone.length < 9) { alert("Erro: Insira um número de telefone válido com 9 dígitos."); return null; }
+    if (municipio === "") { alert("Erro: Selecione o município para a rota ao domicílio."); return null; }
+    if (bairro.length < 3) { alert("Erro: Insira o bairro e rua exata para a rota ao domicílio."); return null; }
+    
+    // 3º: Procura o índice do aluno na tabela do localStorage através do contacto telefónico
+    const indexAluno = bdEstudantes.findIndex(aluno => aluno.telefone === fone);
+    
+    if (indexAluno === -1) {
+        alert(`❌ Erro de Sincronização!\nO número (${fone}) não foi pré-registado no Portal do Estudante.\n\nPor favor, faça primeiro a inscrição no portal do aluno para gerar a sua conta.`);
+        return null;
+    }
+    
+    // 4º: Declaração e isolamento da variável de sessão única (Fim definitivo das quebras)
+    let alunoSincronizado = bdEstudantes[indexAluno];
+    
+    // 5º: Carimbo de data corrente sincronizado com o faturamento
+    const data = new Date();
+    const dataStr = data.getDate().toString().padStart(2,'0') + '/' + 
+                    (data.getMonth()+1).toString().padStart(2,'0') + '/' + 
+                    data.getFullYear() + ' ' + 
+                    data.getHours().toString().padStart(2,'0') + ':' + 
+                    data.getMinutes().toString().padStart(2,'0');
+
+    // 6º: 🔄 INJEÇÃO DINÂMICA DE METADADOS PEDAGÓGICOS E LOGÍSTICOS NA FICHA DO ALUNO
+    alunoSincronizado.nome = nomeAluno;
+    alunoSincronizado.encarregado = nomeEncarregado;
+    alunoSincronizado.classe = itemSelecionado ? itemSelecionado.nome : "Curso Base"; 
+    alunoSincronizado.periodo = document.getElementById('select-periodo').value; 
+    alunoSincronizado.turma = itemSelecionado ? (itemSelecionado.sala || "Sala Regular") : "Sala Regular";
+    alunoSincronizado.localizacao = { municipio: municipio, bairro: bairro };
+    
+    // Captura o preço final numérico limpo para as estatísticas gerenciais do professor
+    const valorTexto = document.getElementById('preco-total-final').innerText;
+    alunoSincronizado.valorPagoReal = parseFloat(valorTexto.replace(/[^\d.]/g, '')) || 0;
+    
+    // Processamento e reconstrução dinâmica das Disciplinas e Prateleiras de Manuais
+    alunoSincronizado.disciplinas = [];
+    alunoSincronizado.livros = [];
+    
+    cbs.forEach(cb => {
+        const rowCard = cb.closest('.servico-row-card');
+        if (rowCard) {
+            const nomeDisciplina = rowCard.querySelector('span').innerText;
+            alunoSincronizado.disciplinas.push({ 
+                nome: nomeDisciplina, 
+                n1: 0.0, n2: 0.0, n3: 0.0, faltas: 0, 
+                estatuto: "Frequência" 
+            });
+            alunoSincronizado.livros.push({ 
+                titulo: `Manual de ${nomeDisciplina} - Edição Aurélius`, 
+                autor: `Editorial Aurélius (${itemSelecionado ? itemSelecionado.nome : 'Geral'})` 
+            });
+        }
+    });
+
+     // 7º: Grava as alterações de volta de forma permanente na base local
+     bdEstudantes[indexAluno] = alunoSincronizado;
+    localStorage.setItem('bd_estudantes', JSON.stringify(bdEstudantes));
+    
+    // 8º: 🔗 INJEÇÃO DIRETA NO RECIBO TÉRMICO DE SAÍDA (TELA 4)
+    if (document.getElementById('sucesso-id')) document.getElementById('sucesso-id').innerText = alunoSincronizado.id;
+    if (document.getElementById('sucesso-codigo')) document.getElementById('sucesso-codigo').innerText = alunoSincronizado.codigoValidacao;
+    if (document.getElementById('sucesso-aluno')) document.getElementById('sucesso-aluno').innerText = nomeAluno;
+    if (document.getElementById('sucesso-encarregado')) document.getElementById('sucesso-encarregado').innerText = nomeEncarregado;
+    if (document.getElementById('sucesso-telefone')) document.getElementById('sucesso-telefone').innerText = fone;
+    if (document.getElementById('sucesso-nome-salao')) document.getElementById('sucesso-nome-salao').innerText = alunoSincronizado.classe;
+    if (document.getElementById('sucesso-periodo')) document.getElementById('sucesso-periodo').innerText = alunoSincronizado.periodo;
+    if (document.getElementById('sucesso-data')) document.getElementById('sucesso-data').innerText = dataStr;
+    if (document.getElementById('sucesso-valor-pago')) document.getElementById('sucesso-valor-pago').innerText = valorTexto;
+    if (document.getElementById('sucesso-endereco')) {
+        document.getElementById('sucesso-endereco').innerText = `${municipio} - ${bairro}`;
+    }
+    fetch('guardar_matricula.php', {
+    method: 'POST',
+    body: JSON.stringify(alunoSincronizado)
+})
+.then(res => res.json())
+.then(resposta => console.log("Nuvem sincronizada:", resposta))
+.catch(erro => console.log("Modo Offline Ativo. Salvo localmente.", erro));
+    
+    // Avança para o ecrã de sucesso do recibo térmico
+    proximaTela(4);
+}
+
+// Limpa os campos do formulário para preparar uma nova inscrição posterior
+function limparEVoltar() {
+    if (document.getElementById('input-nome-aluno')) document.getElementById('input-nome-aluno').value = '';
+    if (document.getElementById('input-nome-encarregado')) document.getElementById('input-nome-encarregado').value = '';
+    if (document.getElementById('input-telefone')) document.getElementById('input-telefone').value = '';
+    if (document.getElementById('input-bairro')) document.getElementById('input-bairro').value = '';
+    proximaTela(1);
+}
+
+// =========================================================================
+// 💡 6. CENTRAL DE ALTO RENDIMENTO PEDAGÓGICO E METODOLOGIAS
+// =========================================================================
+function carregarDicasAltoRendimento() {
+    const contentor = document.getElementById('contentor-dicas-dinamicas');
+    if (!contentor) return;
+
+    if (!localStorage.getItem('bd_dicas_estudo')) {
+        const dicasPadrao = [
+            { titulo: "🧠 Técnica de Feynman", texto: "Para dominar qualquer disciplina complexa do Grupo Aurélius, tente explicar a matéria a outra pessoa em termos simples. Se encontrar barreiras, volte aos livros no seu painel." },
+            { titulo: "📅 Distribuição de Carga Horária", texto: "Divida o estudo das suas disciplinas em blocos diários de no máximo 2 horas por cadeira para evitar a exaustão mental e garantir melhor fixação." }
+        ];
+        localStorage.setItem('bd_dicas_estudo', JSON.stringify(dicasPadrao));
+    }
+
+    const listaDicas = JSON.parse(localStorage.getItem('bd_dicas_estudo')) || [];
+
+    contentor.innerHTML = listaDicas.map(dica => `
+        <div class="bloco-card">
+            <div class="bloco-titulo">${dica.titulo}</div>
+            <p class="dica-texto" style="font-size:12.5px; color:#cbd5e1; line-height:1.5;">${dica.texto}</p>
+        </div>
+    `).reverse().join(''); 
+}
+
+function verCentralRendimento() { 
+    carregarDicasAltoRendimento(); 
+    proximaTela(5); 
+}
+
+// ⏱️ MOTOR DO CRONÓMETRO POMODORO ACADÉMICO COM SINAL SONORO NATIVO
+let pomoTempo, pomoCorrendo = false;
+
+function togglePomodoro() {
+    const display = document.getElementById('pomodoro-display');
+    const btn = document.getElementById('btn-pomodoro');
+    if (!display || !btn) return;
+    
+    if (pomoCorrendo) {
+        clearInterval(pomoTempo); 
+        btn.innerText = "Iniciar Foco"; 
+        pomoCorrendo = false;
+    } else {
+        tocarSinalSonoroPomodoro(440, 0.1); 
+        let seg = 25 * 60; 
+        pomoCorrendo = true; 
+        btn.innerText = "Pausar Foco";
+        
+        pomoTempo = setInterval(() => {
+            seg--;
+            let m = Math.floor(seg / 60).toString().padStart(2, '0');
+            let s = (seg % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            
+            if (seg <= 0) {
+                clearInterval(pomoTempo);
+                pomoCorrendo = false;
+                display.innerText = "25:00";
+                btn.innerText = "Iniciar Foco";
+                dispararAlarmeConclusao();
+                alert("⏰ Tempo de Foco Concluído! Faça uma pausa.");
+            }
+        }, 1000);
+    }
+}
+
+function tocarSinalSonoroPomodoro(frequencia, duracao) {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.type = "sine"; 
+        oscillator.frequency.value = frequencia; 
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); 
+        gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duracao); 
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + duracao);
+    } catch (e) {
+        console.log("Áudio restrito.");
+    }
+}
+
+function dispararAlarmeConclusao() {
+    tocarSinalSonoroPomodoro(587.33, 0.3); 
+    setTimeout(() => tocarSinalSonoroPomodoro(659.25, 0.3), 400); 
+    setTimeout(() => tocarSinalSonoroPomodoro(880.00, 0.5), 800); 
+}
+
+function reporPomodoro() { 
+    clearInterval(pomoTempo); 
+    pomoCorrendo = false; 
+    if (document.getElementById('pomodoro-display')) document.getElementById('pomodoro-display').innerText = "25:00"; 
+    if (document.getElementById('btn-pomodoro')) document.getElementById('btn-pomodoro').innerText = "Iniciar Foco"; 
+}
+</script>
+
+<!-- =========================================================================
+     ⚙️ ATIVAÇÃO DO REGISTO AUTOMÁTICO DO PWA (SERVICE WORKER)
+     ========================================================================= -->
+     <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('PWA Aurélius: Service Worker Ativo!', reg.scope))
+        .catch(err => console.error('Erro ao ativar o PWA:', err));
+    });
+  }
+</script>
+</body>
+</html>

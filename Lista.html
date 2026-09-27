@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="/manifest.json">
+    <!-- Configurações extra para mobile -->
+    <meta name="theme-color" content="#007bff">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    
+</head>
+<body>
+    <h1> Esta é a lista</h1>
+    <h2>
+        <p>
+Cria uma pauta dinamica em que apartir do Professor.html, conseguimos manipular, direcionar cada estudante numa turma. exemplo: o aluno joão, vai esta na turma 1/A , periodo manhã, hora 10 as 11horas, com a disciplina de Língua Portuguesa com o professor x, das 11 as 12 Horas com Matematica com o professor y, e das 14 as 15 horas Biologia com o professor z dinámica e responsiva, que seja automatico, buscando os dados da base de dados, coloca um botao de eliminar nome na lista editar, apartir da administracao do Professor . Faça com quew os cursos/disciplinas selecionados sejam em primeiro lugar, aprovado pelo professor antes de ir para a pagina do estudante, que venha pendente para ser aprovado ou reprovado, popis esistem cursos que ainda nao possuimos professor, emnntaio ´quando o estudante faxz seu cadastro, precisa, esprar aprovacao, para saber se pode ou continuar com as aulas. Exemplo:
+
+        </p>
+    </h2>
+    <div style=" text-align:center;">
+    <table style=" border: 1px solid blue; text-align:center;">
+<tr>
+    <th> Nome do Aluno</th>
+    <th> Classe</th>
+    <th> Periodo</th>
+    <th>hora</th>
+    <th> Disciplina</th>
+    <th> Professor</th>
+  
+</tr>
+<tr>
+    
+    <td> Albino</td>
+    <td>3ª</td>
+    <td> Manhã</td>
+    <td>7:00- 8:00</td>
+    <td> Ling. portuguesa</td>
+    <td>Jaime</td>
+</tr>
+<tr>
+        <td> Albino</td>
+        <td>3ª</td>
+        <td> Manhã</td>
+        <td>9:00-10:00</td>
+        <td> Matemática</td>
+        <td>Aurelio</td>
+    </tr>
+
+    <tr>
+            <td>Tiago</td>
+            <td>9ª</td>
+            <td> Tarde</td>
+            <td>16:00-17:00</td>
+            <td> Matemática</td>
+            <td>Aurelio</td>
+        </tr>
+        <tr>
+                <td> Tiago</td>
+                <td>10ª</td>
+                <td> Manhã</td>
+                <td>7:00-8:00</td>
+                <td> Matemática</td>
+                <td>Soma</td>
+            </tr>
+            <tr>
+                    <td> Jacinta</td>
+                    <td>13ª</td>
+                    <td> Noite</td>
+                    <td>19:00-20:00</td>
+                    <td> Química</td>
+                    <td>Angelino</td>
+                </tr>
+    </table>
+</div>
+
+
+
+
+<script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('PWA Aurélius: Service Worker Ativo!', reg.scope))
+          .catch(err => console.error('Erro ao ativar o PWA:', err));
+      });
+    }
+  </script>
+</body>
+</html>

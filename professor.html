@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#eab308">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title> Academia Aurélius</title>
+    <style>
+        /* ═════════════════════════════════════════════════════════════════════
+           🎨 DESIGN SYSTEM PREMIUM GLASSMORPHISM (AURELIUS 2026)
+           ═════════════════════════════════════════════════════════════════════ */
+        :root {
+            --bg-main: #060b19;
+            --bg-surface: #111a2e;
+            --bg-surface-gradient: linear-gradient(135deg, #16223f 0%, #0f172a 100%);
+            --brand-gold: #eab308;
+            --brand-blue: #00d2ff;
+            --brand-blue-glow: #38bdf8;
+            --brand-success: #22c55e;
+            --border-slate-light: #334155;
+            --text-muted: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg-main); color: #fff; padding-bottom: 40px; }
+        
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 24px; background: linear-gradient(135deg, rgba(26, 36, 61, 0.9) 0%, rgba(11, 18, 36, 0.95) 100%);
+            border-bottom: 2px solid var(--brand-gold); backdrop-filter: blur(12px);
+            position: sticky; top: 0; z-index: 1000; margin-bottom: 20px;
+        }
+        nav .logo { font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; color: #fff; }
+        nav .logo span { color: var(--brand-gold); }
+        
+        .container { max-width: 850px; margin: 0 auto; padding: 0 15px; }
+        
+        .card { 
+            background: var(--bg-surface-gradient); border: 1px solid var(--border-slate-light); 
+            border-radius: 14px; padding: 20px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .titulo { font-size: 16px; color: var(--brand-gold); font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .form-input, .form-select { 
+            width: 100%; padding: 12px; background: #070b14; border: 1px solid var(--border-slate-light); 
+            border-radius: 8px; color: #fff; font-size: 14px; outline: none; margin-top: 6px;
+        }
+        .form-input:focus { border-color: var(--brand-blue); box-shadow: 0 0 8px rgba(0,210,255,0.2); }
+        
+        .btn { 
+            width: 100%; background: var(--brand-gold); color: #060b19; border: none; padding: 14px; 
+            border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; text-transform: uppercase; 
+            margin-top: 15px; box-shadow: 0 4px 12px rgba(234, 179, 8, 0.2); transition: 0.2s;
+        }
+        .btn:hover { background: #f59e0b; transform: translateY(-1px); }
+
+        .nota-input {
+            width: 60px; padding: 6px; background: #070b14; border: 1px solid var(--border-slate-light);
+            border-radius: 4px; color: #fff; text-align: center; font-size: 13px;
+        }
+
+        .table-wrapper { width: 100%; overflow-x: auto; margin-top: 15px; border-radius: 8px; border: 1px solid var(--border-slate-light); }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; background: #070b14; }
+        th { color: var(--brand-blue-glow); padding: 12px 10px; background: rgba(56, 189, 248, 0.05); font-weight: bold; border-bottom: 2px solid var(--border-slate-light); }
+        td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; }
+        
+        .btn-salvar { 
+            background: var(--brand-success); color: #060b19; border: none; padding: 10px 20px; 
+            border-radius: 6px; font-size: 13px; font-weight: 800; cursor: pointer; text-transform: uppercase;
+        }
+        .aluno-header-row { background: rgba(255, 255, 255, 0.03); font-weight: bold; color: var(--brand-gold); }
+        
+        .chat-box { height: 160px; background: #070b14; border-radius: 8px; border: 1px solid var(--border-slate-light); padding: 10px; overflow-y: auto; font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
+        
+        .tela-view { display: none; }
+        .tela-view.active { display: block; }
+    </style>
+</head>
+<body>
+
+        <nav style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; background: linear-gradient(135deg, rgba(26, 36, 61, 0.9) 0%, rgba(11, 18, 36, 0.95) 100%); border-bottom: 2px solid var(--brand-gold); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 1000; margin-bottom: 20px;">
+                <!-- Esquerda: Logotipo -->
+                <h1 class="logo" style="margin: 0; font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; color: #fff;">AURE<span style="color: var(--brand-gold);">LIUS</span> - DOCENTE</h1>
+            
+                <!-- Centro: Link de Navegação Rápida -->
+                <div>
+                    <a href="Principal.html" style="color: #cbd5e1; text-decoration: none; font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s;" onmouseover="this.style.background='rgba(234, 179, 8, 0.15)'; this.style.color='var(--brand-gold)';" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.color='#cbd5e1';">🏪 Home</a>
+                </div>
+            
+                <!-- Direita: Status da Sessão (Gerido por JS) -->
+                <div id="status-sessao" style="font-size: 12px; color: var(--text-muted); font-weight: bold; letter-spacing: 0.5px;">
+                    🔒 Acesso Restrito
+                </div>
+            </nav>
+
+    <div class="container">
+
+        <!-- =========================================================================
+             🚪 TELA 1: PORTAL DO PROFESSOR (LOGIN SEGURO)
+             ========================================================================= -->
+        <div class="tela-view active" id="view-login-prof">
+            <div class="card" style="border-top: 4px solid var(--brand-gold);">
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <span style="font-size: 32px; display: block; margin-bottom: 5px;">🛡️</span>
+                    <h2 style="color: #fff; font-weight: 900; letter-spacing: 0.5px; font-size: 20px; text-transform: uppercase;">ÁREA DO DOCENTE </h2>
+                    <p style="color: var(--text-muted); font-size: 12.5px; margin-top: 4px;">Autenticação obrigatória com credenciais sincronizadas.</p>
+                </div>
+
+                <div id="mensagem-erro-prof" style="display: none; background: rgba(239, 68, 68, 0.15); color: #f87171; padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 15px; border: 1px solid rgba(239, 68, 68, 0.3); text-align: center;">
+                    ❌ Erro: Credenciais Docentes não coincidem! Acesso Rejeitado.
+                </div>
+
+                <form id="form-login-prof" onsubmit="processarAcessoProfessor(event)">
+                    <div style="margin-bottom: 16px;">
+                        <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
+                           Telefone do Professor:
+                        </label>
+                        <input type="text" id="prof-telefone" class="form-input" required>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
+                            Código de Validação:
+                        </label>
+                        <input type="password" id="prof-codigo" class="form-input" style="font-family: monospace; letter-spacing: 2px;" placeholder="Ex: AURE-PROF-2026" required>
+                    </div>
+
+                    <button type="submit" class="btn">Autenticar no Sistema ➔</button>
+                </form>
+                <div style="margin-top: 15px; text-align: center; font-size: 11px; color: var(--text-muted);">
+                    Dica: <b> Somente para os professores</b> <br>
+                   
+                </div>
+            </div>
+        </div>
+
+        <!-- =========================================================================
+             📊 TELA 2: PAINEL DE CONTROLO INTEGRADO (CADERNETA, LIVROS E CHAT)
+             ========================================================================= -->
+        <div class="tela-view" id="view-dashboard-prof">
+            
+            <!-- FILTRO DE TURMA -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px;">
+                    <div class="titulo" style="margin-bottom: 0;">👨‍🏫 Escolha a Turma para Trabalho</div>
+                    <li style="list-style: none;">
+                        <a href="Principal.html" style="color: var(--brand-gold); text-decoration: none; font-size: 13px; font-weight: bold; background: rgba(234, 179, 8, 0.1); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(234, 179, 8, 0.2);">🏪 Home</a>
+                    </li>
+                </div>
+                <select id="filtro-classe" class="form-select" onchange="carregarPautaGlobalProf()">
+                    <option value="">-- Selecione uma Classe Ativa --</option>
+                </select>
+            </div>
+
+            <!-- GESTOR DE MANUAIS: UPLOAD DE PDFs PARA A NUVEM -->
+<div class="card" style="border-top: 4px solid var(--brand-blue-glow);">
+        <div class="titulo">📚 Alocar Manual na Prateleira Inteligente</div>
+        <form id="form-upload-livro" onsubmit="enviarLivroNuvem(event)">
+            <div style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: bold;">Título do Livro / Disciplina:</label>
+                <input type="text" id="livro-titulo" class="form-input" placeholder="Ex: Manual de Química - 7ª Classe" required>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: bold;">Autor / Editorial:</label>
+                <input type="text" id="livro-autor" class="form-input" placeholder="Ex: Editorial Aurélius" required>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: bold;">Selecionar Ficheiro PDF do Manual: *</label>
+                <input type="file" id="livro-ficheiro" accept="application/pdf" class="form-input" required>
+            </div>
+            <button type="submit" class="btn" style="background: var(--brand-blue-glow); color: #000;">Publicar Livro Digital 🚀</button>
+        </form>
+    </div>
+
+
+            <div class="card" style="border-top: 4px solid var(--brand-success);">
+                    <div class="titulo">📊 Indicadores Globais de Faturamento (Huambo)</div>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">Monitorização automatizada de faturamento real em tempo real baseado nas matrículas centralizadas.</p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; text-align: center;">
+                        <div style="background: #070b14; padding: 15px; border-radius: 10px; border: 1px solid var(--border-slate-light);">
+                            <div style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">Total de Estudantes</div>
+                            <div id="estatistica-total-alunos" style="font-size: 24px; font-weight: 900; color: var(--brand-blue-glow); margin-top: 5px;">0</div>
+                        </div>
+                        <div style="background: #070b14; padding: 15px; border-radius: 10px; border: 1px solid var(--border-slate-light);">
+                            <div style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">Ensino Regular</div>
+                            <div id="estatistica-regular" style="font-size: 24px; font-weight: 900; color: #fff; margin-top: 5px;">0</div>
+                        </div>
+                        <div style="background: #070b14; padding: 15px; border-radius: 10px; border: 1px solid var(--border-slate-light);">
+                            <div style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">Ensino Superior</div>
+                            <div id="estatistica-superior" style="font-size: 24px; font-weight: 900; color: #fff; margin-top: 5px;">0</div>
+                        </div>
+                        <div style="background: #070b14; padding: 15px; border-radius: 10px; border: 1px solid var(--border-slate-light); border-color: var(--brand-success);">
+                            <div style="font-size: 11px; font-weight: bold; color: var(--brand-success); text-transform: uppercase;">Faturamento Estimado</div>
+                            <div id="estatistica-faturamento" style="font-size: 20px; font-weight: 900; color: var(--brand-success); margin-top: 8px;">0.00 Kzs</div>
+                        </div>
+                    </div>
+                </div>
+
+            <!-- LANÇAMENTO DE NOTAS -->
+            <div class="card" id="card-pauta-professor" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div class="titulo" style="margin-bottom: 0;">📊 Lançamento de Notas e Assiduidade</div>
+                    <button onclick="salvarNotasCentral()" class="btn-salvar" style="padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer;">Salvar Caderneta 💾</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Estudante / Disciplina</th>
+                                <th style="text-align: center;">N1</th>
+                                <th style="text-align: center;">N2</th>
+                                <th style="text-align: center;">N3</th>
+                                <th style="text-align: center;">Faltas</th>
+                                <th style="text-align: right;">Estatuto</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-pauta-professor"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- GESTOR INTELIGENTE DE LIVROS (ENVIO DIRETAMENTE PARA O ALUNO) -->
+            <div class="card">
+                <div class="titulo">📚 Upload na Prateleira Inteligente de Livros</div>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Selecione o ficheiro do manual no seu telefone. O sistema vai integrá-lo de forma automática na conta de todos os alunos associados a essa disciplina.</p>
+                
+                <form id="form-upload-livro" onsubmit="enviarLivroParaAlunos(event)">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <div>
+                            <label style="font-size: 11px; font-weight: bold;">Título do Livro/Sebenta:</label>
+                            <input type="text" id="upload-titulo" class="form-input" placeholder="Ex: Manual Avançado de Química" required>
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: bold;">Autor/Coordenador:</label>
+                            <input type="text" id="upload-autor" class="form-input" placeholder="Ex: Prof. Alfredo" required>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 11px; font-weight: bold;">Vincular à Disciplina Alvo:</label>
+                        <input type="text" id="upload-disciplina" class="form-input" placeholder="Ex: Química (Escreva exatamente igual ao configurador)" required>
+                    </div>
+
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 11px; font-weight: bold; color: var(--brand-blue);">Selecionar Ficheiro do Telefone (PDF, Livro ou Imagem):</label>
+                        <input type="file" id="upload-ficheiro-real" class="form-input" accept=".pdf,.epub,.jpg,.jpeg,.png" style="padding: 8px; cursor: pointer;" required>
+                    </div>
+                    
+                    <button type="submit" class="btn" style="background: var(--brand-blue); color: #000; margin-top: 12px; padding: 10px;">Injetar e Sincronizar Ficheiro 🚀</button>
+                </form>
+            </div>
+
+
+             <!-- GESTOR DE CONTEÚDO: CENTRAL DE ALTO RENDIMENTO -->
+<div class="card" style="border-top: 4px solid var(--brand-blue-glow);">
+        <div class="titulo">🧠 Publicar Orientação na Central de Alto Rendimento</div>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Escreva orientações pedagógicas, métodos de estudo ou avisos mentais de alto rendimento para todos os alunos.</p>
+        
+        <form id="form-publicar-dica" onsubmit="publicarDicaPedagogica(event)">
+            <div style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: bold;">Título da Orientação (Dica):</label>
+                <input type="text" id="dica-titulo" class="form-input" placeholder="Ex: 🎯 Como Estudar Anatomia para Medicina" required>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: bold;">Conteúdo / Explicação Detalhada:</label>
+                <textarea id="dica-texto" class="form-input" style="height: 80px; resize: none; font-family:inherit;" placeholder="Escreva o passo a passo metodológico para orientar os estudantes..." required></textarea>
+            </div>
+            <button type="submit" class="btn" style="background: var(--brand-blue-glow); color: #000; margin-top: 5px; padding: 10px;">Disparar Orientação para os Alunos 🚀</button>
+        </form>
+    </div>
+
+    <div class="card" style="border-top: 4px solid #ef4444;">
+            <div class="titulo">📜 Histórico de Orientações Publicadas</div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Visualize ou elimine de forma permanente os métodos e dicas de estudo disponíveis na Central de Alto Rendimento.</p>
+            
+            <div id="lista-historico-dicas" style="display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto; padding-right: 5px;">
+                <!-- Injetado Dinamicamente via JS -->
+            </div>
+        </div>
+
+
+
+
+            <!-- 💬 CONTAINER CENTRAL DO CHAT ACADÉMICO -->
+            <div class="card">
+                <div class="titulo">💬 Central de Respostas do Chat Académico</div>
+                <div class="chat-box" id="caixa-mensagens-chat-prof">
+                    <div style="color: var(--brand-blue-glow);"><b>[Coordenação]:</b> Painel docente ligado. Monitore as dúvidas recebidas e oriente os estudantes.</div>
+                </div>
+                <form onsubmit="enviarMensagemProfessor(event)" style="display: flex; gap: 8px; margin-top: 10px;">
+                    <input type="text" id="campo-texto-chat-prof" class="form-input" style="margin-top:0; flex: 1;" placeholder="Escreva a resposta ou orientação oficial..." required>
+                    <button type="submit" class="btn" style="margin-top:0; width: auto; padding: 0 20px;">Responder Alunos</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+   
+
+
+
+
+
+
+
+
+    <script>
+        function enviarLivroNuvem(event) {
+    event.preventDefault();
+    const fileInput = document.getElementById('livro-ficheiro').files[0];
+    const titulo = document.getElementById('livro-titulo').value.trim();
+    const autor = document.getElementById('livro-autor').value.trim();
+
+    if (!fileInput) return;
+
+    const reader = new FileReader();
+    reader.onload = function () {
+        const base64String = reader.result;
+
+        fetch('guardar_livro.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ titulo: titulo, autor: autor, pdf_base64: base64String })
+        })
+        .then(res => res.json())
+        .then(res => {
+            alert(res.mensagem);
+            if(res.sucesso) document.getElementById('form-upload-livro').reset();
+        });
+    };
+    reader.readAsDataURL(fileInput);
+}
+
+
+    // 🛡️ CREDENCIAIS DE ACESSO DOCENTE EXCLUSIVAS
+    const credencialProfessor = {
+        telefone: "925347372",             // Único número autorizado
+        codigoForte: "AURE-MASTER-PROF-2026" // Chave forte impossível de adivinhar
+    };
+
+    let bdEstudantes = [];
+
+    function alternarTela(idTela) {
+        document.querySelectorAll('.tela-view').forEach(t => t.classList.remove('active'));
+        document.getElementById(idTela).classList.add('active');
+    }
+
+    function sincronizarMemoria() {
+        bdEstudantes = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
+    }
+
+    // 🔐 MOTOR DE AUTENTICAÇÃO RIGOROSO (BLOCO ADMINISTRATIVO ÚNICO)
+    function processarAcessoProfessor(event) {
+        event.preventDefault();
+        
+        const fone = document.getElementById('prof-telefone').value.trim();
+        const codigo = document.getElementById('prof-codigo').value.trim();
+        const erroDiv = document.getElementById('mensagem-erro-prof');
+
+        // Validação estrita: Rejeita qualquer dado que não seja a chave mestra
+        if (fone === credencialProfessor.telefone && codigo === credencialProfessor.codigoForte) {
+            erroDiv.style.display = "none";
+            
+            // Atualiza os indicadores visuais para o estado logado seguro
+            const statusSessao = document.getElementById('status-sessao');
+            if (statusSessao) {
+                statusSessao.innerText = "● Administrador Mestre Conectado";
+                statusSessao.style.color = "var(--brand-success)";
+            }
+            
+            // Inicializa as ferramentas e dados do painel único
+            popularFiltroClasses();
+            carregarChatSincronizado();
+            alternarTela('view-dashboard-prof');
+            
+            // Sincronização automática contínua do Chat a cada 3 segundos
+            setInterval(carregarChatSincronizado, 3000);
+        } else {
+            // Se um aluno tentar adivinhar, bloqueia imediatamente o ecrã
+            erroDiv.style.display = "block";
+            erroDiv.innerHTML = "❌ Acesso Negado! Tentativa ilegal de acesso detetada. As credenciais administrativas introduzidas não são válidas.";
+            document.getElementById('form-login-prof').reset();
+        }
+    }
+
+    // 🛠️ Alimenta o Select dinamicamente com as turmas ativas no ecossistema
+    function popularFiltroClasses() {
+        sincronizarMemoria();
+        const select = document.getElementById('filtro-classe');
+        const classesUnicas = [...new Set(bdEstudantes.map(aluno => aluno.classe))];
+        select.innerHTML = '<option value="">-- Selecione uma Classe Ativa --</option>';
+        classesUnicas.forEach(classe => {
+            if(classe && classe !== "Aguardando Matrícula") {
+                const opt = document.createElement('option');
+                opt.value = classe; opt.innerText = classe; select.appendChild(opt);
+            }
+        });
+    }
+
+    // 📊 Renderiza as notas e cadernetas dos alunos da turma correspondente
+    function carregarPautaGlobalProf() {
+        sincronizarMemoria();
+        const classeSelecionada = document.getElementById('filtro-classe').value;
+        const cardPauta = document.getElementById('card-pauta-professor');
+        const corpoTabela = document.getElementById('corpo-pauta-professor');
+        
+        if (!classeSelecionada) { cardPauta.style.display = "none"; return; }
+
+        const alunosDaTurma = bdEstudantes.filter(aluno => aluno.classe === classeSelecionada);
+        if (alunosDaTurma.length === 0) {
+            corpoTabela.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:20px;">Nenhum estudante matriculado nesta classe.</td></tr>`;
+            cardPauta.style.display = "block"; return;
+        }
+
+        let htmlGerado = "";
+        alunosDaTurma.forEach(aluno => {
+            const indiceRealBD = bdEstudantes.findIndex(a => a.id === aluno.id);
+            htmlGerado += `
+                <tr class="aluno-header-row">
+                    <td colspan="5">👤 ${aluno.nome} <span style="color:var(--text-muted); font-size:11px; font-weight:normal; margin-left:10px;">(ID: ${aluno.id})</span></td>
+                    <td style="text-align: right; color: var(--brand-blue-glow); font-size:11px;">${aluno.turma}</td>
+                </tr>
+            `;
+
+            if(aluno.disciplinas && aluno.disciplinas.length > 0) {
+                aluno.disciplinas.forEach((disc, indexDisc) => {
+                    htmlGerado += `
+                        <tr data-aluno-index="${indiceRealBD}" data-disc-index="${indexDisc}">
+                            <td style="padding-left: 20px; color: #cbd5e1;">📘 ${disc.nome}</td>
+                            <td style="text-align: center;"><input type="number" step="0.1" min="0" max="20" class="nota-input input-n1" value="${disc.n1}" onchange="calcularEstatutoLinha(this)"></td>
+                            <td style="text-align: center;"><input type="number" step="0.1" min="0" max="20" class="nota-input input-n2" value="${disc.n2}" onchange="calcularEstatutoLinha(this)"></td>
+                            <td style="text-align: center;"><input type="number" step="0.1" min="0" max="20" class="nota-input input-n3" value="${disc.n3}" onchange="calcularEstatutoLinha(this)"></td>
+                            <td style="text-align: center;"><input type="number" min="0" class="nota-input input-faltas" value="${disc.faltas || 0}"></td>
+                            <td style="text-align: right; font-weight: bold;" class="txt-estatuto">${disc.estatuto}</td>
+                        </tr>
+                    `;
+                });
+            }
+        });
+        corpoTabela.innerHTML = htmlGerado;
+        cardPauta.style.display = "block";
+    }
+
+    function calcularEstatutoLinha(input) {
+        const linha = input.closest('tr');
+        const n1 = parseFloat(linha.querySelector('.input-n1').value) || 0;
+        const n2 = parseFloat(linha.querySelector('.input-n2').value) || 0;
+        const n3 = parseFloat(linha.querySelector('.input-n3').value) || 0;
+        const media = (n1 + n2 + n3) / 3;
+        const txtEstatuto = linha.querySelector('.txt-estatuto');
+        if (media >= 9.5) { txtEstatuto.innerText = "Aprovado"; txtEstatuto.style.color = "var(--brand-success)"; }
+        else { txtEstatuto.innerText = "Reprovado"; txtEstatuto.style.color = "#ef4444"; }
+    }
+
+    function salvarNotasCentral() {
+        const linhasCorpo = document.querySelectorAll('#corpo-pauta-professor tr[data-aluno-index]');
+        linhasCorpo.forEach(linha => {
+            const idxAluno = parseInt(linha.getAttribute('data-aluno-index'));
+            const idxDisc = parseInt(linha.getAttribute('data-disc-index'));
+            bdEstudantes[idxAluno].disciplinas[idxDisc].n1 = parseFloat(linha.querySelector('.input-n1').value) || 0;
+            bdEstudantes[idxAluno].disciplinas[idxDisc].n2 = parseFloat(linha.querySelector('.input-n2').value) || 0;
+            bdEstudantes[idxAluno].disciplinas[idxDisc].n3 = parseFloat(linha.querySelector('.input-n3').value) || 0;
+            bdEstudantes[idxAluno].disciplinas[idxDisc].faltas = parseInt(linha.querySelector('.input-faltas').value) || 0;
+            bdEstudantes[idxAluno].disciplinas[idxDisc].estatuto = linha.querySelector('.txt-estatuto').innerText.trim();
+        });
+        localStorage.setItem('bd_estudantes', JSON.stringify(bdEstudantes));
+        alert("🎉 CADERNETA SALVA!\nNotas integradas com sucesso na conta dos estudantes.");
+        carregarPautaGlobalProf();
+    }
+
+    function renderizarHistoricoDicas() {
+    const contentor = document.getElementById('lista-historico-dicas');
+    if (!contentor) return;
+
+    const listaDicas = JSON.parse(localStorage.getItem('bd_dicas_estudo')) || [];
+
+    if (listaDicas.length === 0) {
+        contentor.innerHTML = `<p style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 10px;">Nenhuma dica publicada até ao momento.</p>`;
+        return;
+    }
+
+    contentor.innerHTML = listaDicas.map((dica, index) => `
+        <div style="background: #070b14; border: 1px solid var(--border-slate-light); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+            <div style="flex: 1;">
+                <div style="font-size: 12px; font-weight: bold; color: var(--brand-gold);">${dica.titulo}</div>
+                <div style="font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 450px; margin-top: 2px;">${dica.texto}</div>
+            </div>
+            <button onclick="eliminarDicaPedagogica(${index})" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#ef4444'; this.style.color='#000';">Eliminar 🗑️</button>
+        </div>
+    `).reverse().join('');
+}
+
+// 🗑️ ELIMINAR DICA DO ECOSSISTEMA GLOBAL
+function eliminarDicaPedagogica(index) {
+    if (confirm("⚠️ Tem a certeza que deseja apagar esta dica de estudo de forma permanente para todos os alunos?")) {
+        let dicas = JSON.parse(localStorage.getItem('bd_dicas_estudo')) || [];
+        dicas.splice(index, 1); // Remove o elemento selecionado pelo índice
+        localStorage.setItem('bd_dicas_estudo', JSON.stringify(dicas));
+        
+        renderizarHistoricoDicas(); // Atualiza o histórico do professor na hora
+        alert("✨ Publicação removida com sucesso da base de dados local!");
+    }
+}
+
+    // 📚 ENVIAR E INJETAR LIVROS AUTOMATICAMENTE SEGUNDO AS DISCIPLINAS
+    function enviarLivroParaAlunos(event) {
+        event.preventDefault();
+        sincronizarMemoria();
+
+        const titulo = document.getElementById('upload-titulo').value.trim();
+        const autor = document.getElementById('upload-autor').value.trim();
+        const disciplinaAlvo = document.getElementById('upload-disciplina').value.trim();
+        const inputFicheiro = document.getElementById('upload-ficheiro-real');
+
+        if (!inputFicheiro.files || inputFicheiro.files.length === 0) {
+            alert("⚠️ Por favor, selecione um ficheiro de livro no armazenamento do seu telefone.");
+            return;
+        }
+
+        const ficheiroSelecionado = inputFicheiro.files[0];
+
+        // Usa o leitor de ficheiros nativo do navegador do telemóvel
+        const leitor = new FileReader();
+        leitor.readAsDataURL(ficheiroSelecionado);
+
+        leitor.onload = function() {
+            // O ficheiro real convertido numa String binária segura para a base de dados local
+            const ficheiroCodificado = leitor.result;
+            let totalContemplados = 0;
+
+            // Vasculha a base local e injeta o manual e o ficheiro real na prateleira certa
+            bdEstudantes.forEach(aluno => {
+                const temDisciplina = aluno.disciplinas.some(d => d.nome.toLowerCase() === disciplinaAlvo.toLowerCase());
+                if (temDisciplina) {
+                    if (!aluno.livros) aluno.livros = [];
+                    aluno.livros.push({ 
+                        titulo: titulo, 
+                        autor: autor,
+                        dadosFicheiro: ficheiroCodificado // O conteúdo real do livro vai aqui dentro de forma dinâmica!
+                    });
+                    totalContemplados++;
+                }
+            });
+
+            if (totalContemplados > 0) {
+                localStorage.setItem('bd_estudantes', JSON.stringify(bdEstudantes));
+                alert(`🎉 LIVRO SINCRONIZADO!\nO ficheiro do livro "${titulo}" foi carregado com sucesso do seu telemóvel e distribuído para ${totalContemplados} estudantes.`);
+                document.getElementById('form-upload-livro').reset();
+            } else {
+                alert(`⚠️ Alerta: Nenhum estudante tem a disciplina "${disciplinaAlvo}" ativa para receber este livro no momento.`);
+            }
+        };
+
+        leitor.onerror = function() {
+            alert("❌ Erro ao ler o ficheiro do armazenamento do telemóvel. Tente novamente.");
+        };
+    }
+
+    // 💬 GESTÃO CENTRALIZADA DO CHAT ACADÉMICO GLOBAL
+    if (!localStorage.getItem('bd_chat_global')) {
+        localStorage.setItem('bd_chat_global', JSON.stringify([]));
+    }
+
+    function carregarChatSincronizado() {
+        const caixaChat = document.getElementById('caixa-mensagens-chat-prof');
+        const msgs = JSON.parse(localStorage.getItem('bd_chat_global')) || [];
+        
+        caixaChat.innerHTML = `<div style="color: var(--brand-blue-glow);"><b>[Coordenação]:</b> Central de atendimento ativa.</div>`;
+        
+        msgs.forEach(m => {
+            const div = document.createElement('div');
+            if (m.origem === 'prof') {
+                div.style.color = 'var(--brand-gold)';
+                div.innerHTML = `<b>[Tu / Professor]:</b> ${m.texto}`;
+            } else {
+                div.style.color = '#fff';
+                div.innerHTML = `<b>[Aluno: ${m.autor} - ID: ${m.id_autor}]:</b> ${m.texto.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
+            }
+            caixaChat.appendChild(div);
+        });
+        caixaChat.scrollTop = caixaChat.scrollHeight;
+    }
+
+    function enviarMensagemProfessor(event) {
+        event.preventDefault();
+        const input = document.getElementById('campo-texto-chat-prof');
+        if (input.value.trim() !== "") {
+            let msgs = JSON.parse(localStorage.getItem('bd_chat_global')) || [];
+            msgs.push({
+                origem: 'prof',
+                autor: 'Professor',
+                texto: input.value.replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            });
+            localStorage.setItem('bd_chat_global', JSON.stringify(msgs));
+            input.value = "";
+            carregarChatSincronizado();
+        }
+    }
+
+    function calcularMetricasFaturamento() {
+        // 🔍 LEITURA DIRETA E REAL DO LOCALSTORAGE DO NAVEGADOR
+        // Tenta ler a chave principal e chaves secundárias para garantir que encontra os dados
+        let dadosLocais = localStorage.getItem('bd_estudantes') || localStorage.getItem('bd_estudante_ativo');
+        let listaAlunos = [];
+        
+        if (dadosLocais) {
+            try {
+                listaAlunos = JSON.parse(dadosLocais);
+                // Se for apenas um objeto em vez de um array, converte para array
+                if (!Array.isArray(listaAlunos)) {
+                    listaAlunos = [listaAlunos];
+                }
+            } catch (e) {
+                console.error("Erro ao ler JSON da memória local", e);
+                listaAlunos = [];
+            }
+        }
+    
+        let totalAlunos = listaAlunos.length;
+        let totalRegular = 0;
+        let totalSuperior = 0;
+        let caixaTotal = 0;
+    
+        // Valor base estimado por cadeira caso o aluno antigo não tenha o valor direto guardado
+        const taxaPorDisciplinaPadrao = 2500;
+    
+        listaAlunos.forEach(aluno => {
+            if (!aluno) return;
+            
+            // Lê de forma segura a classe ou turma do estudante
+            const classeStr = (aluno.classe || aluno.turma || "").toLowerCase();
+            
+            // 1. Classificação Dinâmica da Categoria (Regular vs Superior)
+            if (classeStr.includes("ano") || classeStr.includes("superior") || classeStr.includes("faculdade") || classeStr.includes("universidade") || classeStr.includes("ª classe (faculdade)")) {
+                totalSuperior++;
+            } else if (classeStr !== "" && !classeStr.includes("aguardando") && !classeStr.includes("pendente")) {
+                totalRegular++;
+            }
+    
+            // 2. Auditoria de Faturamento Dinâmico
+            if (aluno.valorPagoReal && !isNaN(aluno.valorPagoReal)) {
+                caixaTotal += parseFloat(aluno.valorPagoReal);
+            } else if (aluno.disciplinas && Array.isArray(aluno.disciplinas) && aluno.disciplinas.length > 0) {
+                caixaTotal += aluno.disciplinas.length * taxaPorDisciplinaPadrao;
+            } else if (classeStr !== "") {
+                caixaTotal += 4000; // Valor de inscrição base
+            }
+        });
+    
+        // 3. Injeção Direta Forçada nos IDs da Interface Gráfica
+        const elTotal = document.getElementById('estatistica-total-alunos');
+        const elRegular = document.getElementById('estatistica-regular');
+        const elSuperior = document.getElementById('estatistica-superior');
+        const elFaturamento = document.getElementById('estatistica-faturamento');
+    
+        if (elTotal) elTotal.innerText = totalAlunos;
+        if (elRegular) elRegular.innerText = totalRegular;
+        if (elSuperior) elSuperior.innerText = totalSuperior;
+        if (elFaturamento) {
+            elFaturamento.innerText = caixaTotal.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " Kzs";
+        }
+    }
+    
+    // 🔔 ATIVAÇÃO DO MOTOR DE SINCRONIZAÇÃO EM TEMPO REAL (A cada 2 segundos)
+    if (!window.intervaloFaturamentoMestre) {
+        window.intervaloFaturamentoMestre = setInterval(calcularMetricasFaturamento, 2000);
+    }
+    calcularMetricasFaturamento();
+
+
+
+
+
+   // 🧠 PUBLICAR MÉTODOS DE ESTUDO DIRETAMENTE NA NUVEM AIVEN
+function publicarDicaPedagogica(event) {
+    event.preventDefault();
+    
+    const tituloInput = document.getElementById('dica-titulo');
+    const textoInput = document.getElementById('dica-texto');
+    
+    if (!tituloInput || !textoInput) return;
+
+    const titulo = tituloInput.value.trim();
+    const texto = textoInput.value.trim();
+
+    // Dispara a dica em segundo plano para o MySQL da Aiven
+    fetch('guardar_dica.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titulo: titulo, texto: texto })
+    })
+    .then(res => res.json())
+    .then(resposta => {
+        if (resposta.sucesso) {
+            alert(`🎯 SUCESSO NA NUVEM!\nA orientação "${titulo}" foi gravada no mural global.`);
+            
+            // Reseta o formulário
+            document.getElementById('form-publicar-dica').reset();
+            
+            // Se tiver a função de histórico local, atualiza-a
+            if (typeof renderizarHistoricoDicas === 'function') {
+                renderizarHistoricoDicas();
+            }
+        } else {
+            alert("⚠️ Erro: " + resposta.mensagem);
+        }
+    })
+    .catch(erro => {
+        console.error("Erro ao publicar:", erro);
+        alert("❌ Falha de rede. Verifique a ligação ao servidor Aiven.");
+    });
+}
+    </script>
+
+
+<script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('PWA Aurélius: Service Worker Ativo!', reg.scope))
+          .catch(err => console.error('Erro ao ativar o PWA:', err));
+      });
+    }
+  </script>
+</body>
+</html>
