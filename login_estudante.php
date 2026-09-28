@@ -1,23 +1,14 @@
 <?php
-// 🔌 API DE AUTENTICAÇÃO: CONECTA O estudante.html À NUVEM DA AIVEN
+// 🔌 API DE AUTENTICAÇÃO: CONECTA O estudante.html À BASE DE DADOS
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Methods: POST");
 header("Content-Type: application/json; charset=UTF-8");
 
-// Credenciais de Conexão da sua Consola Aiven
-$host = "SEU_HOST_DA_://aivencloud.com"; 
-$port = "SUA_PORTA_DA_AIVEN"; 
-$user = "avnadmin"; 
-$pass = "SUA_SENHA_LONGA_DA_AIVEN"; 
-$db   = "aurelius_escola";
+// 🔒 SEGURANÇA MÁXIMA: Puxa a conexão limpa e dinâmica sem expor senhas no código
+require_once "conexao.php";
 
 try {
-    $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4", $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ATTR_ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::ATTR_FETCH_ASSOC
-    ]);
-
     // Recebe os dados de login enviados pelo estudante.html
     $dados = json_decode(file_get_contents("php://input"), true);
 
@@ -29,31 +20,38 @@ try {
     $identificador = trim($dados['identificador']);
     $senhaInserida = trim($dados['senha']);
 
-    // Procura na tabela 'utilizadores' se o ID ou Telefone correspondem ao código de validação
-    // Nota: Ajuste os nomes das colunas conforme o que definiu no DBeaver
-    $stmt = $pdo->prepare("SELECT * FROM utilizadores WHERE (id = ? OR telefone = ?) AND codigo_validacao = ?");
-    $stmt->execute([$identificador, $identificador, $senhaInserida]);
+    // 🔍 ALINHAMENTO DE COLUNAS: Mapeado exatamente com a sua tabela 'utilizadores' do Huambo
+    $query = "SELECT id_utilizador, nome, email, telefone, senha, classe FROM utilizadores WHERE (id_utilizador = ? OR email = ? OR telefone = ?) AND tipo_usuario = 'estudante' LIMIT 1";
+    $stmt = $pdo->prepare($query);
+    $stmt->execute([$identificador, $identificador, $identificador]);
     $estudante = $stmt->fetch();
 
-    if ($estudante) {
-        // Login com sucesso! Devolve os dados pedagógicos do estudante
+    // Compara a senha (suporta password_hash e MD5 antigo para não travar os seus testes)
+    if ($estudante && (password_verify($senhaInserida, $estudante['senha']) || md5($senhaInserida) === $estudante['senha'])) {
+        
+        if (session_status() === PHP_SESSION_NONE) { 
+            session_start(); 
+        }
+        $_SESSION['usuario_id'] = $estudante['id_utilizador'];
+
+        // Login com sucesso! Devolve os dados pedagógicos para a interface
         echo json_encode([
             "sucesso" => true,
             "estudante" => [
-                "id" => $estudante['id'],
+                "id" => $estudante['id_utilizador'],
                 "nome" => $estudante['nome'],
                 "telefone" => $estudante['telefone'],
-                "codigoValidacao" => $estudante['codigo_validacao'],
                 "classe" => $estudante['classe'] ?? 'Aguardando Matrícula',
-                "turma" => $estudante['turma'] ?? 'Sem Turma',
-                "periodo" => $estudante['periodo'] ?? 'Regular'
+                "turma" => 'Ver na Pauta',
+                "periodo" => 'Regular'
             ]
         ]);
     } else {
-        echo json_encode(["sucesso" => false, "mensagem" => "ID/Telefone ou Código de Validação incorretos."]);
+        echo json_encode(["sucesso" => false, "mensagem" => "⚠️ ID/Telefone ou Código de Validação incorretos."]);
     }
 
 } catch (Exception $e) {
-    echo json_encode(["sucesso" => false, "mensagem" => "Erro de rede na nuvem: " . $e->getMessage()]);
+    error_log("Erro na API de Login: " . $e->getMessage());
+    echo json_encode(["sucesso" => false, "mensagem" => "Falha crítica de ligação ao servidor."]);
 }
 ?>
