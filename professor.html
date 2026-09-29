@@ -516,23 +516,27 @@
 
 
 
-
-            <!-- 💬 CONTAINER CENTRAL DO CHAT ACADÉMICO -->
-            <div class="card">
+        <div class="card">
                 <div class="titulo">💬 Central de Respostas do Chat Académico</div>
-                <div class="chat-box" id="caixa-mensagens-chat-prof">
-                    <div style="color: var(--brand-blue-glow);"><b>[Coordenação]:</b> Painel docente ligado. Monitore as dúvidas recebidas e oriente os estudantes.</div>
+                
+                <!-- 👥 SELETOR DE ALUNOS ATIVOS -->
+                <div style="margin-bottom: 12px;">
+                    <select id="chat-seletor-aluno" onchange="mudarAlunoChat(this.value)" style="width: 100%; padding: 10px; background: #060b19; color: #fff; border: 1px solid #1e293b; border-radius: 6px; font-weight: bold; font-size: 13px;">
+                        <option value="">-- Escolha um Aluno para Conversar --</option>
+                    </select>
                 </div>
+            
+                <!-- CAIXA DE TEXTO DO HISTÓRICO -->
+                <div class="chat-box" id="caixa-mensagens-chat-prof" style="height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                    <div style="color: var(--brand-blue-glow);"><b>[Coordenação]:</b> Painel docente ligado. Selecione um aluno acima para monitorizar as dúvidas.</div>
+                </div>
+                
+                <!-- FORMULÁRIO DE ENVIO -->
                 <form onsubmit="enviarMensagemProfessor(event)" style="display: flex; gap: 8px; margin-top: 10px;">
                     <input type="text" id="campo-texto-chat-prof" class="form-input" style="margin-top:0; flex: 1;" placeholder="Escreva a resposta ou orientação oficial..." required>
                     <button type="submit" class="btn" style="margin-top:0; width: auto; padding: 0 20px;">Responder Alunos</button>
                 </form>
             </div>
-
-        </div>
-    </div>
-
-   
 
 
 
@@ -569,6 +573,9 @@
 }
 
 
+
+
+
     // 🛡️ CREDENCIAIS DE ACESSO DOCENTE EXCLUSIVAS
     const credencialProfessor = {
         telefone: "925347372",             // Único número autorizado
@@ -586,6 +593,121 @@
         bdEstudantes = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
     }
 
+
+
+
+
+    let alunoChatSelecionado = ""; // Guarda o ID (AUR-...) do aluno ativo
+
+// 🔄 1. ALIMENTA O DROPDOWN COM OS ALUNOS MATRICULADOS
+// Chame esta função passando a lista de alunos logo após ler os dados do banco MySQL
+function atualizarSeletorAlunosChat(listaAlunos) {
+    const seletor = document.getElementById('chat-seletor-aluno');
+    if (!seletor) return;
+    
+    if (!listaAlunos || listaAlunos.length === 0) {
+        seletor.innerHTML = '<option value="">Nenhum aluno localizado no sistema</option>';
+        return;
+    }
+    
+    seletor.innerHTML = '<option value="">-- Escolha um Aluno para Conversar --</option>' + 
+        listaAlunos.map(a => `<option value="${a.id_unico_escolar || a.id}">${a.nome} (${a.id_unico_escolar || a.id})</option>`).join('');
+}
+
+// 🔄 2. DETETA MUDANÇA DE ALUNO NO SELETOR
+function mudarAlunoChat(idAluno) {
+    alunoChatSelecionado = idAluno;
+    sincronizarChatProfessor();
+}
+
+// 🔄 3. LOOP DE SINCRONIZAÇÃO (GET)
+function sincronizarChatProfessor() {
+    if (!alunoChatSelecionado) return;
+
+    fetch(`chat_academico.php?id_estudante=${alunoChatSelecionado}`)
+    .then(res => res.json())
+    .then(dados => {
+        const caixaChat = document.getElementById('caixa-mensagens-chat-prof');
+        if (!caixaChat) return;
+
+        if (dados.sucesso && dados.mensagens.length > 0) {
+            caixaChat.innerHTML = dados.mensagens.map(m => {
+                const isProf = m.remetente === 'coord_prof';
+                const corEtiqueta = isProf ? 'var(--brand-gold, #eab308)' : 'var(--brand-blue-glow, #3b82f6)';
+                const label = isProf ? "[Tu / Professor]" : "[Aluno]";
+                
+                return `<div style="margin-bottom: 4px; font-size: 13px; line-height: 1.4;">
+                            <span style="color: ${corEtiqueta}; font-weight: bold;">${label}:</span> ${m.conteudo}
+                            <span style="font-size: 10px; color: #64748b; margin-left: 8px;">(${m.hora})</span>
+                        </div>`;
+            }).join('');
+            caixaChat.scrollTop = caixaChat.scrollHeight; // Scroll automático
+        } else if (dados.sucesso && dados.mensagens.length === 0) {
+            caixaChat.innerHTML = `<div style="color: #64748b; font-size: 13px; text-align: center; padding-top: 20px;">Nenhuma mensagem registada com este aluno.</div>`;
+        }
+    })
+    .catch(err => console.error("Erro ao sincronizar chat:", err));
+}
+
+// 🔄 4. DISPARAR ENVIO DA MENSAGEM (POST)
+function enviarMensagemProfessor(event) {
+    if (event) event.preventDefault();
+
+    const inputTexto = document.getElementById('campo-texto-chat-prof');
+    if (!inputTexto || inputTexto.value.trim() === "") return;
+
+    if (!alunoChatSelecionado) {
+        alert("⚠️ Por favor, escolha um aluno na lista antes de enviar uma resposta!");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('remetente', 'coord_prof');
+    formData.append('id_estudante', alunoChatSelecionado);
+    formData.append('conteudo', inputTexto.value.trim());
+
+    fetch("chat_academico.php", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(dados => {
+        if (dados.sucesso) {
+            inputTexto.value = ""; // Limpa a caixa de texto local
+            sincronizarChatProfessor(); // Atualiza na hora
+        } else {
+            alert("❌ Erro interno: " + dados.mensagem);
+        }
+    })
+    .catch(err => console.error("Erro ao processar envio do chat:", err));
+}
+
+
+function carregarAlunosNoSeletorDoChat() {
+    fetch("listar_estudantes.php")
+    .then(res => {
+        if (!res.ok) throw new Error("Erro ao ler lista de estudantes do servidor");
+        return res.json();
+    })
+    .then(dados => {
+        if (dados.sucesso) {
+            // Chama a função que já estruturámos para desenhar as <option> no HTML
+            atualizarSeletorAlunosChat(dados.alunos);
+        } else {
+            console.error("Erro do banco: " + dados.mensagem);
+        }
+    })
+    .catch(err => {
+        console.error("Falha de rede ao carregar seletor de alunos:", err);
+    });
+}
+
+// 🎯 DISPARADOR AUTOMÁTICO: Executa assim que o painel abre no navegador
+document.addEventListener("DOMContentLoaded", () => {
+    carregarAlunosNoSeletorDoChat();
+});
+// ⏱️ ATIVA O MONITOR EM TEMPO REAL A CADA 3 SEGUNDOS
+setInterval(sincronizarChatProfessor, 3000);
     // 🔐 MOTOR DE AUTENTICAÇÃO RIGOROSO (BLOCO ADMINISTRATIVO ÚNICO)
     function processarAcessoProfessor(event) {
         event.preventDefault();
