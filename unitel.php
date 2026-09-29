@@ -545,6 +545,131 @@ function renderizarListaDeCadeirasCliente(disciplinas) {
 
     containerDetalhe.innerHTML = htmlGerado;
 }
+
+
+
+
+function gerarFaturaDigital(event) {
+    if (event) event.preventDefault();
+    
+    if (!nomeEstudanteAtivo) {
+        alert("⚠️ Erro: Nenhum estudante selecionado para faturamento.");
+        return;
+    }
+
+    const mes = document.getElementById('mes_referencia').value;
+    const entregue = parseFloat(document.getElementById('valor_entregue_input').value) || 0;
+    const telefoneAluno = document.getElementById('telefone_input').value;
+    const txtTotal = document.getElementById("txt_total_liquido").innerText;
+    const totalLiquido = parseFloat(txtTotal.replace(" AKZ", "").replace(".", "").replace(",", ".")) || 0;
+
+    if (entregue < totalLiquido) {
+        alert("❌ Erro: O valor entregue é inferior ao total líquido obrigatório.");
+        return;
+    }
+
+    // 📅 GERAÇÃO DINÂMICA DA DATA EXIGIDA NO RECIBO HTML
+    const dataAtual = new Date();
+    const dia = String(dataAtual.getDate()).padStart(2, '0');
+    const mesesAno = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    const nomeMes = mesesAno[dataAtual.getMonth()];
+    const ano = dataAtual.getFullYear();
+    const dataFormatada = `${dia} de ${nomeMes} de ${ano}`;
+
+    // 📋 INJEÇÃO DOS DADOS NO RECIBO VISUAL DO PORTAL
+    if (document.getElementById('rec_nome')) document.getElementById('rec_nome').innerText = nomeEstudanteAtivo;
+    if (document.getElementById('rec_tel')) document.getElementById('rec_tel').innerText = telefoneAluno;
+    if (document.getElementById('rec_mes')) document.getElementById('rec_mes').innerText = mes;
+    if (document.getElementById('rec_data')) document.getElementById('rec_data').innerText = dataFormatada;
+    if (document.getElementById('rec_qtd')) document.getElementById('rec_qtd').innerText = document.getElementById('qtd_disciplinas').value + " Disciplina(s)";
+    if (document.getElementById('rec_turma')) document.getElementById('rec_turma').innerText = dadosAlunoAtivo.turma || "Geral";
+    
+    // Recupera os valores de preço calculados no ecrã para o recibo
+    const fServicoTxt = document.getElementById("f_servico").innerText;
+    const fSaldoUsadoTxt = document.getElementById("f_saldo_usado") ? document.getElementById("f_saldo_usado").innerText : "-0,00 AKZ";
+
+    if (document.getElementById('rec_custo')) document.getElementById('rec_custo').innerText = fServicoTxt;
+
+    // Sincroniza o detalhamento das cadeiras do ecrã para o recibo de impressão
+    const containerDetalheEcra = document.getElementById("detalhe_disciplinas_cliente");
+    const containerDetalheRecibo = document.getElementById("rec_detalhe_lista_cadeiras");
+    if (containerDetalheEcra && containerDetalheRecibo) {
+        containerDetalheRecibo.innerHTML = containerDetalheEcra.innerHTML.replace("📚 Módulos e Preços Reais:", "<b>Discriminação dos Módulos:</b>");
+    }
+
+    // Estrutura visual de Desconto VIP no recibo
+    if (dadosAlunoAtivo.desconto_ganho > 0) {
+        if (document.getElementById('rec_linha_desc')) document.getElementById('rec_linha_desc').style.display = 'flex';
+        if (document.getElementById('rec_desc')) document.getElementById('rec_desc').innerText = document.getElementById("txt_desc_vip").innerText;
+    } else { 
+        if (document.getElementById('rec_linha_desc')) document.getElementById('rec_linha_desc').style.display = 'none'; 
+    }
+
+    // Estrutura visual de Saldo Abatido no recibo
+    const saldoUsadoValor = parseFloat(fSaldoUsadoTxt.replace("-", "").replace(" AKZ", "").replace(".", "").replace(",", ".")) || 0;
+    if (saldoUsadoValor > 0) {
+        if (document.getElementById('rec_linha_saldo_usado')) document.getElementById('rec_linha_saldo_usado').style.display = 'flex';
+        if (document.getElementById('rec_saldo_usado')) document.getElementById('rec_saldo_usado').innerText = fSaldoUsadoTxt;
+    } else {
+        if (document.getElementById('rec_linha_saldo_usado')) document.getElementById('rec_linha_saldo_usado').style.display = 'none';
+    }
+
+    // Estrutura visual de Dívidas Acumuladas no recibo
+    if (dadosAlunoAtivo.divida > 0) {
+        if (document.getElementById('rec_linha_divida')) document.getElementById('rec_linha_divida').style.display = 'flex';
+        if (document.getElementById('rec_divida')) document.getElementById('rec_divida').innerText = '+' + dadosAlunoAtivo.divida.toLocaleString('pt-PT') + " AKZ";
+    } else { 
+        if (document.getElementById('rec_linha_divida')) document.getElementById('rec_linha_divida').style.display = 'none'; 
+    }
+
+    // Estrutura de Stock Adiantado (Se o valor entregue superou o líquido final do caixa)
+    const sobraStock = entregue - totalLiquido;
+    if (sobraStock > 0) {
+        if (document.getElementById('rec_linha_stock')) document.getElementById('rec_linha_stock').style.display = 'flex';
+        if (document.getElementById('rec_stock')) document.getElementById('rec_stock').innerText = '+' + sobraStock.toLocaleString('pt-PT') + " AKZ";
+    } else { 
+        if (document.getElementById('rec_linha_stock')) document.getElementById('rec_linha_stock').style.display = 'none'; 
+    }
+
+    if (document.getElementById('rec_total')) document.getElementById('rec_total').innerText = entregue.toLocaleString('pt-PT') + " AKZ";
+
+    // 🚀 ENVIO SEGURO EM FORMATO JSON COMPATÍVEL COM O RENDER
+    fetch("unitel.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        body: JSON.stringify({
+            acao_financeira: 'registar_pagamento',
+            telefone: telefoneAluno,
+            valor_pago: entregue,
+            mes_pago: mes,
+            saldo_abatido: saldoUsadoValor
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("A porta de rede do Render rejeitou a resposta.");
+        return res.json();
+    })
+    .then(resposta => {
+        if (resposta.sucesso) {
+            console.log("🎉 Sincronização concluída no MySQL central via Render.");
+            
+            // Torna o bloco do recibo imperial visível e faz scroll suave
+            const blocoFatura = document.getElementById('bloco_fatura_recibo');
+            if (blocoFatura) {
+                blocoFatura.style.display = 'block';
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }
+        } else {
+            alert("❌ O Banco rejeitou a transação: " + resposta.mensagem);
+        }
+    })
+    .catch(err => {
+        console.error("Erro capturado:", err);
+        alert("⚠️ Falha de comunicação: O recibo foi montado na tela mas os dados não puderam ser transmitidos para o servidor Render.");
+    });
+}
 </script>
 </body>
 </html>
