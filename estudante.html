@@ -253,35 +253,20 @@
 
     // Navegação Interna da Aplicação (SPA)
     function alternarTela(idTelaAlvo) {
-        // Procura todas as telas que possuem a classe 'tela-view'
         const telas = document.querySelectorAll('.tela-view');
-        
-        if (telas.length === 0) {
-            console.warn("⚠️ Nenhuma div com a classe 'tela-view' foi encontrada no HTML.");
-            return;
-        }
-    
         telas.forEach(tela => {
-            // Remove a classe active de todas as telas para escondê-las
             tela.classList.remove('active');
-            
-            // Se a sua PWA usa display: none/block em vez de classes CSS, use a linha abaixo:
-            // tela.style.display = 'none';
         });
     
-        // Localiza a tela alvo pelo ID e ativa-a no ecrã
         const telaAlvo = document.getElementById(idTelaAlvo);
         if (telaAlvo) {
             telaAlvo.classList.add('active');
-            
-            // Se a sua PWA usa display, descomente a linha abaixo:
-            // telaAlvo.style.display = 'block';
-            
-            console.log(`🎯 Tela alternada com sucesso para: ${idTelaAlvo}`);
+            console.log(`🎯 Tela alternada para: ${idTelaAlvo}`);
         } else {
-            console.error(`❌ Erro: A tela com o ID '${idTelaAlvo}' não existe no estudante.html`);
+            console.error(`❌ Erro: A tela '${idTelaAlvo}' não existe.`);
         }
     }
+    
 
 
 
