@@ -261,55 +261,45 @@
             event.preventDefault();
             event.stopPropagation();
             
-            const nome = document.getElementById('cad-nome').value.trim();
-            const telefone = document.getElementById('cad-telefone').value.trim();
-            const classe = document.getElementById('cad-classe').value.trim();
-            const periodo = document.getElementById('cad-periodo').value.trim();
-        
-            if (!nome || !telefone) {
-                alert("❌ Nome e Telefone são obrigatórios!");
-                return false;
-            }
-        
             const formData = new FormData();
-            formData.append('nome', nome);
-            formData.append('telefone', telefone);
-            formData.append('classe', classe);
-            formData.append('periodo', periodo);
+            formData.append('nome', document.getElementById('cad-nome').value.trim());
+            formData.append('telefone', document.getElementById('cad-telefone').value.trim());
+            formData.append('classe', document.getElementById('cad-classe').value.trim());
+            formData.append('periodo', document.getElementById('cad-periodo').value.trim());
         
-            // 🚀 IDENTIFICA O AMBIENTE AUTOMATICAMENTE
-            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    
-            // Substitua o link abaixo pela URL real do seu Web Service PHP do Render se for diferente:
-            const URL_API = isLocal ? "cadastrar_estudante.php" : "https://onrender.com";
+            // 🚀 MOTOR DE ROTA AUTOMÁTICA UNIVERSAL
+            // Esta linha extrai o domínio atual e garante que o fetch vá para o ficheiro PHP na mesma pasta do servidor
+            const URL_AUTOMATICA = window.location.protocol + "//" + window.location.host + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + "/cadastrar_estudante.php";
         
-            fetch(URL_API, {
+            console.log("A enviar matrícula automática para: " + URL_AUTOMATICA);
+        
+            fetch(URL_AUTOMATICA, {
                 method: "POST",
                 body: formData
             })
             .then(res => {
-                if (!res.ok) throw new Error("Erro de rede do servidor. Status: " + res.status);
+                if (!res.ok) throw new Error("Erro na rede do servidor");
                 return res.json();
             })
             .then(dados => {
                 if (dados.sucesso) {
-                    alert(`🎉 MATRÍCULA AUTOMÁTICA CONCLUÍDA!\n\nID ÚNICO ACADÉMICO: ${dados.id_estudante}\nCÓDIGO DE ACESSO: ${dados.codigo_validacao}\n\nGuarde estes dados para fazer o login.`);
+                    alert(`🎉 MATRÍCULA GRAVADA NO MYSQL AUTOMATICAMENTE!\n\nID ESTUDANTE: ${dados.id_estudante}\nCÓDIGO VALIDAÇÃO (SENHA): ${dados.codigo_validacao}`);
                     
                     document.getElementById('form-cadastro').reset();
                     document.getElementById('login-identificador').value = dados.id_estudante;
                     document.getElementById('login-senha').value = dados.codigo_validacao;
                     alternarTela('view-login');
                 } else {
-                    alert("❌ Erro no cadastro: " + dados.mensagem);
+                    alert("❌ Rejeitado pelo Banco: " + dados.mensagem);
                 }
             })
             .catch(err => {
                 console.error(err);
-                alert("⚠️ Falha de comunicação com o banco de dados remoto da Aiven. Verifique se o Web Service está online.");
+                alert("⚠️ Erro de rede: Não foi possível alcançar o ficheiro cadastrar_estudante.php na nuvem.");
             });
-        
-            return false;
         }
+        
+           
             // Carrega os estudantes gravados no navegador
             const listaEstudantes = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
     
