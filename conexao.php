@@ -1,8 +1,8 @@
 <?php
-// 🗄️ CONEXÃO DINÂMICA ALINHADA - ACADEMIA AURÉLIUS
+// 🗄️ CONEXÃO DINÂMICA SEGURA - ACADEMIA AURÉLIUS
 
-// Deteta se está a correr na sua máquina (Localhost) ou no Render
-$isLocal = ($_SERVER['REMOTE_ADDR'] === '127.0.0.1' || $_SERVER['REMOTE_ADDR'] === '::1' || $_SERVER['SERVER_NAME'] === 'localhost');
+// Se existir a variável DB_HOST configurada no Render, assume NUVEM. Caso contrário, LOCALHOST.
+$isLocal = (getenv('DB_HOST') === false);
 
 if ($isLocal) {
     // 🏠 CONFIGURAÇÕES PARA O XAMPP LOCAL
@@ -12,22 +12,22 @@ if ($isLocal) {
     $password = "";
     $dbname = "aurelius_escola";
 } else {
-    // ☁️ CONFIGURAÇÕES PARA A NUVEM DO RENDER (Puxa do painel do Render)
+    // ☁️ CONFIGURAÇÕES PARA A NUVEM DO RENDER (Puxa da Aiven Cloud)
     $host = getenv('DB_HOST');
     $port = getenv('DB_PORT') ?: "22002";
     $user = getenv('DB_USER');
     $password = getenv('DB_PASSWORD');
-    $dbname = getenv('DB_NAME') ?: "aurelius_escola";
+    $dbname = getenv('DB_NAME');
 }
 
 try {
     $options = [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, // 🌟 Corrigido aqui!
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
     ];
 
-    // Só aplica regras rígidas de SSL se estiver fora do Localhost
+    // Regras rígidas de SSL obrigatórias para a Aiven Cloud na Nuvem
     if (!$isLocal) {
         $options[PDO::MYSQL_ATTR_SSL_CA] = true;
         $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
@@ -36,10 +36,9 @@ try {
     $pdo = new PDO("mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4", $user, $password, $options);
 } catch (PDOException $e) {
     error_log("Erro de Ligação: " . $e->getMessage());
-    header('Content-Type: application/json');
+    header('Content-Type: application/json; charset=utf-8');
     
-    // Devolve uma mensagem clara se falhar local ou na nuvem
-    $ambiente = $isLocal ? "servidor local (XAMPP)" : "servidor da nuvem";
-    die(json_encode(["sucesso" => false, "mensagem" => "⚠️ Falha de ligação ao $ambiente."]));
+    $ambiente = $isLocal ? "servidor local (XAMPP)" : "servidor da nuvem (Aiven)";
+    die(json_encode(["sucesso" => false, "mensagem" => "⚠️ Falha de ligação ao $ambiente. Detalhe: " . $e->getMessage()]));
 }
 ?>

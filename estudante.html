@@ -266,18 +266,13 @@
             formData.append('classe', document.getElementById('cad-classe').value.trim());
             formData.append('periodo', document.getElementById('cad-periodo').value.trim());
         
-            // 🚀 DETETA SE ESTÁ NO LOCALHOST OU NO RENDER
-            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            
-            // 🌟 Substitua "sua-api-aurelius" pela URL real do seu Web Service PHP do Render:
-            const URL_BACKEND = isLocal ? "cadastrar_estudante.php" : "https://onrender.com";
-        
-            fetch(URL_BACKEND, {
+            // Utilizar a rota relativa direta funciona tanto no Localhost quanto no Render se estiverem na mesma pasta!
+            fetch("cadastrar_estudante.php", {
                 method: "POST",
                 body: formData
             })
             .then(res => {
-                if (!res.ok) throw new Error("Erro na rede do servidor");
+                if (!res.ok) throw new Error();
                 return res.json();
             })
             .then(dados => {
@@ -296,20 +291,6 @@
                 alert("⚠️ Falha de ligação ao servidor da nuvem para realizar a inscrição.");
             });
         }
-        // 🚀 PROCESSADOR DE LOGIN LOCAL CORRIGIDO
-        function processarAcesso(event) {
-            event.preventDefault();
-            
-            // Captura correta usando os IDs exatos dos inputs do formulário HTML
-            const identificador = document.getElementById('login-identificador').value.trim();
-            const senhaInserida = document.getElementById('login-senha').value.trim();
-            const erroDiv = document.getElementById('mensagem-erro');
-    
-            if (!identificador || !senhaInserida) {
-                erroDiv.style.display = "block";
-                erroDiv.innerHTML = "⚠️ Campos vazios.";
-                return;
-            }
     
             // Carrega os estudantes gravados no navegador
             const listaEstudantes = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
