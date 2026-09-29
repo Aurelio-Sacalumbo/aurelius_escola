@@ -107,7 +107,7 @@
         <!-- =========================================================================
              🚪 TELA 1: PORTAL DO PROFESSOR (LOGIN SEGURO)
              ========================================================================= -->
-        <div class="tela-view active" id="view-login-prof">
+             <div class="tela-view" id="view-dashboard-prof" style="display: none;">
             <div class="card" style="border-top: 4px solid var(--brand-gold);">
                 <div style="text-align: center; margin-bottom: 25px;">
                     <span style="font-size: 32px; display: block; margin-bottom: 5px;">🛡️</span>
@@ -119,7 +119,7 @@
                     ❌ Erro: Credenciais Docentes não coincidem! Acesso Rejeitado.
                 </div>
 
-                <form id="form-login-prof" onsubmit="processarAcessoProfessor(event)">
+                <form id="form-login-prof" onsubmit="processarAcessoProfessorReal(event)">
                     <div style="margin-bottom: 16px;">
                         <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
                            Telefone do Professor:
@@ -147,7 +147,17 @@
 
 
         
-       <!-- =========================================================================
+     
+
+
+
+
+
+
+
+
+
+         <!-- =========================================================================
      📊 TELA 2: PAINEL DE CONTROLO INTEGRADO (CADERNETA, LIVROS E CHAT)
      ========================================================================= -->
 <div class="tela-view active" id="view-dashboard-prof">
@@ -242,17 +252,7 @@
         </div>
     
     </div>
-
-
-
-
-
-
-
-
-
-
-            
+     
 <!-- =========================================================================
      🏫 SEÇÃO DE GESTÃO DE TURMAS (PROFESSOR.HTML)
      ========================================================================= -->
@@ -493,17 +493,40 @@ document.getElementById('pautaFormLocal').addEventListener('submit', function(e)
         localStorage.setItem('bd_pautas_professor', JSON.stringify([]));
     }
 
-    // Força o fecho absoluto e prepara a contagem inicial no carregamento da página
-    document.addEventListener("DOMContentLoaded", () => {
+    // =========================================================================
+// 🎯 DISPARADOR ÚNICO E CENTRALIZADO DE ENTRADA (DOM) - TRANCADO POR PADRÃO
+// =========================================================================
+document.addEventListener("DOMContentLoaded", () => {
+    // 🛡️ 1. Garante o isolamento visual absoluto no carregamento do F5
+    const telaLogin = document.getElementById('view-login-prof');
+    const painelAdmin = document.getElementById('view-dashboard-prof');
+    
+    if (telaLogin) {
+        telaLogin.style.display = 'block';
+        telaLogin.classList.add('active');
+    }
+    
+    if (painelAdmin) {
+        painelAdmin.style.display = 'none';
+        painelAdmin.classList.remove('active');
+    }
+
+    // 📁 2. Força o fecho físico da aba de aprovação administrativa
+    if (typeof gerenciarAbaLocal === "function") {
         gerenciarAbaLocal(false); 
-        
-        // Sincroniza o clique do botão de fechar fisicamente se ele existir no seu ecrã
-        const btnFecharVisual = document.getElementById('btnFecharAba');
-        if (btnFecharVisual) {
-            btnFecharVisual.onclick = () => { gerenciarAbaLocal(false); };
-        }
-    });
-    setTimeout(() => { gerenciarAbaLocal(false); }, 100);
+    }
+    
+    const btnFecharVisual = document.getElementById('btnFecharAba');
+    if (btnFecharVisual) {
+        btnFecharVisual.onclick = () => { if (typeof gerenciarAbaLocal === "function") gerenciarAbaLocal(false); };
+    }
+
+    // 🛑 ATENÇÃO: As funções de sincronização automática com o MySQL (faturamento, chat, etc.)
+    // foram movidas para dentro do "processarAcessoProfessorReal". Elas só acordam após o login com sucesso!
+});
+
+// ⏱️ ATIVA O MONITOR DO CHAT EM SEGUNDO PLANO (Fica ativo globalmente)
+setInterval(sincronizarChatProfessor, 3000);
 
     function gerenciarAbaLocal(deveAbrir) {
         const containerAba = document.getElementById('abaTabelaProfessor');
@@ -1143,88 +1166,68 @@ document.addEventListener("DOMContentLoaded", () => {
 // ⏱️ ATIVA O MONITOR EM TEMPO REAL A CADA 3 SEGUNDOS
 setInterval(sincronizarChatProfessor, 3000);
     // 🔐 MOTOR DE AUTENTICAÇÃO RIGOROSO (BLOCO ADMINISTRATIVO ÚNICO)
-    function processarAcessoProfessor(event) {
-        event.preventDefault();
-        
-        const fone = document.getElementById('prof-telefone').value.trim();
-        const codigo = document.getElementById('prof-codigo').value.trim();
+    function processarAcessoProfessorReal(event) {
+        if (event) event.preventDefault();
+    
+        const inputTelefone = document.getElementById('prof-telefone');
+        const inputCodigo = document.getElementById('prof-codigo');
         const erroDiv = document.getElementById('mensagem-erro-prof');
-
-        // Validação estrita: Rejeita qualquer dado que não seja a chave mestra
-        if (fone === credencialProfessor.telefone && codigo === credencialProfessor.codigoForte) {
-            erroDiv.style.display = "none";
-            
-            // Atualiza os indicadores visuais para o estado logado seguro
-            const statusSessao = document.getElementById('status-sessao');
-            if (statusSessao) {
-                statusSessao.innerText = "● Administrador Mestre Conectado";
-                statusSessao.style.color = "var(--brand-success)";
-            }
-            
-            // Inicializa as ferramentas e dados do painel único
-            popularFiltroClasses();
-            carregarChatSincronizado();
-            alternarTela('view-dashboard-prof');
-            
-            // Sincronização automática contínua do Chat a cada 3 segundos
-            setInterval(carregarChatSincronizado, 3000);
-        } else {
-            // Se um aluno tentar adivinhar, bloqueia imediatamente o ecrã
+    
+        if (!inputTelefone || !inputCodigo || !erroDiv) return;
+    
+        const telefone = inputTelefone.value.trim();
+        const codigo = inputCodigo.value.trim();
+    
+        if (telefone === "" || codigo === "") {
             erroDiv.style.display = "block";
-            erroDiv.innerHTML = "❌ Acesso Negado! Tentativa ilegal de acesso detetada. As credenciais administrativas introduzidas não são válidas.";
-            document.getElementById('form-login-prof').reset();
+            erroDiv.innerHTML = "❌ Por favor, preencha todos os campos.";
+            return;
         }
-    }
-
-
-    function renderizarAlunosNoPainelProfessor() {
-    // Bate no arquivo PHP que calcula as métricas e lista os utilizadores do banco
-    fetch("faturamento_admin.php")
-    .then(res => res.json())
-    .then(dados => {
-        if (dados.sucesso) {
-            // 1. Atualiza os contadores no ecrã (O seu já marca 5, mas isto garante o automatismo)
-            if (document.getElementById('estatistica-total-alunos')) {
-                document.getElementById('estatistica-total-alunos').innerText = dados.total_estudantes;
-            }
-
-            // 2. Localiza o corpo da tabela de Administração / Aprovação
-            // 🌟 Verifique se o ID do seu <tbody> é exatamente este ou ajuste
-            const corpoTabelaAdmin = document.getElementById('corpo-tabela-admin') || document.querySelector('.table-wrapper tbody');
-            
-            if (corpoTabelaAdmin) {
-                if (dados.alunos.length > 0) {
-                    // Injeta dinamicamente as linhas vindas diretamente do DBeaver
-                    corpoTabelaAdmin.innerHTML = dados.alunos.map(aluno => `
-                        <tr>
-                            <td><b>${aluno.nome}</b></td>
-                            <td>${aluno.classe || '9ª Classe'}</td>
-                            <td>${aluno.periodo || 'Tarde'}</td>
-                            <td>07:00-08:00</td>
-                            <td>Geral</td>
-                            <td>Prof. Responsável</td>
-                            <td>
-                                <span class="badge" style="background: rgba(234, 179, 8, 0.15); color: #eab308; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">
-                                    Pendente
-                                </span>
-                            </td>
-                        </tr>
-                    `).join('');
-                } else {
-                    corpoTabelaAdmin.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px; color:#64748b;">Nenhum estudante pendente no banco.</td></tr>`;
+    
+        const formData = new FormData();
+        formData.append('acao_login', 'autenticar_professor');
+        formData.append('telefone', telefone);
+        formData.append('codigo', codigo);
+    
+        fetch("login_estudante.php", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("Falha no barramento de rede.");
+            return res.json();
+        })
+        .then(dados => {
+            if (dados.sucesso) {
+                erroDiv.style.display = "none";
+                alert(`🔓 ACESSO DOCENTE AUTORIZADO!\n\nBem-vindo de volta, Prof. ${dados.nome || 'Responsável'}.`);
+    
+                // 🛡️ 1. ESCONDE O CARD DE LOGIN DE VEZ
+                document.getElementById('view-login-prof').style.display = 'none';
+                document.getElementById('view-login-prof').classList.remove('active');
+    
+                // 🚀 2. REVELA E ATIVA O PORTAL ADMINISTRATIVO OCULTO
+                const painelAdmin = document.getElementById('view-dashboard-prof');
+                if (painelAdmin) {
+                    painelAdmin.style.display = 'block';
+                    painelAdmin.classList.add('active');
                 }
+    
+                // ⏱️ 3. Inicializa os motores de dados dinâmicos do MySQL
+                if (typeof sincronizarPainelProfessorAutomatico === "function") sincronizarPainelProfessorAutomatico();
+                if (typeof carregarAlunosNoSeletorDoChat === "function") carregarAlunosNoSeletorDoChat();
+            } else {
+                // Exibe a mensagem real devolvida pelo PHP
+                erroDiv.style.display = "block";
+                erroDiv.innerHTML = "❌ " + dados.mensagem;
             }
-        }
-    })
-    .catch(err => console.error("Erro ao sincronizar listagem do professor:", err));
-}
-
-// 🎯 GATILHO AUTOMÁTICO: Executa a procura assim que o portal do professor abre
-document.addEventListener("DOMContentLoaded", () => {
-    renderizarAlunosNoPainelProfessor();
-});
-
-
+        })
+        .catch(err => {
+            console.error(err);
+            erroDiv.style.display = "block";
+            erroDiv.innerHTML = "⚠️ Falha ao conectar ao servidor MySQL central.";
+        });
+    }
 
 
 
