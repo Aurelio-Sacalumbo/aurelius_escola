@@ -120,7 +120,7 @@
                     ⚠️ Acesso Rejeitado! O ID/Telefone ou o Código de Validação não estão sincronizados.
                 </div>
 
-                <form id="form-login" onsubmit="processarAcesso(event)">
+                <form id="form-login" onsubmit="return processarAcesso(event)">
                     <div style="margin-bottom: 16px;">
                         <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
                             ID do Estudante ou Nº de Telefone:
@@ -372,6 +372,98 @@
             document.getElementById('mensagem-erro').style.display = "none";
             alternarTela('view-login');
         }
+
+        function processarAcesso(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
+    const identificadorInput = document.getElementById('login-identificador');
+    const senhaInput = document.getElementById('login-senha');
+    const erroDiv = document.getElementById('mensagem-erro');
+
+    if (!identificadorInput || !senhaInput) {
+        alert("⚠️ Erro crítico: Campos do formulário não foram encontrados no HTML.");
+        return false;
+    }
+
+    const identificador = identificadorInput.value.trim();
+    const senhaInserida = senhaInput.value.trim();
+
+    if (identificador === "" || senhaInserida === "") {
+        if (erroDiv) {
+            erroDiv.style.display = "block";
+            erroDiv.innerHTML = "❌ Por favor, preencha todos os campos antes de aceder.";
+        } else {
+            alert("❌ Por favor, preencha todos os campos antes de aceder.");
+        }
+        return false;
+    }
+
+    const formData = new FormData();
+    formData.append('identificador', identificador);
+    formData.append('senha', senhaInserida);
+
+    if (erroDiv) {
+        erroDiv.style.display = "block";
+        erroDiv.innerHTML = "⏳ A autenticar na base académica... Aguarde.";
+        erroDiv.style.color = "#eab308";
+    }
+
+    // Rota relativa direta para garantir o funcionamento dinâmico no XAMPP e Render
+    fetch("login_estudante.php", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Erro de rede: O servidor devolveu status " + res.status);
+        return res.json();
+    })
+    .then(dados => {
+        if (!erroDiv) return;
+
+        if (dados.sucesso) {
+            erroDiv.style.display = "none";
+            
+            // Grava os dados do estudante autenticado pelo banco na memória global
+            estudanteLogado = dados.estudante;
+            
+            // Injeta reativamente os dados no Dashboard principal
+            const txtNome = document.getElementById('txt-nome-aluno');
+            const txtId = document.getElementById('txt-id-escolar');
+            
+            if (txtNome) txtNome.innerText = estudanteLogado.nome;
+            if (txtId) txtId.innerText = estudanteLogado.id;
+            
+            // Executa os carregamentos internos e alterna a tela visual
+            if (typeof carregarDadosDashboard === "function") carregarDadosDashboard();
+            if (typeof alternarTela === "function") alternarTela('view-dashboard');
+            
+            const menuLogout = document.getElementById('menu-logout');
+            if (menuLogout) menuLogout.style.display = "block";
+            
+            alert(`🎉 Bem-vindo de volta, ${estudanteLogado.nome}! Acesso autorizado.`);
+        } else {
+            erroDiv.style.display = "block";
+            erroDiv.style.color = "#ef4444";
+            erroDiv.innerHTML = dados.mensagem || "❌ Identificador ou código incorreto.";
+            alert(dados.mensagem || "❌ Credenciais inválidas. Verifique os dados introduzidos.");
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        if (erroDiv) {
+            erroDiv.style.display = "block";
+            erroDiv.style.color = "#ef4444";
+            erroDiv.innerHTML = "⚠️ Falha de ligação ao servidor da nuvem.";
+        }
+        alert("⚠️ Erro de comunicação: Não foi possível receber resposta do arquivo login_estudante.php. Verifique a consola (F12).");
+    });
+
+    return false;
+}
+
         </script>
     </body>
     </html>
