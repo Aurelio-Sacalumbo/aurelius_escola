@@ -29,22 +29,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao_gestao']) && $_P
 // =========================================================================
 // 🏢 AÇÃO 2: ATUALIZAR ESTADO / DIRECIONAMENTO DO ALUNO (VIA FORMDATA)
 // =========================================================================
+// =========================================================================
+// 🏢 AÇÃO 2: ATUALIZAR ESTADO / DIRECIONAMENTO DO ALUNO (VIA FORMDATA)
+// =========================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao_gestao']) && $_POST['acao_gestao'] === 'atualizar_estado_aluno') {
+    header('Content-Type: application/json; charset=utf-8');
+    require_once 'conexao.php';
+
     $id = intval($_POST['id_utilizador']);
     $classe = trim($_POST['classe_turma']);
     $periodo = trim($_POST['periodo']);
+    
+    // Novas colunas dinâmicas enviadas pelo seu formulário avançado
+    $horario = isset($_POST['horario']) ? trim($_POST['horario']) : '07:00-08:00';
+    $curso = isset($_POST['curso']) ? trim($_POST['curso']) : 'Geral';
 
     try {
-        // Atualiza a turma (nivel) e o período na tabela utilizadores
-        $stmt = $pdo->prepare("UPDATE utilizadores SET nivel = ?, periodo = ? WHERE id_utilizador = ?");
-        $sucesso = $stmt->execute([$classe, $periodo, $id]);
-        echo json_encode(['sucesso' => $sucesso, 'mensagem' => 'Estado e direcionamento atualizados com sucesso!']);
+        // Se o professor selecionou "Aprovado (Direto)", vamos gerar o ID Único Escolar definitivo (Ex: AUR-XXXXXX)
+        // apenas se o aluno ainda não tiver um, para libertar a pauta de notas automaticamente!
+        $verificar = $pdo->prepare("SELECT id_unico_escolar FROM utilizadores WHERE id_utilizador = ?");
+        $verificar->execute([$id]);
+        $alunoAtual = $verificar->fetch();
+
+        $novoID = $alunoAtual['id_unico_escolar'];
+        if (empty($novoID) || !str_contains($novoID, 'AUR-')) {
+            $novoID = "AUR-" . rand(100000, 999999);
+        }
+
+        // Alinha os dados dinamicamente com as colunas reais da sua tabela utilizadores:
+        // nivel = classe do aluno, curso = Disciplina, periodo = Turno, id_unico_escolar = Matrícula ativa
+        $stmt = $pdo->prepare("UPDATE utilizadores SET nivel = ?, curso = ?, periodo = ?, id_unico_escolar = ? WHERE id_utilizador = ?");
+        $sucesso = $stmt->execute([$classe, $curso, $periodo, $novoID, $id]);
+
+        echo json_encode(['sucesso' => $sucesso, 'mensagem' => '🎉 Aluno aprovado e matriculado com sucesso no MySQL!']);
     } catch (Exception $e) {
-        echo json_encode(['sucesso' => false, 'mensagem' => 'Erro ao atualizar estado: ' . $e->getMessage()]);
+        echo json_encode(['sucesso' => false, 'mensagem' => 'Erro ao atualizar: ' . $e->getMessage()]);
     }
     exit;
 }
-
 // =========================================================================
 // 📊 AÇÃO 3: SALVAMENTO EM LOTE / BATCH UPDATE DE NOTAS (VIA JSON PAYLOAD)
 // =========================================================================
