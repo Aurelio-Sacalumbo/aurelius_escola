@@ -137,7 +137,7 @@
                 
                     <!-- 🔑 BOTÃO / LINK DE RECUPERAÇÃO DE SENHA ADICIONADO -->
                     <div style="text-align: right; margin-bottom: 20px;">
-                        <a href="recuperar.html" style="font-size: 12px; color: var(--brand-gold, #eab308); text-decoration: none; font-weight: 600; transition: color 0.2s;" onmouseover="this.style.color='#facc15'" onmouseout="this.style.color='var(--brand-gold, #eab308)'">
+                        <a href="recuperar.php" style="font-size: 12px; color: var(--brand-gold, #eab308); text-decoration: none; font-weight: 600; transition: color 0.2s;" onmouseover="this.style.color='#facc15'" onmouseout="this.style.color='var(--brand-gold, #eab308)'">
                             Esqueceu a password?
                         </a>
                     </div>
@@ -259,42 +259,43 @@
         // 💾 INSCRIÇÃO DINÂMICA LOCAL
         function cadastrarEstudanteAutomatico(event) {
             event.preventDefault();
-            const numAleatorio = Math.floor(100000 + Math.random() * 900000);
-            const novoID = `AUR-${numAleatorio}`;
-            const novoCodigo = Math.random().toString(36).substring(2, 8).toUpperCase();
-        
-            const novoAluno = {
-                id: novoID,
-                telefone: document.getElementById('cad-telefone').value.trim(),
-                codigoValidacao: novoCodigo,
-                nome: document.getElementById('cad-nome').value.trim(),
-                classe: document.getElementById('cad-classe').value.trim(),
-                turma: "Turma Única A", 
-                periodo: document.getElementById('cad-periodo').value.trim(),
-                disciplinas: [
-                    { nome: "Língua Portuguesa", n1: 14, n2: 15, n3: 16, faltas: 0, estatuto: "Aprovado" },
-                    { nome: "Matemática", n1: 12, n2: 14, n3: 15, faltas: 1, estatuto: "Aprovado" }
-                ],
-                livros: []
-            };
-        
-            let lista = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
-            if (lista.some(aluno => aluno.telefone === novoAluno.telefone)) {
-                alert("⚠️ Erro: Este número de telefone já se encontra registado!");
-                return;
-            }
-        
-            lista.push(novoAluno);
-            localStorage.setItem('bd_estudantes', JSON.stringify(lista));
-        
-            alert(`🎉 INSCRIÇÃO CONCLUÍDA!\n\nID: ${novoID}\nCÓDIGO (SENHA): ${novoCodigo}`);
             
-            document.getElementById('form-cadastro').reset();
-            document.getElementById('login-identificador').value = novoAluno.telefone;
-            document.getElementById('login-senha').value = novoCodigo;
-            alternarTela('view-login');
+            const formData = new FormData();
+            formData.append('nome', document.getElementById('cad-nome').value.trim());
+            formData.append('telefone', document.getElementById('cad-telefone').value.trim());
+            formData.append('classe', document.getElementById('cad-classe').value.trim());
+            formData.append('periodo', document.getElementById('cad-periodo').value.trim());
+        
+            // 🚀 DETETA SE ESTÁ NO LOCALHOST OU NO RENDER
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            
+            // 🌟 Substitua "sua-api-aurelius" pela URL real do seu Web Service PHP do Render:
+            const URL_BACKEND = isLocal ? "cadastrar_estudante.php" : "https://onrender.com";
+        
+            fetch(URL_BACKEND, {
+                method: "POST",
+                body: formData
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Erro na rede do servidor");
+                return res.json();
+            })
+            .then(dados => {
+                if (dados.sucesso) {
+                    alert(`🎉 INSCRIÇÃO CONCLUÍDA NO BANCO!\n\nID ESTUDANTE: ${dados.id_estudante}\nCÓDIGO VALIDAÇÃO (SENHA): ${dados.codigo_validacao}`);
+                    
+                    document.getElementById('form-cadastro').reset();
+                    document.getElementById('login-identificador').value = dados.id_estudante;
+                    document.getElementById('login-senha').value = dados.codigo_validacao;
+                    alternarTela('view-login');
+                } else {
+                    alert(dados.mensagem);
+                }
+            })
+            .catch(err => {
+                alert("⚠️ Falha de ligação ao servidor da nuvem para realizar a inscrição.");
+            });
         }
-    
         // 🚀 PROCESSADOR DE LOGIN LOCAL CORRIGIDO
         function processarAcesso(event) {
             event.preventDefault();
