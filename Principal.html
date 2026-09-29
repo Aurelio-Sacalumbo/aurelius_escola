@@ -313,18 +313,28 @@
                             </div>
                         </div>
     
-                        <!-- Caixa de Resumo de Preço -->
-                        <div class="resumo-total-box">
-                            <div>
-                                <span style="font-size: 13px; color: var(--text-muted); display: block;">Total Líquido Estimado:</span>
-                                <span id="desconto-aviso" style="font-size: 11px; color: var(--brand-success); font-weight: bold; display:none;">Desconto de 20% Aplicado!</span>
-                            </div>
-                            <strong style="font-size: 22px; color: var(--brand-gold);" id="preco-total-final">0.00 Kzs</strong>
-                        </div>
+                       <!-- Caixa de Resumo de Preço -->
+<div class="resumo-total-box">
+        <div>
+            <span style="font-size: 13px; color: var(--text-muted); display: block;">Total Líquido Estimado:</span>
+            <span id="desconto-aviso" style="font-size: 11px; color: var(--brand-success); font-weight: bold; display:none;">Desconto de 20% Aplicado!</span>
+        </div>
+        <strong style="font-size: 22px; color: var(--brand-gold);" id="preco-total-final">9000.00 Kzs</strong>
+    </div>
     
-                        <button class="btn-submeter" onclick="submeterAgendamento()">Concluir Matrícula ✓</button>
+    <!-- 🌟 CORRIGIDO: Agora chama a função de matrícula da escola e passa o evento -->
+    <button class="btn-submeter" onclick="submeterMatriculaEscolaReal(event)">Concluir Matrícula ✓</button>
+    
                     </div>
             
+
+
+
+
+
+
+
+
                     <!-- =========================================================================
                          📋 TELA 4: EMISSÃO DE RECIBO TÉRMICO COMPACTO E UNIFICADO
                          ========================================================================= -->
@@ -699,6 +709,59 @@
         proximaTela(num); 
     }
 
+
+
+
+    function submeterMatriculaEscolaReal(event) {
+    if (event) event.preventDefault();
+
+    // Captura os dados exatamente como estão no seu formulário da Sabina Bongo
+    const nomeAluno = document.getElementById('cad-nome') ? document.getElementById('cad-nome').value.trim() : 'Sabina Bongo';
+    const nomeEncarregado = document.getElementById('cad-encarregado') ? document.getElementById('cad-encarregado').value.trim() : 'Mário Tatiana';
+    const telefone = document.getElementById('cad-telefone') ? document.getElementById('cad-telefone').value.trim() : '925347370';
+    const classe = document.getElementById('cad-classe') ? document.getElementById('cad-classe').value.trim() : '10ª Classe (II Ciclo)';
+    const periodo = document.getElementById('cad-periodo') ? document.getElementById('cad-periodo').value.trim() : 'Noite (18h - 21h)';
+
+    // Se preferir salvar o nome do aluno junto com o encarregado na coluna 'nome'
+    const nomeCompletoParaBanco = nomeAluno + " (Enc: " + nomeEncarregado + ")";
+
+    const formData = new FormData();
+    formData.append('nome', nomeCompletoParaBanco);
+    formData.append('telefone', telefone);
+    formData.append('classe', classe);
+    formData.append('periodo', periodo);
+
+    // Rota relativa pura para funcionar instantaneamente localmente e no Render
+    const URL_CADASTRO = "cadastrar_estudante.php";
+
+    console.log("A enviar matrícula real para o MySQL...");
+
+    fetch(URL_CADASTRO, {
+        method: "POST",
+        body: formData
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Falha na resposta do servidor.");
+        return res.json();
+    })
+    .then(dados => {
+        if (dados.sucesso) {
+            // 🎉 ALERTA COM OS DADOS GERADOS REALMENTE PELO MYSQL DA NUVEM
+            alert(`🎉 MATRÍCULA GRAVADA NO MYSQL DA NUVEM!\n\nID ESTUDANTE: ${dados.id_estudante}\nCÓDIGO VALIDAÇÃO (SENHA): ${dados.codigo_validacao}\n\nOs dados já estão disponíveis automaticamente em todos os programas do professor.`);
+            
+            // Redireciona visualmente para a tela de login
+            if (typeof alternarTela === "function") {
+                alternarTela('view-login');
+            }
+        } else {
+            alert("❌ O Banco de Dados rejeitou a gravação: " + dados.mensagem);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("⚠️ Erro de rede: Não foi possível alcançar o servidor MySQL remoto.");
+    });
+}
     // =========================================================================
     // 🚀 3. MOTOR DE RENDERIZAÇÃO DE BOTÕES E GRID DE CURSOS
     // =========================================================================
