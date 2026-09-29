@@ -186,69 +186,117 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
                 </div>
             </div>
     
-            <!-- QUADRO RESUMO BASE DAS CONTAS -->
-            <div class="resumo-fatura">
-                <div class="resumo-linha">
-                    <span>Preço Total das Cadeiras:</span>
-                    <span id="f_servico">0,00 AKZ</span>
-                </div>
-                
-                <div class="resumo-linha" id="linha_divida" style="color: var(--brand-danger);">
-                    <span>Dívidas Acumuladas no Banco:</span>
-                    <span id="f_divida">0,00 AKZ</span>
-                </div>
-                
-                <div class="resumo-linha" id="linha_desconto_vip" style="color: var(--brand-success); display: none;">
-                    <span>Desconto Cortesia (Apenas 4+ Cadeiras):</span>
-                    <span id="txt_desc_vip">-0,00 AKZ</span>
-                </div>
-                
-                <div class="resumo-linha" id="linha_saldo_existente" style="color: #38bdf8; display: none;">
-                    <span>Saldo Abatido Automaticamente:</span>
-                    <span id="f_saldo_usado">-0,00 AKZ</span>
-                </div>
-                
-                <div class="resumo-linha" id="linha_troco_caixa" style="color: var(--brand-gold); display: none;">
-                    <span>Troco Físico a Devolver:</span>
-                    <span id="lbl_troco_caixa">0,00 AKZ</span>
-                </div>
-                
-                <div class="resumo-linha" id="linha_credito_futuro" style="color: #a855f7; display: none;">
-                    <span>Guardado em Stock (Adiantado):</span>
-                    <span id="lbl_credito_futuro">0,00 AKZ</span>
-                </div>
-                
-                <div class="resumo-linha" style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px; padding-top: 10px; font-weight: bold;">
-                    <span>Total Líquido a Pagar no Caixa:</span>
-                    <span id="txt_total_liquido" style="color: var(--brand-success);">0,00 AKZ</span>
-                </div>
-            </div>
-    
-            <!-- BOTÃO DE CONFIRMAÇÃO DE CAIXA -->
-            <button type="submit" class="btn-pay">Emitir Fatura & Confirmar Pagamento ➔</button>
+             <!-- QUADRO RESUMO BASE DAS CONTAS -->
+        <div class="resumo-fatura">
+        <!-- 🌟 VISUALIZAÇÃO: Mostra o Stock Total que o aluno possui no banco -->
+        <div class="resumo-linha" id="linha_saldo_total_banco" style="color: #38bdf8; display: none; font-weight: bold; margin-bottom: 10px; background: rgba(56, 189, 248, 0.05); padding: 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.15);">
+            <span>Stock Total na Conta:</span>
+            <span id="f_saldo_total_banco">0,00 AKZ</span>
         </div>
-    </form>
+
+        <!-- 📚 COMPONENTE: Injeta a listagem detalhada de disciplinas e preços individuais -->
+        <div id="detalhe_disciplinas_cliente" style="margin-bottom: 15px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 10px; display: none;"></div>
+
+        <div class="resumo-linha">
+            <span>Preço Total das Cadeiras:</span>
+            <span id="f_servico">0,00 AKZ</span>
+        </div>
+        
+        <div class="resumo-linha" id="linha_divida" style="color: var(--brand-danger);">
+            <span>Dívidas Acumuladas no Banco:</span>
+            <span id="f_divida">0,00 AKZ</span>
+        </div>
+        
+        <div class="resumo-linha" id="linha_desconto_vip" style="color: var(--brand-success); display: none;">
+            <span>Desconto Cortesia (Apenas 4+ Cadeiras):</span>
+            <span id="txt_desc_vip">-0,00 AKZ</span>
+        </div>
+        
+        <div class="resumo-linha" id="linha_saldo_existente" style="color: #38bdf8; display: none;">
+            <span>Saldo Abatido Automaticamente:</span>
+            <span id="f_saldo_usado">-0,00 AKZ</span>
+        </div>
+        
+        <div class="resumo-linha" id="linha_troco_caixa" style="color: var(--brand-gold); display: none;">
+            <span>Troco Físico a Devolver:</span>
+            <span id="lbl_troco_caixa">0,00 AKZ</span>
+        </div>
+        
+        <div class="resumo-linha" id="linha_credito_futuro" style="color: #a855f7; display: none;">
+            <span>Guardado em Stock (Adiantado):</span>
+            <span id="lbl_credito_futuro">0,00 AKZ</span>
+        </div>
+        
+        <div class="resumo-linha" style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px; padding-top: 10px; font-weight: bold;">
+            <span>Total Líquido a Pagar no Caixa:</span>
+            <span id="txt_total_liquido" style="color: var(--brand-success);">0,00 AKZ</span>
+        </div>
     </div>
 
-    <!-- 📋 BLOCO DA FATURA DE IMPRESSÃO IMPERIAL -->
-    <div id="bloco_fatura_recibo">
-        <h3>🏫 ACADEMIA AURÉLIUS</h3>
-        <div style="text-align: center; margin-bottom: 12px; font-size: 11px;">Huambo - São Luís Catimba</div>
-        <div class="recibo-linha"><span>Estudante:</span><b id="rec_nome">-</b></div>
-        <div class="recibo-linha"><span>Contacto:</span><span id="rec_tel">-</span></div>
-        <div class="recibo-linha"><span>Mês Pago:</span><span id="rec_mes">-</span></div>
-        <div class="recibo-linha"><span>Disciplinas:</span><span id="rec_qtd">-</span></div>
-        <div style="border-top: 1px dashed #000; margin: 8px 0;"></div>
-        <div class="recibo-linha"><span>Custo Base:</span><span id="rec_custo">-</span></div>
-        <div class="recibo-linha" id="rec_linha_desc" style="display:none;"><span>Desconto (20%):</span><span id="rec_desc">-</span></div>
-        <div class="recibo-linha" id="rec_linha_divida" style="display:none;"><span>Atrasos Pagos:</span><span id="rec_divida">-</span></div>
-        <div class="recibo-linha" id="rec_linha_stock" style="display:none;"><span>Stock Retido:</span><span id="rec_stock">-</span></div>
-        <div class="recibo-total"><span>Total Pago:</span><span id="rec_total">-</span></div>
-        <div style="text-align: center; margin-top: 15px; font-size: 10px; border-top: 2px dashed #000; padding-top: 10px;">
-            Obrigado pela confiança.<br>Documento processado via Caixa.
-        </div>
-        <button onclick="window.print()" style="margin-top: 15px; width: 100%; padding: 5px; font-family: sans-serif; background: #000; color: #fff; border: none; cursor: pointer; font-size: 11px;">Imprimir Fatura 🖨️</button>
-    </div>
+    <!-- BOTÃO DE CONFIRMAÇÃO DE CAIXA -->
+    <button type="submit" class="btn-pay">Emitir Fatura & Confirmar Pagamento ➔</button>
+</div>
+</form>
+</div>
+
+<!-- 📋 BLOCO DA FATURA DE IMPRESSÃO IMPERIAL -->
+<div id="bloco_fatura_recibo" style="display: none; background: #fff; color: #000; padding: 20px; font-family: monospace; max-width: 350px; margin: 20px auto; border: 1px solid #000;">
+<h3 style="text-align: center; margin-bottom: 5px;">🏫 ACADEMIA AURÉLIUS</h3>
+<div style="text-align: center; margin-bottom: 12px; font-size: 11px;">Huambo - São Luís Catimba</div>
+
+<div class="recibo-linha" style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+    <span>Estudante:</span><b id="rec_nome">-</b>
+</div>
+<div class="recibo-linha" style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+    <span>Contacto:</span><span id="rec_tel">-</span>
+</div>
+<div class="recibo-linha" style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+    <span>Data de Emissão:</span><span id="rec_data">-</span>
+</div>
+<div class="recibo-linha" style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+    <span>Mês Pago:</span><span id="rec_mes">-</span>
+</div>
+<div class="recibo-linha" style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+    <span>Turma/Período:</span><span id="rec_turma">-</span>
+</div>
+<div class="recibo-linha" style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+    <span>Disciplinas:</span><span id="rec_qtd">-</span>
+</div>
+
+<div style="border-top: 1px dashed #000; margin: 8px 0;"></div>
+
+<!-- 📚 DETALHAMENTO DAS DISCIPLINAS NO RECIBO IMPRESSO -->
+<div id="rec_detalhe_lista_cadeiras" style="font-size: 11px; margin-bottom: 8px;"></div>
+
+<div style="border-top: 1px dashed #000; margin: 8px 0;"></div>
+
+<div class="recibo-linha" style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+    <span>Custo Base:</span><span id="rec_custo">-</span>
+</div>
+<div class="recibo-linha" id="rec_linha_desc" style="display: none; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: #000;">
+    <span>Desconto VIP:</span><span id="rec_desc">-</span>
+</div>
+<div class="recibo-linha" id="rec_linha_saldo_usado" style="display: none; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+    <span>Saldo Abatido:</span><span id="rec_saldo_usado">-</span>
+</div>
+<div class="recibo-linha" id="rec_linha_divida" style="display: none; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+    <span>Atrasos Pagos:</span><span id="rec_divida">-</span>
+</div>
+<div class="recibo-linha" id="rec_linha_stock" style="display: none; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+    <span>Stock Adiantado:</span><span id="rec_stock">-</span>
+</div>
+
+<div style="border-top: 1px dashed #000; margin: 8px 0;"></div>
+
+<div class="recibo-total" style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px;">
+    <span>Total Pago:</span><span id="rec_total">-</span>
+</div>
+
+<div style="text-align: center; margin-top: 15px; font-size: 10px; border-top: 2px dashed #000; padding-top: 10px;">
+    Obrigado pela confiança.<br>Documento processado via Caixa.
+</div>
+<button onclick="window.print()" style="margin-top: 15px; width: 100%; padding: 8px; font-family: monospace; background: #000; color: #fff; border: none; cursor: pointer; font-size: 12px; font-weight: bold;">Imprimir Fatura 🖨️</button>
+</div>
 
 
 
@@ -310,22 +358,35 @@ function buscarAlunoSincronizado(valorDigitado) {
         return;
     }
 
+    // Consulta em tempo real na Rota 2 do seu próprio PHP (unitel.php)
     fetch(`unitel.php?pesquisa_automatica_cliente=1&termo=${encodeURIComponent(termo)}`)
         .then(res => res.json())
         .then(dados => {
             if (dados.status === 'encontrado') {
                 if (blocoOculto) blocoOculto.style.display = "block";
                 
+                // Mapeia o contacto registado no ecrã
                 const telInput = document.getElementById("telefone_input");
                 if (telInput) telInput.value = dados.telefone || "";
                 
+                // Popula os objetos globais mantendo a compatibilidade do sistema
                 nomeEstudanteAtivo = dados.nome;
                 dadosAlunoAtivo.classe_real = dados.classe; 
                 dadosAlunoAtivo.divida = parseFloat(dados.divida) || 0;
                 dadosAlunoAtivo.saldo_interno = parseFloat(dados.saldo_interno) || 0;
                 dadosAlunoAtivo.turma = dados.turma || "Turma Única A";
 
-                console.log("✔️ Aluno reconhecido:", nomeEstudanteAtivo);
+                // 🌟 FIX CIRÚRGICO: Injeta e exibe imediatamente o Stock Real na label do topo
+                const linhaSaldoTotal = document.getElementById("linha_saldo_total_banco");
+                const txtSaldoTotal = document.getElementById("f_saldo_total_banco");
+                if (linhaSaldoTotal && txtSaldoTotal) {
+                    linhaSaldoTotal.style.display = "flex";
+                    txtSaldoTotal.innerText = dadosAlunoAtivo.saldo_interno.toFixed(2).replace(".", ",") + " AKZ";
+                }
+
+                console.log("✔️ Aluno reconhecido com Stock de:", dadosAlunoAtivo.saldo_interno);
+                
+                // Dispara o motor de cálculo reativo
                 recalcularFaturamentoEscolar();
             } else {
                 if (blocoOculto) blocoOculto.style.display = "none";
@@ -334,13 +395,58 @@ function buscarAlunoSincronizado(valorDigitado) {
         .catch(err => console.error("Erro na rota de busca:", err));
 }
 
-// 🧮 3. MOTOR DE PROCESSAMENTO FINANCEIRO REATIVO
+function calcularTrocoECredito(valorDigitado) {
+    // 🌟 CORREÇÃO CIRÚRGICA: Converte o texto digitado num número real válido
+    var valorEntregue = parseFloat(valorDigitado) || 0;
+
+    // Captura os valores reais calculados no motor financeiro
+    var precoTotalCadeirasReal = dadosAlunoAtivo.custo_cadeiras || 0;
+    var desconto = dadosAlunoAtivo.desconto_ganho || 0;
+    var subTotalFatura = precoTotalCadeirasReal - desconto;
+    var stockDisponivel = dadosAlunoAtivo.saldo_interno || 0;
+    
+    // Quanto foi abatido do stock interno existente
+    var saldoAbatidoAutomático = stockDisponivel >= subTotalFatura ? subTotalFatura : stockDisponivel;
+    var totalLiquidoFinalNoCaixa = subTotalFatura - saldoAbatidoAutomático;
+
+    var lblTroco = document.getElementById("lbl_troco_caixa");
+    var lblCredito = document.getElementById("lbl_credito_futuro");
+    var linhaTroco = document.getElementById("linha_troco_caixa");
+    var linhaCredito = document.getElementById("linha_credito_futuro");
+
+    // 🔄 CASO 1: O saldo interno já cobriu tudo (Total Líquido = 0)
+    if (totalLiquidoFinalNoCaixa === 0 && valorEntregue > 0) {
+        // Todo o dinheiro físico entregue vira Crédito Futuro (Guardado em Stock)
+        if (linhaTroco) linhaTroco.style.display = "none";
+        if (linhaCredito) linhaCredito.style.display = "flex";
+        
+        if (lblTroco) lblTroco.innerText = "0,00 AKZ";
+        if (lblCredito) lblCredito.innerText = valorEntregue.toFixed(2).replace(".", ",") + " AKZ";
+    } 
+    // 🔄 CASO 2: O aluno ainda tinha saldo a pagar no caixa e deu dinheiro a mais
+    else if (totalLiquidoFinalNoCaixa > 0 && valorEntregue > totalLiquidoFinalNoCaixa) {
+        var diferenca = valorEntregue - totalLiquidoFinalNoCaixa;
+        if (linhaTroco) linhaTroco.style.display = "flex";
+        if (linhaCredito) linhaCredito.style.display = "none";
+        
+        if (lblTroco) lblTroco.innerText = diferenca.toFixed(2).replace(".", ",") + " AKZ";
+        if (lblCredito) lblCredito.innerText = "0,00 AKZ";
+    } 
+    // 🔄 CASO 3: O pagamento foi exato ou insuficiente
+    else {
+        if (linhaTroco) linhaTroco.style.display = "none";
+        if (linhaCredito) Richmond; linhaCredito.style.display = "none";
+        if (lblTroco) lblTroco.innerText = "0,00 AKZ";
+        if (lblCredito) lblCredito.innerText = "0,00 AKZ";
+    }
+}
 function recalcularFaturamentoEscolar() {
     if (!nomeEstudanteAtivo) return;
 
     const stringCursoCompleto = dadosAlunoAtivo.classe_real || "";
     const matchDisciplinas = stringCursoCompleto.match(/\[(.*?)\]/);
     let listaDisciplinasDoAluno = [];
+    
     if (matchDisciplinas && matchDisciplinas[1]) {
         listaDisciplinasDoAluno = matchDisciplinas[1].split(",").map(d => d.trim()).filter(d => d !== "");
     }
@@ -356,6 +462,15 @@ function recalcularFaturamentoEscolar() {
         if (selectQtd) selectQtd.value = listaDisciplinasDoAluno.length;
     }
 
+    // Mostra o Stock Total do Aluno na linha do topo
+    const linhaSaldoTotal = document.getElementById("linha_saldo_total_banco");
+    const txtSaldoTotal = document.getElementById("f_saldo_total_banco");
+    if (linhaSaldoTotal && txtSaldoTotal) {
+        linhaSaldoTotal.style.display = "flex";
+        txtSaldoTotal.innerText = dadosAlunoAtivo.saldo_interno.toFixed(2).replace(".", ",") + " AKZ";
+    }
+
+    // Calcula os preços reais mapeados
     let precoTotalCadeirasReal = 0;
     let detalheArray = [];
     const nomeNivelLimpo = stringCursoCompleto.split("[")[0].trim();
@@ -365,13 +480,14 @@ function recalcularFaturamentoEscolar() {
 
     listaDisciplinasDoAluno.forEach(nomeDisc => {
         const configDisc = bancoDisciplinas.find(d => d.n.trim().toLowerCase() === nomeDisc.toLowerCase());
-        const precoVerdadeiro = configDisc ? configDisc.p : 1500;
+        const precoVerdadeiro = configDisc ? configDisc.p : 1500; // Padrão 1500 se não achar
         precoTotalCadeirasReal += precoVerdadeiro;
         detalheArray.push({ nome: nomeDisc, preco: precoVerdadeiro });
     });
 
     dadosAlunoAtivo.custo_cadeiras = precoTotalCadeirasReal;
 
+    // Desconto VIP de 20% se houver 4 ou mais disciplinas
     let desconto = listaDisciplinasDoAluno.length >= 4 ? precoTotalCadeirasReal * 0.20 : 0;
     dadosAlunoAtivo.desconto_ganho = desconto;
     
@@ -380,6 +496,7 @@ function recalcularFaturamentoEscolar() {
 
     let subTotalFatura = precoTotalCadeirasReal - desconto;
 
+    // Abatimento automático de stock
     let stockDisponivel = dadosAlunoAtivo.saldo_interno;
     let saldoAbatidoAutomático = stockDisponivel >= subTotalFatura ? subTotalFatura : stockDisponivel;
 
@@ -390,111 +507,43 @@ function recalcularFaturamentoEscolar() {
     if (totalLiquidoFinalNoCaixa < 0) totalLiquidoFinalNoCaixa = 0;
     dadosAlunoAtivo.total_caixa = totalLiquidoFinalNoCaixa;
 
+    // Injeção de valores na tela
     document.getElementById("f_servico").innerText = precoTotalCadeirasReal.toFixed(2).replace(".", ",") + " AKZ";
     document.getElementById("f_divida").innerText = dadosAlunoAtivo.divida.toFixed(2).replace(".", ",") + " AKZ";
     if (document.getElementById("txt_desc_vip")) document.getElementById("txt_desc_vip").innerText = "-" + desconto.toFixed(2).replace(".", ",") + " AKZ";
     if (document.getElementById("f_saldo_usado")) document.getElementById("f_saldo_usado").innerText = "-" + saldoAbatidoAutomático.toFixed(2).replace(".", ",") + " AKZ";
     document.getElementById("txt_total_liquido").innerText = totalLiquidoFinalNoCaixa.toFixed(2).replace(".", ",") + " AKZ";
 
+    // 📋 EXIBE AS DISCIPLINAS E OS SEUS PREÇOS EXATOS
     renderizarListaDeCadeirasCliente(detalheArray);
     
-    const inputEntregue = document.getElementById("valor_entregue_input");
-    const valorEntregue = inputEntregue ? parseFloat(inputEntregue.value) : 0;
-    calcularTrocoECredito(valorEntregue);
+    const valorAtualInput = parseFloat(document.getElementById("valor_entregue_input").value) || 0;
+    calcularTrocoECredito(valorAtualInput);
 }
-// 🎯 4. SUBMISSÃO DA FATURA DIGITAL, IMPRESSÃO DE RECIBO E ALTERAÇÃO NO MYSQL
-function gerarFaturaDigital(event) {
-    if (event) event.preventDefault();
-    
-    if (!nomeEstudanteAtivo) {
-        alert("⚠️ Erro: Nenhum estudante selecionado para faturamento.");
+
+// 👁️ COMPONENTE VISUAL DAS CADEIRAS (Injeta as disciplinas detalhadamente)
+function renderizarListaDeCadeirasCliente(disciplinas) {
+    var containerDetalhe = document.getElementById("detalhe_disciplinas_cliente");
+    if (!containerDetalhe) return;
+
+    if (disciplinas.length === 0) {
+        containerDetalhe.style.display = "none";
         return;
     }
 
-    const mes = document.getElementById('mes_referencia').value;
-    const entregue = parseFloat(document.getElementById('valor_entregue_input').value) || 0;
-    const telefoneAluno = document.getElementById('telefone_input').value;
-    const txtTotal = document.getElementById("txt_total_liquido").innerText;
-    const totalLiquido = parseFloat(txtTotal.replace(" AKZ", "").replace(".", "").replace(",", ".")) || 0;
-
-    if (entregue < totalLiquido) {
-        alert(`❌ Erro: O valor entregue (${entregue.toLocaleString('pt-PT')} AKZ) é inferior ao total líquido (${totalLiquido.toLocaleString('pt-PT')} AKZ).`);
-        return;
-    }
-
-    // 📅 GERAÇÃO DINÂMICA DA DATA EXIGIDA NO RECIBO HTML
-    const dataAtual = new Date();
-    const dia = String(dataAtual.getDate()).padStart(2, '0');
-    const mesesAno = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-    const nomeMes = mesesAno[dataAtual.getMonth()];
-    const ano = dataAtual.getFullYear();
-    const dataFormatada = `${dia} de ${nomeMes} de ${ano}`;
-
-    // 📋 INJEÇÃO DOS DADOS NO RECIBO VISUAL DO PORTAL
-    if (document.getElementById('rec_nome')) document.getElementById('rec_nome').innerText = nomeEstudanteAtivo;
-    if (document.getElementById('rec_tel')) document.getElementById('rec_tel').innerText = telefoneAluno;
-    if (document.getElementById('rec_mes')) document.getElementById('rec_mes').innerText = mes;
-    if (document.getElementById('rec_data')) document.getElementById('rec_data').innerText = dataFormatada;
-    if (document.getElementById('rec_qtd')) document.getElementById('rec_qtd').innerText = document.getElementById('qtd_disciplinas').value + " Disciplina(s)";
+    containerDetalhe.style.display = "block";
     
-    if (document.getElementById('rec_turma')) document.getElementById('rec_turma').innerText = dadosAlunoAtivo.turma;
-    if (document.getElementById('rec_custo')) document.getElementById('rec_custo').innerText = dadosAlunoAtivo.custo_cadeiras.toLocaleString('pt-PT') + " AKZ";
-
-    if (dadosAlunoAtivo.desconto_ganho > 0) {
-        if (document.getElementById('rec_linha_desc')) document.getElementById('rec_linha_desc').style.display = 'flex';
-        if (document.getElementById('rec_desc')) document.getElementById('rec_desc').innerText = '-' + dadosAlunoAtivo.desconto_ganho.toLocaleString('pt-PT') + " AKZ";
-    } else { 
-        if (document.getElementById('rec_linha_desc')) document.getElementById('rec_linha_desc').style.display = 'none'; 
-    }
-
-    if (dadosAlunoAtivo.divida > 0) {
-        if (document.getElementById('rec_linha_divida')) document.getElementById('rec_linha_divida').style.display = 'flex';
-        if (document.getElementById('rec_divida')) document.getElementById('rec_divida').innerText = '+' + dadosAlunoAtivo.divida.toLocaleString('pt-PT') + " AKZ";
-    } else { 
-        if (document.getElementById('rec_linha_divida')) document.getElementById('rec_linha_divida').style.display = 'none'; 
-    }
-
-    const sobraStock = entregue - totalLiquido;
-    if (sobraStock > 0) {
-        if (document.getElementById('rec_linha_stock')) document.getElementById('rec_linha_stock').style.display = 'flex';
-        if (document.getElementById('rec_stock')) document.getElementById('rec_stock').innerText = '+' + sobraStock.toLocaleString('pt-PT') + " AKZ Retidos";
-    } else { 
-        if (document.getElementById('rec_linha_stock')) document.getElementById('rec_linha_stock').style.display = 'none'; 
-    }
-
-    if (document.getElementById('rec_total')) document.getElementById('rec_total').innerText = entregue.toLocaleString('pt-PT') + " AKZ";
-
-    // Dispara as informações consolidadas contra a rota POST do seu backend unitel.php
-    const formData = new FormData();
-    formData.append('acao_financeira', 'registar_pagamento');
-    formData.append('telefone', telefoneAluno);
-    formData.append('valor_pago', entregue);
-    formData.append('mes_pago', mes);
-
-    fetch("unitel.php", {
-        method: "POST",
-        body: formData
-    })
-    .then(res => {
-        if (!res.ok) throw new Error("A porta de rede rejeitou a resposta.");
-        return res.json();
-    })
-    .then(resposta => {
-        if (resposta.sucesso) {
-            console.log("🎉 Sincronização concluída com sucesso no MySQL central.");
-            const blocoFatura = document.getElementById('bloco_fatura_recibo');
-            if (blocoFatura) {
-                blocoFatura.style.display = 'block';
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-            }
-        } else {
-            alert("❌ O Banco rejeitou a transação: " + resposta.mensagem);
-        }
-    })
-    .catch(err => {
-        console.error("Erro capturado:", err);
-        alert("⚠️ Erro de rede: O dinheiro foi calculado mas não pôde ser salvo na base de dados central.");
+    var htmlGerado = '<div style="font-size: 11px; font-weight: bold; color: var(--brand-gold); text-transform: uppercase; margin-bottom: 6px;">📚 Módulos e Preços Individuais:</div>';
+    
+    disciplinas.forEach(function(item) {
+        var precoFormatado = item.preco.toFixed(2).replace(".", ",");
+        htmlGerado += '<div style="display: flex; justify-content: space-between; font-size: 12.5px; color: #cbd5e1; margin-bottom: 4px;">' +
+                      '<span>📖 ' + item.nome + '</span>' +
+                      '<span style="font-weight: bold; color: #fff;">' + precoFormatado + ' AKZ</span>' +
+                      '</div>';
     });
+
+    containerDetalhe.innerHTML = htmlGerado;
 }
 </script>
 </body>
