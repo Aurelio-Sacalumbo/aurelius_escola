@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
@@ -266,7 +266,7 @@
             formData.append('classe', document.getElementById('cad-classe').value.trim());
             formData.append('periodo', document.getElementById('cad-periodo').value.trim());
         
-            // 🚀 Chama o arquivo PHP de cadastro na mesma pasta raiz do Render
+            // 🚀 Rota relativa direta: Funciona dinamicamente no XAMPP local e no Render!
             fetch("cadastrar_estudante.php", {
                 method: "POST",
                 body: formData
@@ -277,17 +277,19 @@
             })
             .then(dados => {
                 if (dados.sucesso) {
+                    // Mostra o feedback dinâmico automático com a senha e ID gerados pelo banco
                     alert(`🎉 INSCRIÇÃO CONCLUÍDA COM SUCESSO!\n\nID ESTUDANTE: ${dados.id_estudante}\nCÓDIGO VALIDAÇÃO (SENHA): ${dados.codigo_validacao}`);
+                    
                     document.getElementById('form-cadastro').reset();
                     document.getElementById('login-identificador').value = dados.id_estudante;
                     document.getElementById('login-senha').value = dados.codigo_validacao;
-                    alternarTela('view-login');
+                    alternarTela('view-login'); // Leva o aluno direto para a tela de login preenchida
                 } else {
                     alert(dados.mensagem);
                 }
             })
             .catch(() => {
-                alert("⚠️ Falha de ligação ao servidor da nuvem para realizar a inscrição.");
+                alert("⚠️ Falha de ligação: O formulário estático não alcançou o ficheiro cadastrar_estudante.php.");
             });
         }
             // Carrega os estudantes gravados no navegador
