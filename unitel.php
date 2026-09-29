@@ -122,7 +122,7 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     <div class="checkout-container">
         <!-- 🏫 Logótipo Oficial Integrado -->
         <div class="header-logo-escrita">
-            <div class="logo-box">🏫 AURE<span>LIUS</span></div>
+            <div class="logo-box" ACADEMIA<span>AURELIUS</span></div>
             <p style="color: var(--text-muted); font-size: 13px;">Módulo Financeiro: Emissão de Propinas & Mensalidades</p>
         </div>
 
