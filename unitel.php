@@ -1,46 +1,32 @@
 <?php
-// 🗄️ ENGINE DE FATURAÇÃO ACADÉMICA - ACADEMIA AURÉLIUS
-ini_set('display_errors', 0); 
-error_reporting(E_ALL);
-header('Content-Type: text/html; charset=utf-8');
+// Adicione estes cabeçalhos no topo do unitel.php para evitar bloqueios de rede (CORS)
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 
-require_once 'conexao.php'; // Conexão oficial com o MySQL
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit(0);
+}
 
-// 📱 ENDPOINT DE PESQUISA ASSÍNCRONA (AJAX)
-if (isset($_GET['pesquisa_automatica_cliente'])) {
+// Rota de gravação que o fetch chama
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao_financeira']) && $_POST['acao_financeira'] === 'registar_pagamento') {
     header('Content-Type: application/json; charset=utf-8');
-    $termo = isset($_GET['termo']) ? trim($_GET['termo']) : '';
+    require_once 'conexao.php';
     
-    $resposta = ['status' => 'nao_encontrado'];
-
-    if (!empty($termo)) {
-        try {
-            // Busca o aluno mapeando a coluna 'senha' como categoria 'estudante'
-            $query = "SELECT id_utilizador, nome, telefone, saldo_propina FROM utilizadores WHERE (nome LIKE ? OR telefone = ? OR id_unico_escolar = ?) AND senha = 'estudante' LIMIT 1";
-            $stmt = $pdo->prepare($query);
-            $stmt->execute(["%$termo%", $termo, $termo]);
-            $aluno = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($aluno) {
-                $saldoOuDivida = floatval($aluno['saldo_propina']);
-                $resposta = [
-                    'status' => 'encontrado',
-                    'id_utilizador' => $aluno['id_utilizador'],
-                    'nome' => $aluno['nome'],
-                    'telefone' => $aluno['telefone'],
-                    // Se o saldo for negativo na sua tabela, tratamos como dívida, se positivo como stock
-                    'divida' => ($saldoOuDivida < 0) ? abs($saldoOuDivida) : 0,
-                    'saldo_interno' => ($saldoOuDivida > 0) ? $saldoOuDivida : 0
-                ];
-            }
-        } catch (Exception $e) {
-            $resposta = ['status' => 'erro', 'mensagem' => $e->getMessage()];
-        }
+    $telefone = isset($_POST['telefone']) ? trim($_POST['telefone']) : '';
+    $valor = isset($_POST['valor_pago']) ? floatval($_POST['valor_pago']) : 0;
+    
+    try {
+        // Atualiza a coluna saldo_propina somando o valor pago na linha do aluno pelo telefone dele
+        $stmt = $pdo->prepare("UPDATE utilizadores SET saldo_propina = saldo_propina + ? WHERE telefone = ?");
+        $executo = $stmt->execute([$valor, $telefone]);
+        
+        echo json_encode(['sucesso' => $executo, 'mensagem' => 'Pagamento integrado com sucesso!']);
+    } catch (Exception $e) {
+        echo json_encode(['sucesso' => false, 'mensagem' => $e->getMessage()]);
     }
-    echo json_encode($resposta);
     exit;
 }
-?>
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
@@ -179,6 +165,12 @@ if (isset($_GET['pesquisa_automatica_cliente'])) {
         <button onclick="window.print()" style="margin-top: 15px; width: 100%; padding: 5px; font-family: sans-serif; background: #000; color: #fff; border: none; cursor: pointer; font-size: 11px;">Imprimir Fatura 🖨️</button>
     </div>
 
+
+
+
+
+
+
     <!-- 🟢 ENGINE BANCÁRIO REATIVO -->
     <script>
     const PRECO_FIXO_DISCIPLINA = 5000; 
@@ -297,39 +289,87 @@ if (isset($_GET['pesquisa_automatica_cliente'])) {
 
     function gerarFaturaDigital(event) {
         event.preventDefault();
+        
+        // Captura os dados do formulário financeiro
         const mes = document.getElementById('mes_referencia').value;
         const qtd = document.getElementById('qtd_disciplinas').value;
         const entregue = parseFloat(document.getElementById('valor_entregue_input').value) || 0;
-
-        document.getElementById('rec_nome').innerText = nomeEstudanteAtivo;
-        document.getElementById('rec_tel').innerText = document.getElementById('telefone_input').value;
-        document.getElementById('rec_mes').innerText = mes;
-        document.getElementById('rec_qtd').innerText = qtd + " Disciplina(s)";
-        document.getElementById('rec_custo').innerText = dadosAlunoAtivo.custo_cadeiras.toLocaleString('pt-PT') + " AKZ";
-
+        const telefoneAluno = document.getElementById('telefone_input').value;
+        
+        // 📅 GERAÇÃO DINÂMICA DA DATA (Dia, Mês e Ano)
+        const dataAtual = new Date();
+        const dia = String(dataAtual.getDate()).padStart(2, '0');
+        const mesesAno = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const nomeMes = mesesAno[dataAtual.getMonth()];
+        const ano = dataAtual.getFullYear();
+        const dataFormatada = `${dia} de ${nomeMes} de ${ano}`;
+    
+        // 📋 INJEÇÃO DOS DADOS EXIGIDOS NO RECIBO HTML
+        if(document.getElementById('rec_nome')) document.getElementById('rec_nome').innerText = nomeEstudanteAtivo;
+        if(document.getElementById('rec_tel')) document.getElementById('rec_tel').innerText = telefoneAluno;
+        if(document.getElementById('rec_mes')) document.getElementById('rec_mes').innerText = mes;
+        if(document.getElementById('rec_data')) document.getElementById('rec_data').innerText = dataFormatada; // 🌟 Data adicionada
+        if(document.getElementById('rec_qtd')) document.getElementById('rec_qtd').innerText = qtd + " Disciplina(s)";
+        
+        // Injeta Turma e Disciplinas se existirem no objeto carregado pelo banco
+        if(document.getElementById('rec_turma')) {
+            document.getElementById('rec_turma').innerText = dadosAlunoAtivo.turma || "Turma Única A";
+        }
+        if(document.getElementById('rec_custo')) {
+            document.getElementById('rec_custo').innerText = dadosAlunoAtivo.custo_cadeiras.toLocaleString('pt-PT') + " AKZ";
+        }
+    
+        // Estrutura visual de descontos e dívidas
         if(dadosAlunoAtivo.desconto_ganho > 0) {
-            document.getElementById('rec_linha_desc').style.display = 'flex';
-            document.getElementById('rec_desc').innerText = '-' + dadosAlunoAtivo.desconto_ganho.toLocaleString('pt-PT') + " AKZ";
-        } else { document.getElementById('rec_linha_desc').style.display = 'none'; }
-
+            if(document.getElementById('rec_linha_desc')) document.getElementById('rec_linha_desc').style.display = 'flex';
+            if(document.getElementById('rec_desc')) document.getElementById('rec_desc').innerText = '-' + dadosAlunoAtivo.desconto_ganho.toLocaleString('pt-PT') + " AKZ";
+        } else { if(document.getElementById('rec_linha_desc')) document.getElementById('rec_linha_desc').style.display = 'none'; }
+    
         if(dadosAlunoAtivo.divida > 0) {
-            document.getElementById('rec_linha_divida').style.display = 'flex';
-            document.getElementById('rec_divida').innerText = '+' + dadosAlunoAtivo.divida.toLocaleString('pt-PT') + " AKZ";
-        } else { document.getElementById('rec_linha_divida').style.display = 'none'; }
-
+            if(document.getElementById('rec_linha_divida')) document.getElementById('rec_linha_divida').style.display = 'flex';
+            if(document.getElementById('rec_divida')) document.getElementById('rec_divida').innerText = '+' + dadosAlunoAtivo.divida.toLocaleString('pt-PT') + " AKZ";
+        } else { if(document.getElementById('rec_linha_divida')) document.getElementById('rec_linha_divida').style.display = 'none'; }
+    
         const sobraStock = entregue - dadosAlunoAtivo.total_caixa;
         if(sobraStock > 0) {
-            document.getElementById('rec_linha_stock').style.display = 'flex';
-            document.getElementById('rec_stock').innerText = '+' + sobraStock.toLocaleString('pt-PT') + " AKZ Retidos";
-        } else { 
-            document.getElementById('rec_linha_stock').style.display = 'none'; 
-        }
-
-        document.getElementById('rec_total').innerText = entregue.toLocaleString('pt-PT') + " AKZ";
-
-        // Exibe a fatura estruturada no ecrã e faz scroll suave até ela
-        document.getElementById('bloco_fatura_recibo').style.display = 'block';
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            if(document.getElementById('rec_linha_stock')) document.getElementById('rec_linha_stock').style.display = 'flex';
+            if(document.getElementById('rec_stock')) document.getElementById('rec_stock').innerText = '+' + sobraStock.toLocaleString('pt-PT') + " AKZ Retidos";
+        } else { if(document.getElementById('rec_linha_stock')) document.getElementById('rec_linha_stock').style.display = 'none'; }
+    
+        if(document.getElementById('rec_total')) document.getElementById('rec_total').innerText = entregue.toLocaleString('pt-PT') + " AKZ";
+    
+        // 🚀 DISPARO CONTRA ERRO DE REDE: FormData explícito e rota segura
+        const formData = new FormData();
+        formData.append('acao_financeira', 'registar_pagamento');
+        formData.append('telefone', telefoneAluno);
+        formData.append('valor_pago', entregue);
+        formData.append('mes_pago', mes);
+    
+        fetch("unitel.php", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("A porta de rede do servidor rejeitou a resposta.");
+            return res.json();
+        })
+        .then(resposta => {
+            if (resposta.sucesso) {
+                console.log("🎉 Sincronização concluída com sucesso no MySQL remoto.");
+                // Exibe o bloco da fatura e desce a página com scroll suave
+                const blocoFatura = document.getElementById('bloco_fatura_recibo');
+                if(blocoFatura) {
+                    blocoFatura.style.display = 'block';
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                }
+            } else {
+                alert("❌ O Banco rejeitou a transação: " + resposta.mensagem);
+            }
+        })
+        .catch(err => {
+            console.error("Erro capturado:", err);
+            alert("⚠️ Erro de rede: O dinheiro foi calculado mas não pôde ser salvo na base de dados central. Verifique o CORS ou a conexão com a Aiven.");
+        });
     }
     </script>
 </body>
