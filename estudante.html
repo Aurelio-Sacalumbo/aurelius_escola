@@ -259,38 +259,59 @@
         // 💾 INSCRIÇÃO DINÂMICA LOCAL
         function cadastrarEstudanteAutomatico(event) {
             event.preventDefault();
+            event.stopPropagation();
             
-            const formData = new FormData();
-            formData.append('nome', document.getElementById('cad-nome').value.trim());
-            formData.append('telefone', document.getElementById('cad-telefone').value.trim());
-            formData.append('classe', document.getElementById('cad-classe').value.trim());
-            formData.append('periodo', document.getElementById('cad-periodo').value.trim());
+            const nome = document.getElementById('cad-nome').value.trim();
+            const telefone = document.getElementById('cad-telefone').value.trim();
+            const classe = document.getElementById('cad-classe').value.trim();
+            const periodo = document.getElementById('cad-periodo').value.trim();
         
-            // 🚀 Rota relativa direta: Funciona dinamicamente no XAMPP local e no Render!
-            fetch("cadastrar_estudante.php", {
+            if (!nome || !telefone) {
+                alert("❌ Nome e Telefone são obrigatórios!");
+                return false;
+            }
+        
+            const formData = new FormData();
+            formData.append('nome', nome);
+            formData.append('telefone', telefone);
+            formData.append('classe', classe);
+            formData.append('periodo', periodo);
+        
+            // 🚀 IDENTIFICA O AMBIENTE AUTOMATICAMENTE
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            
+            // 🌟 SE ESTIVER NA NUVEM, MUDA "https://onrender.com" PARA A URL DO TEU WEB SERVICE PHP SEPARADO DO RENDER
+            const URL_BASE = isLocal ? "" : "https://onrender.com/";
+            const URL_FINAL = URL_BASE + "cadastrar_estudante.php";
+        
+            console.log("Enviando requisição automática para: " + URL_FINAL);
+        
+            fetch(URL_FINAL, {
                 method: "POST",
                 body: formData
             })
             .then(res => {
-                if (!res.ok) throw new Error();
+                if (!res.ok) throw new Error("Erro de rede do servidor. Status: " + res.status);
                 return res.json();
             })
             .then(dados => {
                 if (dados.sucesso) {
-                    // Mostra o feedback dinâmico automático com a senha e ID gerados pelo banco
-                    alert(`🎉 INSCRIÇÃO CONCLUÍDA COM SUCESSO!\n\nID ESTUDANTE: ${dados.id_estudante}\nCÓDIGO VALIDAÇÃO (SENHA): ${dados.codigo_validacao}`);
+                    alert(`🎉 MATRÍCULA AUTOMÁTICA CONCLUÍDA!\n\nID ÚNICO ACADÉMICO: ${dados.id_estudante}\nCÓDIGO DE ACESSO: ${dados.codigo_validacao}\n\nGuarde estes dados para fazer o login.`);
                     
                     document.getElementById('form-cadastro').reset();
                     document.getElementById('login-identificador').value = dados.id_estudante;
                     document.getElementById('login-senha').value = dados.codigo_validacao;
-                    alternarTela('view-login'); // Leva o aluno direto para a tela de login preenchida
+                    alternarTela('view-login');
                 } else {
-                    alert(dados.mensagem);
+                    alert("❌ Erro no cadastro: " + dados.mensagem);
                 }
             })
-            .catch(() => {
-                alert("⚠️ Falha de ligação: O formulário estático não alcançou o ficheiro cadastrar_estudante.php.");
+            .catch(err => {
+                console.error(err);
+                alert("⚠️ Falha de comunicação com o banco de dados remoto da Aiven. Verifique se o Web Service está online.");
             });
+        
+            return false;
         }
             // Carrega os estudantes gravados no navegador
             const listaEstudantes = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
