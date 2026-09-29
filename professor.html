@@ -684,24 +684,31 @@ function enviarMensagemProfessor(event) {
 
 
 function carregarAlunosNoSeletorDoChat() {
+    // 1. Tenta ir buscar os estudantes guardados na memória local (localStorage)
+    const listaEstudantesLocais = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
+    
+    // 2. Se encontrar alunos locais (como o Estudante Teste), alimenta o seletor imediatamente
+    if (listaEstudantesLocais.length > 0) {
+        console.log("A carregar seletor com alunos da base local: ", listaEstudantesLocais);
+        atualizarSeletorAlunosChat(listaEstudantesLocais);
+        return;
+    }
+
+    // 3. CASO CONTRÁRIO: Se a base local estiver vazia, vai buscar ao MySQL via PHP
     fetch("listar_estudantes.php")
-    .then(res => {
-        if (!res.ok) throw new Error("Erro ao ler lista de estudantes do servidor");
-        return res.json();
-    })
+    .then(res => res.json())
     .then(dados => {
         if (dados.sucesso) {
-            // Chama a função que já estruturámos para desenhar as <option> no HTML
             atualizarSeletorAlunosChat(dados.alunos);
-        } else {
-            console.error("Erro do banco: " + dados.mensagem);
         }
     })
-    .catch(err => {
-        console.error("Falha de rede ao carregar seletor de alunos:", err);
-    });
+    .catch(err => console.error("Falha ao sincronizar seletor do chat:", err));
 }
 
+// 🎯 GARANTE QUE O SELETOR ATUALIZA ASSIM QUE A PÁGINA ABRE
+document.addEventListener("DOMContentLoaded", () => {
+    carregarAlunosNoSeletorDoChat();
+});
 // 🎯 DISPARADOR AUTOMÁTICO: Executa assim que o painel abre no navegador
 document.addEventListener("DOMContentLoaded", () => {
     carregarAlunosNoSeletorDoChat();
