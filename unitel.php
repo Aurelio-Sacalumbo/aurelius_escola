@@ -8,7 +8,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-// Rota de gravação que o fetch chama
+// =========================================================================
+// 📥 ROTA 1: PROCESSAMENTO POST (REGISTAR PAGAMENTO)
+// =========================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao_financeira']) && $_POST['acao_financeira'] === 'registar_pagamento') {
     header('Content-Type: application/json; charset=utf-8');
     require_once 'conexao.php';
@@ -25,8 +27,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao_financeira']) &&
     } catch (Exception $e) {
         echo json_encode(['sucesso' => false, 'mensagem' => $e->getMessage()]);
     }
-    exit;
+    exit; // 🌟 Fecha e corta a execução do POST aqui!
 }
+
+// =========================================================================
+// 🔍 ROTA 2: PROCESSAMENTO GET (PESQUISA AUTOMÁTICA DO ALUNO)
+// =========================================================================
+if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    require_once 'conexao.php';
+    
+    $termo = trim($_GET['termo']);
+    
+    try {
+        // Busca ampla por ID Único, Nome ou Telefone
+        $stmt = $pdo->prepare("SELECT id_utilizador, nome, telefone, email as codigo_validacao, saldo_propina, nivel, id_unico_escolar FROM utilizadores WHERE id_unico_escolar = ? OR nome LIKE ? OR telefone = ? LIMIT 1");
+        $stmt->execute([$termo, "%$termo%", $termo]);
+        $aluno = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($aluno) {
+            // Se o nível/classe estiver NULL (como o do Moma), define uma classe padrão para não quebrar o JS
+            $classeReal = !empty($aluno['nivel']) ? $aluno['nivel'] : "9ª Classe";
+            
+            // Simulação de histórico financeiro seguro baseado no saldo
+            $dividaReal = ($aluno['saldo_propina'] < 0) ? abs($aluno['saldo_propina']) : 0;
+            $saldoReal = ($aluno['saldo_propina'] > 0) ? $aluno['saldo_propina'] : 0;
+
+            echo json_encode([
+                'status' => 'encontrado',
+                'nome' => $aluno['nome'],
+                'telefone' => $aluno['telefone'],
+                'turma' => 'Turma Única A',
+                'classe' => $classeReal,
+                'divida' => $dividaReal,
+                'saldo_interno' => $saldoReal
+            ]);
+        } else {
+            echo json_encode(['status' => 'nao_encontrado']);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['status' => 'erro', 'mensagem' => $e->getMessage()]);
+    }
+    exit; // 🌟 Fecha e corta a execução do GET aqui!
+}
+?>
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
@@ -181,8 +225,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao_financeira']) &&
     };
 
     function buscarAlunoSincronizado(termo) {
-        if (termo.trim().length >= 3) {
-            fetch('unitel.php?pesquisa_automatica_cliente=1&termo=' + encodeURIComponent(termo).trim())
+        // 🔍 Reduzido para 2 caracteres para apanhar nomes curtos instantaneamente!
+        if (termo.trim().length >= 2) { 
+            fetch('unitel.php?pesquisa_automatica_cliente=1&termo=' + encodeURIComponent(termo.trim()))
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'encontrado') {
@@ -190,45 +235,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao_financeira']) &&
                     document.getElementById('telefone_input').value = data.telefone;
                     nomeEstudanteAtivo = data.nome;
                     
+                    // Injeta a classe e turma dinamicamente no objeto de controle
+                    dadosAlunoAtivo.turma = data.turma;
+                    dadosAlunoAtivo.classe = data.classe;
+                    
                     dadosAlunoAtivo.divida = parseFloat(data.divida) || 0;
                     dadosAlunoAtivo.saldo_interno = parseFloat(data.saldo_interno) || 0;
-
+    
                     const statusBox = document.getElementById('msg_status_aluno');
-                    statusBox.style.display = 'block';
-                    
-                    if (dadosAlunoAtivo.divida > 0) {
-                        statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
-                        statusBox.style.color = '#f87171';
-                        statusBox.style.borderColor = 'rgba(239, 68, 68, 0.3)';
-                        statusBox.innerHTML = `⚠️ DÍVIDA ATIVA NO BANCO: Constam mensalidades em atraso de ${dadosAlunoAtivo.divida.toLocaleString('pt-PT')} AKZ!`;
-                    } else {
+                    if (statusBox) {
+                        statusBox.style.display = 'block';
                         statusBox.style.background = 'rgba(34, 197, 94, 0.15)';
                         statusBox.style.color = '#4ade80';
                         statusBox.style.borderColor = 'rgba(34, 197, 94, 0.3)';
-                        statusBox.innerHTML = ` ALUNO REGULARIZADO: Dados de ${data.nome} carregados com sucesso .`;
+                        statusBox.innerHTML = `✅ ALUNO REGULARIZADO: Dados de <b>${data.nome}</b> (${data.classe}) carregados com sucesso.`;
                     }
-
+    
                     const stockBox = document.getElementById('msg_alerta_stock');
-                    if (dadosAlunoAtivo.saldo_interno > 0) {
-                        stockBox.style.display = 'block';
-                        stockBox.style.background = 'rgba(56, 189, 248, 0.15)';
-                        stockBox.style.color = '#38bdf8';
-                        stockBox.style.borderColor = 'rgba(56, 189, 248, 0.3)';
-                        stockBox.innerHTML = `💰 STOCK DISPONÍVEL: Existe um valor adiantado de ${dadosAlunoAtivo.saldo_interno.toLocaleString('pt-PT')} AKZ guardado na conta.`;
-                    } else {
-                        stockBox.style.display = 'none';
+                    if (stockBox) {
+                        if (dadosAlunoAtivo.saldo_interno > 0) {
+                            stockBox.style.display = 'block';
+                            stockBox.style.background = 'rgba(56, 189, 248, 0.15)';
+                            stockBox.style.color = '#38bdf8';
+                            stockBox.style.borderColor = 'rgba(56, 189, 248, 0.3)';
+                            stockBox.innerHTML = `💰 STOCK DISPONÍVEL: Existe um valor adiantado de ${dadosAlunoAtivo.saldo_interno.toLocaleString('pt-PT')} AKZ na conta.`;
+                        } else {
+                            stockBox.style.display = 'none';
+                        }
                     }
-
+    
                     recalcularFaturamentoEscolar();
                 } else {
                     ocultarTelasFaturamento();
                 }
-            });
+            })
+            .catch(err => console.error("Erro na busca assíncrona: ", err));
         } else {
             ocultarTelasFaturamento();
         }
     }
-
     function ocultarTelasFaturamento() {
         document.getElementById('bloco_faturamento_oculto').style.display = 'none';
         document.getElementById('msg_status_aluno').style.display = 'none';

@@ -230,6 +230,7 @@
                         <div class="barbearias-grid" id="lista-barbearias"></div>
                     </div>
             
+                    
                     <!-- =========================================================================
                          📝 TELA 3: CONFIGURADOR DE MATRÍCULA
                          ========================================================================= -->
@@ -260,6 +261,9 @@
                             </div>
                         </div>
     
+
+
+                        
                         <!-- Bloco de Identificação e Contacto Obrigatório -->
                         <div class="bloco-card">
                             <div class="bloco-titulo">👤 Dados Obrigatórios da Matrícula</div>
@@ -313,18 +317,16 @@
                             </div>
                         </div>
     
-                       <!-- Caixa de Resumo de Preço -->
-<div class="resumo-total-box">
-    <div>
-        <span style="font-size: 13px; color: var(--text-muted); display: block;">Total Líquido Estimado:</span>
-        <span id="desconto-aviso" style="font-size: 11px; color: var(--brand-success); font-weight: bold; display:none;">Desconto de 20% Aplicado!</span>
-    </div>
-    <strong style="font-size: 22px; color: var(--brand-gold);" id="preco-total-final">9000.00 Kzs</strong>
-</div>
-
-<!-- 🌟 CORRIGIDO: Agora chama a função de matrícula da escola e passa o evento -->
-<button class="btn-submeter" onclick="submeterMatriculaEscolaReal(event)">Concluir Matrícula ✓</button>
-
+                        <!-- Caixa de Resumo de Preço -->
+                        <div class="resumo-total-box">
+                            <div>
+                                <span style="font-size: 13px; color: var(--text-muted); display: block;">Total Líquido Estimado:</span>
+                                <span id="desconto-aviso" style="font-size: 11px; color: var(--brand-success); font-weight: bold; display:none;">Desconto de 20% Aplicado!</span>
+                            </div>
+                            <strong style="font-size: 22px; color: var(--brand-gold);" id="preco-total-final">0.00 Kzs</strong>
+                        </div>
+    
+                        <button class="btn-submeter" onclick="submeterMatriculaEscolaReal(event)">Concluir Matrícula ✓</button>
                     </div>
             
 
@@ -335,6 +337,11 @@
 
 
 
+
+
+
+
+                    
                     <!-- =========================================================================
                          📋 TELA 4: EMISSÃO DE RECIBO TÉRMICO COMPACTO E UNIFICADO
                          ========================================================================= -->
@@ -709,88 +716,6 @@
         proximaTela(num); 
     }
 
-
-
-
-    function submeterMatriculaEscolaReal(event) {
-        if (event) event.preventDefault();
-    
-        // 🔍 Captura correta e direta dos inputs dinâmicos do seu ecrã de matrícula
-        const inputNome = document.getElementById('cad-nome');
-        const inputTelefone = document.getElementById('cad-telefone');
-        const inputEncarregado = document.getElementById('cad-encarregado');
-        
-        // Captura as configurações de curso e período selecionadas no ecrã ativo
-        const inputClasse = document.getElementById('cad-classe') || { value: '10ª Classe (II Ciclo)' };
-        const inputPeriodo = document.getElementById('cad-periodo') || { value: 'Noite (18h - 21h)' };
-    
-        // Validação rígida para impedir que o motor MySQL receba dados incompletos ou vazios
-        if (!inputNome || !inputTelefone) {
-            alert("⚠️ Erro de Integração: Não foi possível mapear as caixas de texto do ecrã. Verifique se os IDs cad-nome e cad-telefone existem no HTML.");
-            return;
-        }
-    
-        const nomeAluno = inputNome.value.trim();
-        const telefone = inputTelefone.value.trim();
-        const nomeEncarregado = inputEncarregado ? inputEncarregado.value.trim() : "";
-        const classe = inputClasse.value.trim();
-        const periodo = inputPeriodo.value.trim();
-    
-        // 🛑 Bloqueio preventivo: impede requisições vazias de baterem no servidor
-        if (nomeAluno === "" || telefone === "") {
-            alert("⚠️ Por favor, preencha o Nome Completo do Aluno e o Número de Telefone antes de Concluir a Matrícula!");
-            return;
-        }
-    
-        // Unificação de dados para gravação limpa no banco de dados centralizado
-        const nomeCompletoParaBanco = nomeEncarregado !== "" ? `${nomeAluno} (Enc: ${nomeEncarregado})` : nomeAluno;
-    
-        const formData = new FormData();
-        formData.append('nome', nomeCompletoParaBanco);
-        formData.append('telefone', telefone);
-        formData.append('classe', classe);
-        formData.append('periodo', periodo);
-    
-        const URL_CADASTRO = "cadastrar_estudante.php";
-    
-        console.log(`A processar matrícula real via MySQL: Aluno: ${nomeCompletoParaBanco}, Tel: ${telefone}`);
-    
-        fetch(URL_CADASTRO, {
-            method: "POST",
-            body: formData
-        })
-        .then(res => {
-            if (!res.ok) throw new Error("Erro na resposta do servidor académico.");
-            return res.json();
-        })
-        .then(dados => {
-            if (dados.sucesso) {
-                // 🎉 SUCESSO REAL DEVOLVIDO DO MYSQL (DBEAVER/AIVEN)
-                alert(`🎉 MATRÍCULA GRAVADA NO MYSQL!\n\nID ESTUDANTE: ${dados.id_estudante}\nCÓDIGO VALIDAÇÃO (SENHA): ${dados.codigo_validacao}\n\nO registo foi integrado automaticamente em todos os painéis.`);
-                
-                // Limpa o formulário de forma segura
-                if(document.getElementById('form-cadastro-escola')) document.getElementById('form-cadastro-escola').reset();
-                inputNome.value = "";
-                inputTelefone.value = "";
-                if(inputEncarregado) inputEncarregado.value = "";
-                
-                // Preenche o formulário de login automaticamente para facilitar o acesso do aluno
-                if (document.getElementById('login-identificador')) document.getElementById('login-identificador').value = dados.id_estudante;
-                if (document.getElementById('login-senha')) document.getElementById('login-senha').value = dados.codigo_validacao;
-                
-                // 🔄 INTEGRAÇÃO COM O SEU CONTROLADOR SPA: Redireciona de volta para a tela inicial (Login ou Home)
-                // Se a tela 1 for o seu ecrã de login/boas-vindas, ele avança sem travar a navegação
-                proximaTela(1); 
-            } else {
-                alert("❌ O Banco de Dados rejeitou a gravação: " + dados.mensagem);
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert("⚠️ Erro de rede: Não foi possível alcançar o processador de matrículas remoto.");
-        });
-    }
-
     // =========================================================================
     // 🚀 3. MOTOR DE RENDERIZAÇÃO DE BOTÕES E GRID DE CURSOS
     // =========================================================================
@@ -921,6 +846,97 @@ function calcularPrecoTotal() {
 function verificarPreparatorios() {
     alert("📣 Preparatórios Grupo Aurélius:\nAs inscrições abrem brevemente para exames de admissão!");
 }
+
+
+
+
+// 💾 SUBMISSÃO REAL E DINÂMICA DA MATRÍCULA PARA O MYSQL
+function submeterMatriculaEscolaReal(event) {
+    if (event) event.preventDefault();
+
+    // 🔍 Captura cirúrgica através dos IDs reais do seu HTML
+    const inputNome = document.getElementById('input-nome-aluno');
+    const inputEncarregado = document.getElementById('input-nome-encarregado');
+    const inputTelefone = document.getElementById('input-input-telefone') || document.getElementById('input-telefone');
+    const selectPeriodo = document.getElementById('select-periodo');
+    const divCurso = document.getElementById('nome-estabelecimento-atende');
+    const selectMunicipio = document.getElementById('input-municipio');
+    const inputBairro = document.getElementById('input-bairro');
+
+    if (!inputNome || !inputTelefone) {
+        alert("⚠️ Erro Crítico: Elementos do formulário não foram localizados no DOM.");
+        return;
+    }
+
+    const nomeAluno = inputNome.value.trim();
+    const nomeEncarregado = inputEncarregado ? inputEncarregado.value.trim() : "";
+    const telefone = inputTelefone.value.trim();
+    const periodo = selectPeriodo ? selectPeriodo.value : "Tarde";
+    const classe = divCurso ? divCurso.innerText.trim() : "9ª Classe";
+    const municipio = selectMunicipio ? selectMunicipio.value : "";
+    const bairro = inputBairro ? inputBairro.value.trim() : "";
+
+    // 🛑 VALIDAÇÃO DE SEGURANÇA SEVERA AGAINST DADOS VAZIOS
+    if (nomeAluno === "" || telefone === "") {
+        alert("⚠️ Por favor, preencha o Nome do Aluno e o Número de Telefone antes de prosseguir!");
+        return;
+    }
+
+    if (municipio === "" || bairro === "") {
+        alert("⚠️ Por favor, indique o Município e o Bairro para efeitos de localização em Huambo!");
+        return;
+    }
+
+    // Unifica o nome do aluno ao encarregado e anexa a localização para o banco central
+    const nomeCompletoParaBanco = nomeEncarregado !== "" ? `${nomeAluno} (Enc: ${nomeEncarregado})` : nomeAluno;
+    const periodoComLocalizacao = `${periodo} | ${municipio} (${bairro})`;
+
+    const formData = new FormData();
+    formData.append('nome', nomeCompletoParaBanco);
+    formData.append('telefone', telefone);
+    formData.append('classe', classe);
+    formData.append('periodo', periodoComLocalizacao);
+
+    console.log(`Disparando matrícula via AJAX: ${nomeCompletoParaBanco} -> ${classe}`);
+
+    fetch("cadastrar_estudante.php", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("O servidor recusou a requisição.");
+        return res.json();
+    })
+    .then(dados => {
+        if (dados.sucesso) {
+            // 🎉 SUCESSO DO BANCO REVELADO NA TELA
+            alert(`🎉 MATRÍCULA INTEGRADA NO MYSQL COM SUCESSO!\n\nID ESTUDANTE: ${dados.id_estudante}\nCÓDIGO VALIDAÇÃO (SENHA): ${dados.codigo_validacao}\n\nO registo está ativo em todas as centrais.`);
+            
+            // Limpa o formulário reativamente
+            inputNome.value = "";
+            if(inputEncarregado) inputEncarregado.value = "";
+            inputTelefone.value = "";
+            if(inputBairro) inputBairro.value = "";
+            if(selectMunicipio) selectMunicipio.value = "";
+
+            // 🔄 CONTROLADOR SPA: Executa a sua função nativa de navegação para voltar à tela de Login/Home
+            if (typeof proximaTela === "function") {
+                proximaTela(1); 
+            } else if (typeof alternarTela === "function") {
+                alternarTela('view-login');
+            }
+        } else {
+            alert("❌ O Banco de Dados rejeitou: " + dados.mensagem);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("⚠️ Erro de rede: Não foi possível alcançar o barramento do MySQL remoto.");
+    });
+}
+
+
+
 
 // =========================================================================
 // 🚀 5. PROCESSADOR DE SUBMISSÃO DINÂMICA COMPLETO (ORDEM DE VARIÁVEIS SEGURA)

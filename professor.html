@@ -899,6 +899,57 @@ setInterval(sincronizarChatProfessor, 3000);
         }
     }
 
+
+    function renderizarAlunosNoPainelProfessor() {
+    // Bate no arquivo PHP que calcula as métricas e lista os utilizadores do banco
+    fetch("faturamento_admin.php")
+    .then(res => res.json())
+    .then(dados => {
+        if (dados.sucesso) {
+            // 1. Atualiza os contadores no ecrã (O seu já marca 5, mas isto garante o automatismo)
+            if (document.getElementById('estatistica-total-alunos')) {
+                document.getElementById('estatistica-total-alunos').innerText = dados.total_estudantes;
+            }
+
+            // 2. Localiza o corpo da tabela de Administração / Aprovação
+            // 🌟 Verifique se o ID do seu <tbody> é exatamente este ou ajuste
+            const corpoTabelaAdmin = document.getElementById('corpo-tabela-admin') || document.querySelector('.table-wrapper tbody');
+            
+            if (corpoTabelaAdmin) {
+                if (dados.alunos.length > 0) {
+                    // Injeta dinamicamente as linhas vindas diretamente do DBeaver
+                    corpoTabelaAdmin.innerHTML = dados.alunos.map(aluno => `
+                        <tr>
+                            <td><b>${aluno.nome}</b></td>
+                            <td>${aluno.classe || '9ª Classe'}</td>
+                            <td>${aluno.periodo || 'Tarde'}</td>
+                            <td>07:00-08:00</td>
+                            <td>Geral</td>
+                            <td>Prof. Responsável</td>
+                            <td>
+                                <span class="badge" style="background: rgba(234, 179, 8, 0.15); color: #eab308; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">
+                                    Pendente
+                                </span>
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    corpoTabelaAdmin.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px; color:#64748b;">Nenhum estudante pendente no banco.</td></tr>`;
+                }
+            }
+        }
+    })
+    .catch(err => console.error("Erro ao sincronizar listagem do professor:", err));
+}
+
+// 🎯 GATILHO AUTOMÁTICO: Executa a procura assim que o portal do professor abre
+document.addEventListener("DOMContentLoaded", () => {
+    renderizarAlunosNoPainelProfessor();
+});
+
+
+
+
     // 🛠️ Alimenta o Select dinamicamente com as turmas ativas no ecossistema
     function popularFiltroClasses() {
         sincronizarMemoria();
