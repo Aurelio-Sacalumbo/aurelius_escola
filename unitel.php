@@ -71,6 +71,92 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     exit; // 🌟 Fecha e corta a execução do GET aqui!
 }
 ?>
+<?php
+// Adicione estes cabeçalhos no topo do unitel.php para evitar bloqueios de rede (CORS)
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit(0);
+}
+
+// =========================================================================
+// 📥 ROTA 1: PROCESSAMENTO POST (REGISTAR PAGAMENTO)
+// =========================================================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Content-Type: application/json; charset=utf-8');
+    require_once 'conexao.php';
+
+    $inputRaw = file_get_contents("php://input");
+    $dadosJson = json_decode($inputRaw, true);
+
+    if ($dadosJson) {
+        $acao = isset($dadosJson['acao_financeira']) ? trim($dadosJson['acao_financeira']) : '';
+        $telefone = isset($dadosJson['telefone']) ? trim($dadosJson['telefone']) : '';
+        $saldoAbatido = isset($dadosJson['saldo_abatido']) ? floatval($dadosJson['saldo_abatido']) : 0;
+    } else {
+        $acao = isset($_POST['acao_financeira']) ? trim($_POST['acao_financeira']) : '';
+        $telefone = isset($_POST['telefone']) ? trim($_POST['telefone']) : '';
+        $saldoAbatido = 0;
+    }
+
+    if ($acao === 'registar_pagamento') {
+        if (empty($telefone)) {
+            echo json_encode(['sucesso' => false, 'mensagem' => 'Contacto em falta.']);
+            exit;
+        }
+
+        try {
+            // Atualiza o saldo_propina deduzindo o que foi gasto do estoque interno
+            $stmt = $pdo->prepare("UPDATE utilizadores SET saldo_propina = saldo_propina - ? WHERE telefone = ? AND nivel = 'estudante'");
+            $executo = $stmt->execute([$saldoAbatido, $telefone]);
+
+            echo json_encode(['sucesso' => true, 'mensagem' => 'Pagamento integrado com sucesso!']);
+        } catch (Exception $e) {
+            echo json_encode(['sucesso' => false, 'mensagem' => $e->getMessage()]);
+        }
+        exit;
+    }
+}
+
+// =========================================================================
+// 🔍 ROTA 2: PROCESSAMENTO GET (PESQUISA AUTOMÁTICA DO ALUNO)
+// =========================================================================
+if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    require_once 'conexao.php';
+    
+    $termo = trim($_GET['termo']);
+    
+    try {
+        // Correção Cirúrgica: nivel = 'estudante' para a regra de negócio e curso guarda as disciplinas
+        $stmt = $pdo->prepare("SELECT id_utilizador, nome, telefone, saldo_propina, curso, id_unico_escolar FROM utilizadores WHERE (id_unico_escolar = ? OR nome LIKE ? OR telefone = ?) AND nivel = 'estudante' LIMIT 1");
+        $stmt->execute([$termo, "%$termo%", $termo]);
+        $aluno = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($aluno) {
+            $classeReal = !empty($aluno['curso']) ? $aluno['curso'] : "9ª Classe";
+            $saldoReal = ($aluno['saldo_propina'] > 0) ? floatval($aluno['saldo_propina']) : 0;
+
+            echo json_encode([
+                'status' => 'encontrado',
+                'nome' => $aluno['nome'],
+                'telefone' => $aluno['telefone'],
+                'turma' => 'Turma Única A',
+                'classe' => $classeReal,
+                'divida' => 0,
+                'saldo_interno' => $saldoReal
+            ]);
+        } else {
+            echo json_encode(['status' => 'nao_encontrado']);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['status' => 'erro', 'mensagem' => $e->getMessage()]);
+    }
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>

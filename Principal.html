@@ -154,7 +154,7 @@
                         <div class="tela-view active" id="tela-1">
                             <div style="margin-bottom: 20px;">
                                 <span style="color: var(--brand-gold); font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Formação Presencial e Domicíliar <hr></span>
-                                <h2 style="font-size: 22px; font-weight: 800; margin-top: 2px;">Academia Aurelius</h2>
+                                <h2 style="font-size: 22px; font-weight: 800; margin-top: 2px;">Academia Aurélius</h2>
                                 <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">Selecione o fluxo desejado para efetuar a sua matrícula académica no Huambo.</p>
                             </div>
                             
@@ -409,11 +409,11 @@
 <!-- Interface Visual Flutuante do Chat da Alana IA -->
 <div id="chat-alana-container" style="position: fixed; bottom: 85px; right: 20px; width: 320px; background: #0f1423; border: 1px solid #1e293b; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); font-family: sans-serif; display: none; z-index: 10000; overflow: hidden;">
     <div style="background: #111c35; padding: 12px; color: #eab308; font-weight: bold; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center;">
-        <span>🧠 Alana IA - Aurélius</span>
+        <span> Aurélius IA</span>
         <button onclick="toggleChatAlana()" style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer;">X</button>
     </div>
     <div id="alana-logs" style="height: 200px; padding: 10px; overflow-y: auto; font-size: 13px; color: #f8fafc; line-height: 1.4;">
-        <div style="color: #eab308; margin-bottom: 5px;"><b>Alana:</b> Olá! Como estão os mambos dos estudos no Huambo? Podes perguntar-me sobre matemática, código ou matrículas!</div>
+        <div style="color: #eab308; margin-bottom: 5px;"><b>Aurélius:</b> Olá! tudo bem..?, Ben-vindo/a, pergunte o que quiseres sobre o site, dsisciplinas, Pagamento, ou sobre os cursos, terei muito gosto em te ajudar</div>
     </div>
     <div style="padding: 10px; border-top: 1px solid #1e293b; display: flex; gap: 5px;">
         <input type="text" id="alana-input" placeholder="Escreve aqui a tua dúvida..." style="flex: 1; padding: 8px; background: #060b19; border: 1px solid #1e293b; color: #fff; border-radius: 4px; font-size: 12px;">
@@ -446,7 +446,7 @@
         const respostaIA = AlanaIA.processarMensagem(mensagem);
         
         // Exibe a resposta filtrada e limpa no log
-        logs.innerHTML += `<div style="margin-top:8px; color:#eab308;"><b>Alana:</b> ${respostaIA}</div>`;
+        logs.innerHTML += `<div style="margin-top:8px; color:#eab308;"><b>Aurélius:</b> ${respostaIA}</div>`;
         
         input.value = "";
         logs.scrollTop = logs.scrollHeight; // Auto-scroll para acompanhar a conversa
@@ -519,10 +519,10 @@
                 <div>
                     <h4 style="font-size: 13px; font-weight: bold; color: #ca8a04; text-transform: uppercase; margin-bottom: 15px; letter-spacing: 0.5px;">Fluxos de Inscrição</h4>
                     <ul style="list-style: none; padding: 0; margin: 0; font-size: 13px; display: flex; flex-direction: column; gap: 10px;">
-                        <li><a href="estudante.html" style="text-decoration: none; transition: 0.2s; color: #fff; background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; display: block;" onmouseover="this.style.borderColor='#ca8a04';" onmouseout="this.style.borderColor='#334155';">🏫 Portal do Estudante</a></li> 
-                        <li><a href="professor.html" style="text-decoration: none; transition: 0.2s; color: #fff; background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; display: block;" onmouseover="this.style.borderColor='#ca8a04';" onmouseout="this.style.borderColor='#334155';">👨‍🏫 Painel de Pautas (Docente)</a></li>
-                        <li><a href="Lista.html" style="text-decoration: none; transition: 0.2s; color: #fff; background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; display: block;" onmouseover="this.style.borderColor='#ca8a04';" onmouseout="this.style.borderColor='#334155';">📊 Distribuição Geral de Aulas</a></li>
-                        <li><a href="unitel.php" style="text-decoration: none; transition: 0.2s; color: #fff; background: #22c55e; border-radius: 6px; padding: 8px 12px; display: block; text-align: center; font-weight: bold; border: 1px solid transparent;" onmouseover="this.style.background='#16a34a';" onmouseout="this.style.background='#22c55e';">📱 Propinas / Gateway Unitel Money</a></li>
+                        <li><a href="estudante.html" style="text-decoration: none; transition: 0.2s; color: #fff; background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; display: block;" onmouseover="this.style.borderColor='#ca8a04';" onmouseout="this.style.borderColor='#334155';">Portal do Estudante</a></li> 
+                        <li><a href="professor.html" style="text-decoration: none; transition: 0.2s; color: #fff; background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; display: block;" onmouseover="this.style.borderColor='#ca8a04';" onmouseout="this.style.borderColor='#334155';">Painel de Pautas</a></li>
+                        <li><a href="Lista.html" style="text-decoration: none; transition: 0.2s; color: #fff; background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; display: block;" onmouseover="this.style.borderColor='#ca8a04';" onmouseout="this.style.borderColor='#334155';">Distribuição de Aulas</a></li>
+                        <li><a href="unitel.php" style="text-decoration: none; transition: 0.2s; color: #fff; background: #22c55e; border-radius: 6px; padding: 8px 12px; display: block; text-align: center; font-weight: bold; border: 1px solid transparent;" onmouseover="this.style.background='#16a34a';" onmouseout="this.style.background='#22c55e';">Pagamentos de  Propinas  </a></li>
                     </ul>
                 </div>
         
@@ -538,7 +538,7 @@
                         <span style="color: #38bdf8; font-weight: bold;">+244 928 829 299</span>
                     </p>
                     <p style="font-size: 12px; color: #64748b;">
-                        ⏰ Atendimento Secretaria:<br>Seg a Sáb — 08h00 às 22h00
+                        ⏰ Atendimento Secretaria:<br>Seg a Sáb — 08h00 às 21h00
                     </p>
                 </div>
         
@@ -765,6 +765,42 @@
         proximaTela(2);
     }
 
+
+    let gatilhoInstalacaoPWA = null;
+
+// Escuta o navegador avisar que o site está pronto para ser instalado
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Impede o Chrome de abrir a janela padrão de forma bruta
+    e.preventDefault();
+    // Guarda o evento para disparar quando clicarem no seu botão
+    gatilhoInstalacaoPWA = e;
+    
+    // Procura o ID do seu botão de instalação no HTML e torna-o visível
+    const btnInstalar = document.getElementById('btn-instalar-pwa') || document.querySelector('.btn-instalar');
+    if (btnInstalar) {
+        btnInstalar.style.display = 'block';
+        
+        // Associa o clique ao processo imperial de instalação
+        btnInstalar.addEventListener('click', () => {
+            if (gatilhoInstalacaoPWA) {
+                gatilhoInstalacaoPWA.prompt();
+                gatilhoInstalacaoPWA.userChoice.then((escolha) => {
+                    if (escolha.outcome === 'accepted') {
+                        console.log('🎉 Aluno instalou a App com sucesso!');
+                    }
+                    gatilhoInstalacaoPWA = null;
+                });
+            }
+        });
+    }
+});
+
+
+
+
+
+
+
     // =========================================================================
 // 🏛️ 4. SELETOR DE ANOS LETIVOS E CONFIGURADOR DE DISCIPLINAS
 // =========================================================================
@@ -843,10 +879,51 @@ function calcularPrecoTotal() {
     if (elPreco) elPreco.innerText = `${total.toFixed(2)} Kzs`;
 }
 
+// 🎯 DISPARADOR REAL DOS TÓPICOS DO CURSO PREPARATÓRIO (HUAMBO 2026)
 function verificarPreparatorios() {
-    alert("📣 Preparatórios Grupo Aurélius:\nAs inscrições abrem brevemente para exames de admissão!");
-}
+    // Constrói a visualização dos módulos de alto rendimento diretamente na tela do aluno
+    const dadosPreparatorio = `
+📚 <b>CURSOS PREPARATÓRIOS ATIVOS - ACADEMIA AURÉLIUS</b><br>
+--------------------------------------------------<br>
+💻 <b>Informática - 1º Ano:</b><br>
+   • Algorítmo e Lógica de Programação (6.000 AKZ)<br>
+   • Matemática Discreta (6.500 AKZ)<br>
+<br>
+⚕️ <b>Medicina - 1º Ano:</b><br>
+   • Anatomia Humana I (8.500 AKZ)<br>
+   • Biologia Celular (7.000 AKZ)<br>
+<br>
+⚖️ <b>Direito - 1º Ano:</b><br>
+   • Introdução ao Estudo do Direito (8.500 AKZ)<br>
+   • História do Direito (8.000 AKZ)<br>
+--------------------------------------------------<br>
+🎯 <i>As inscrições para os exames de admissão estão abertas na Secretaria Virtual!</i>
+    `;
 
+    // Localiza uma div de avisos ou injeta um modal flutuante elegante na tela
+    let modalAviso = document.getElementById("central-avisos-preparatorio");
+    if (!modalAviso) {
+        modalAviso = document.createElement("div");
+        modalAviso.id = "central-avisos-preparatorio";
+        modalAviso.style.position = "fixed";
+        modalAviso.style.top = "50%";
+        modalAviso.style.left = "50%";
+        modalAviso.style.transform = "translate(-50%, -50%)";
+        modalAviso.style.background = "#0b1329";
+        modalAviso.style.color = "#fff";
+        modalAviso.style.padding = "20px";
+        modalAviso.style.borderRadius = "8px";
+        modalAviso.style.border = "2px solid var(--brand-gold, #eab308)";
+        modalAviso.style.zIndex = "10000";
+        modalAviso.style.fontFamily = "monospace";
+        modalAviso.style.fontSize = "13px";
+        modalAviso.style.boxShadow = "0 10px 25px rgba(0,0,0,0.5)";
+        document.body.appendChild(modalAviso);
+    }
+
+    modalAviso.style.display = "block";
+    modalAviso.innerHTML = dadosPreparatorio + `<br><br><button onclick="this.parentNode.style.display='none'" style="width:100%; padding:8px; background:var(--brand-gold, #eab308); color:#000; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Fechar Painel ➔</button>`;
+}
 
 
 function submeterMatriculaEscolaReal(event) {

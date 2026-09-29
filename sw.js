@@ -1,12 +1,16 @@
 // ⚡ ATUALIZAÇÃO DE CACHE DA ACADEMIA AURÉLIUS
-const CACHE_NAME = 'aurelius-cache-v2'; // 🌟 Alterado para v2 para descolar as telas velhas
-const assets = [
+const CACHE_NAME = 'aurelius-cache-v5'; // 🌟 Incrementado para v5 para forçar a limpeza em todos os telemóveis
+
+// 🌟 CORREÇÃO: Nome unificado em MAIÚSCULAS para bater certo com a função install
+const ASSETS = [
   './',
   './estudante.html',
   './Principal.html',
   './professor.html',
   './lista.html',
-  './manifest.json'
+  './manifest.json',
+  './icone-192.png',
+  './icone-512.png'
 ];
 
 // Instalação - Guarda os ficheiros estáticos em cache

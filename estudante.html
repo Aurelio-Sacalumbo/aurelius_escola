@@ -111,7 +111,7 @@
         <div class="tela-view active" id="view-login">
             <div class="card" style="border-top: 4px solid var(--brand-gold);">
                 <div style="text-align: center; margin-bottom: 25px;">
-                    <span style="font-size: 32px; display: block; margin-bottom: 5px;">🏫</span>
+                  
                     <h2 style="color: #fff; font-weight: 900; letter-spacing: 0.5px; font-size: 20px; text-transform: uppercase;">PORTAL ACADÉMICO</h2>
                     <p style="color: var(--text-muted); font-size: 12.5px; margin-top: 4px;">Insira os seus dados de inscrição para aceder localmente.</p>
                 </div>
@@ -250,8 +250,6 @@
     }
 
     let estudianteLogado = null;
-
-    // Navegação Interna da Aplicação (SPA)
     function alternarTela(idTelaAlvo) {
         const telas = document.querySelectorAll('.tela-view');
         telas.forEach(tela => {
@@ -261,16 +259,12 @@
         const telaAlvo = document.getElementById(idTelaAlvo);
         if (telaAlvo) {
             telaAlvo.classList.add('active');
-            console.log(`🎯 Tela alternada para: ${idTelaAlvo}`);
+            console.log("🎯 Tela alternada para: " + idTelaAlvo);
         } else {
-            console.error(`❌ Erro: A tela '${idTelaAlvo}' não existe.`);
+            console.error("❌ Erro: A div '" + idTelaAlvo + "' não existe.");
         }
     }
-    
-
-
-
-
+    </script>
     // 🔐 PROCESSAR ACESSO (LOGIN)
     function processarAcesso(event) {
         if (event) event.preventDefault();
