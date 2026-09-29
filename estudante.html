@@ -279,14 +279,11 @@
         
             // 🚀 IDENTIFICA O AMBIENTE AUTOMATICAMENTE
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            
-            // 🌟 SE ESTIVER NA NUVEM, MUDA "https://onrender.com" PARA A URL DO TEU WEB SERVICE PHP SEPARADO DO RENDER
-            const URL_BASE = isLocal ? "" : "https://onrender.com/";
-            const URL_FINAL = URL_BASE + "cadastrar_estudante.php";
+    
+            // Substitua o link abaixo pela URL real do seu Web Service PHP do Render se for diferente:
+            const URL_API = isLocal ? "cadastrar_estudante.php" : "https://onrender.com";
         
-            console.log("Enviando requisição automática para: " + URL_FINAL);
-        
-            fetch(URL_FINAL, {
+            fetch(URL_API, {
                 method: "POST",
                 body: formData
             })
