@@ -52,34 +52,40 @@
             </tr>
         </thead>
         <tbody id="listaPublica">
-            <!-- Dados puros carregados da base de dados aqui -->
+            <!-- Dados puros carregados localmente aqui -->
         </tbody>
     </table>
 
 <script>
+    // 🧠 SINCRONIZAÇÃO COMPLETA COM A BASE LOCAL DO PROFESSOR
     document.addEventListener("DOMContentLoaded", () => {
-        fetch('gerir_pauta.php')
-            .then(res => res.json())
-            .then(res => {
-                if(res.sucesso) {
-                    const tbody = document.getElementById('listaPublica');
-                    tbody.innerHTML = "";
-                    res.dados.forEach(row => {
-                        let badgeColor = row.estado === 'aprovado' ? '#10b981' : (row.estado === 'rejeitado' ? '#ef4444' : '#f59e0b');
-                        tbody.innerHTML += `
-                            <tr>
-                                <td><b>${row.nome_aluno}</b></td>
-                                <td>${row.classe}</td>
-                                <td>${row.periodo}</td>
-                                <td><code>${row.hora}</code></td>
-                                <td>${row.disciplina}</td>
-                                <td>${row.professor}</td>
-                                <td><span class="badge" style="background:${badgeColor};">${row.estado}</span></td>
-                            </tr>
-                        `;
-                    });
-                }
-            });
+        const tbody = document.getElementById('listaPublica');
+        if (!tbody) return;
+
+        // Captura os mesmos dados que o professor acabou de salvar
+        const dadosLocais = JSON.parse(localStorage.getItem('bd_pautas_professor')) || [];
+        tbody.innerHTML = "";
+
+        if (dadosLocais.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:#94a3b8;">Nenhuma turma operacional registada no momento.</td></tr>`;
+            return;
+        }
+
+        // Renderiza os dados na tabela pública
+        dadosLocais.forEach(row => {
+            let badgeColor = row.estado === 'aprovado' ? '#10b981' : (row.estado === 'rejeitado' ? '#ef4444' : '#f59e0b');
+            tbody.innerHTML += `
+                <tr>
+                    <td><b>${row.nome_aluno}</b></td>
+                    <td>${row.classe}</td>
+                    <td>${row.periodo}</td>
+                    <td><code>${row.hora}</code></td>
+                    <td>${row.disciplina}</td>
+                    <td>${row.professor}</td>
+                    <td><span class="badge" style="background:${badgeColor};">${row.estado}</span></td>
+                </tr>
+            `;
+        });
     });
 </script>
 
