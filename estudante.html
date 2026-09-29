@@ -301,6 +301,10 @@
         });
     }
     
+
+
+
+
     // 🔐 PROCESSAR ACESSO (LOGIN)
     function processarAcesso(event) {
         if (event) event.preventDefault();
@@ -364,6 +368,56 @@
             }
         });
     }
+
+
+
+
+    function carregarCadernoNotasEstudante(idEstudanteLogado) {
+    // Alvo: o <tbody> da tabela de notas do estudante
+    // 🌟 Certifique-se de que a sua tabela tem um <tbody> com ID ou ajuste este seletor
+    const corpoTabelaEstudante = document.querySelector('#view-dashboard table tbody') || document.getElementById('corpo-notas-estudante');
+    
+    if (!corpoTabelaEstudante) return;
+
+    // Mensagem de carregamento
+    corpoTabelaEstudante.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:12px; color:var(--brand-gold);">⏳ A sincronizar caderneta com a base central...</td></tr>`;
+
+    fetch(`obter_notas_estudante.php?id_estudante=${encodeURIComponent(idEstudanteLogado)}`)
+    .then(res => res.json())
+    .then(dados => {
+        if (dados.sucesso && dados.notas) {
+            const n = dados.notas;
+            
+            // Cálculos pedagógicos de média e estatuto em tempo real
+            const nota1 = parseFloat(n.n1) || 0;
+            const nota2 = parseFloat(n.n2) || 0;
+            const nota3 = parseFloat(n.n3) || 0;
+            const media = (nota1 + nota2 + nota3) / 3;
+            
+            const estatuto = media >= 10 ? "Aprovado" : "Avaliação";
+            const corEstatuto = media >= 10 ? "#22c55e" : "#eab308";
+
+            // Limpa o aviso de "Nenhuma disciplina" e injeta a linha real com as notas do MySQL
+            corpoTabelaEstudante.innerHTML = `
+                <tr style="border-bottom: 1px solid #1e293b;">
+                    <td style="padding: 12px; color: #fff;">📘 Tronco Geral / Disciplinas Ativas</td>
+                    <td style="text-align: center; font-weight: bold; color: #fff;">${n.n1 || 0}</td>
+                    <td style="text-align: center; font-weight: bold; color: #fff;">${n.n2 || 0}</td>
+                    <td style="text-align: center; font-weight: bold; color: #fff;">${n.n3 || 0}</td>
+                    <td style="text-align: center; color: #94a3b8;">${n.faltas || 0}</td>
+                    <td style="text-align: right; font-weight: bold; color: ${corEstatuto};">${estatuto}</td>
+                </tr>
+            `;
+        } else {
+            corpoTabelaEstudante.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;">Nenhuma nota lançada para este perfil no momento.</td></tr>`;
+        }
+    })
+    .catch(err => {
+        console.error("Erro de sincronismo no painel do aluno:", err);
+        corpoTabelaEstudante.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#ef4444;">⚠️ Erro de rede ao buscar notas.</td></tr>`;
+    });
+}
+
 
 
     let idEstudanteChatAtivo = "AUR-840044"; // Mude dinamicamente para o ID do aluno selecionado
@@ -448,30 +502,35 @@ const URL_BACKEND = isLocal ? "cadastrar_estudante.php" : window.location.origin
 const URL_LOGIN = isLocal ? "login_estudante.php" : window.location.origin + "/login_estudante.php";
 
     
-        fetch(URL_LOGIN, {
-            method: "POST",
-            body: formData
-        })
-        .then(res => res.json())
-        .then(dados => {
-            if (dados.sucesso) {
-                erroDiv.style.display = "none";
-                estudanteLogado = dados.estudante;
-                carregarDadosDashboard();
-                alternarTela('view-dashboard');
-                document.getElementById('menu-logout').style.display = "block";
-            } else {
-                // EXIBE A MENSAGEM REAL VINDA DO PHP (Ex: "❌ Código de validação incorreto.")
-                erroDiv.style.display = "block";
-                erroDiv.innerHTML = dados.mensagem;
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            erroDiv.style.display = "block";
-            erroDiv.innerHTML = "⚠️ Falha ao conectar ao servidor MySQL.";
-        });
+fetch(URL_LOGIN, {
+    method: "POST",
+    body: formData
+})
+.then(res => res.json())
+.then(dados => {
+    if (dados.sucesso) {
+        erroDiv.style.display = "none";
+        estudanteLogado = dados.estudante;
+        
+        // 🌟 LINHA ADICIONADA: Ativa o caderno reativo com o ID do aluno logado (Ex: AUR-799922)
+        if (dados.estudante && dados.estudante.id_unico_escolar) {
+            carregarCadernoNotasEstudante(dados.estudante.id_unico_escolar);
+        } else if (typeof carregarDadosDashboard === "function") {
+            carregarDadosDashboard(); // Mantém o seu backup caso use outra estrutura
+        }
+
+        alternarTela('view-dashboard');
+        document.getElementById('menu-logout').style.display = "block";
+    } else {
+        erroDiv.style.display = "block";
+        erroDiv.innerHTML = dados.mensagem;
     }
+})
+.catch(err => {
+    console.error(err);
+    erroDiv.style.display = "block";
+    erroDiv.innerHTML = "⚠️ Falha ao conectar ao servidor MySQL.";
+});
     
     // 📊 INJEÇÃO DOS DADOS NO PAINEL
     function carregarDadosDashboard() {
