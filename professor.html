@@ -184,7 +184,6 @@
             <button type="submit" class="btn" style="background: var(--brand-blue-glow); color: #000;">Publicar Livro Digital 🚀</button>
                     </form>
         
-           
     </div>
 
 
@@ -778,82 +777,101 @@ document.addEventListener("DOMContentLoaded", carregarIndicadoresETurmas);
 
 
 
-// 🔄 2. A FUNÇÃO CHAMADA NO ONCHANGE DO SELECT
+// =========================================================================
+// 🚀 MOTOR DE SINCRONIZAÇÃO AUTOMÁTICA E DINÂMICA VIA MYSQL
+// =========================================================================
+
+// 🔄 1. CARREGA OS INDICADORES DE FATURAMENTO E ALIMENTA O SELECT DE TURMAS
+function sincronizarPainelProfessorAutomatico() {
+    fetch("obter_pauta_prof.php?acao=indicadores")
+    .then(res => {
+        if (!res.ok) throw new Error("Falha na ligação com o servidor.");
+        return res.json();
+    })
+    .then(dados => {
+        if (dados.sucesso) {
+            // Injeta os dados em tempo real nos Indicadores Globais do seu HTML
+            if(document.getElementById('estatistica-total-alunos')) document.getElementById('estatistica-total-alunos').innerText = dados.total;
+            if(document.getElementById('estatistica-regular')) document.getElementById('estatistica-regular').innerText = dados.regular;
+            if(document.getElementById('estatistica-superior')) document.getElementById('estatistica-superior').innerText = dados.superior;
+            if(document.getElementById('estatistica-faturamento')) {
+                document.getElementById('estatistica-faturamento').innerText = Number(dados.faturamento).toLocaleString('pt-AO', {minimumFractionDigits: 2}) + " Kzs";
+            }
+
+            // Alimenta o filtro de turmas (<select id="filtro-classe">) com os cursos reais do MySQL
+            const seletor = document.getElementById('filtro-classe');
+            if (seletor) {
+                // Guarda a seleção atual para não resetar visualmente caso mude
+                const valorAtual = seletor.value;
+                
+                seletor.innerHTML = '<option value="">-- Selecione uma Classe Ativa --</option>' +
+                    dados.turmas.map(t => `<option value="${t}">${t}</option>`).join('');
+                
+                if (valorAtual) seletor.value = valorAtual;
+            }
+        }
+    })
+    .catch(err => console.error("Erro ao carregar indicadores dinâmicos:", err));
+}
+
+// 🔄 2. DETETA A SELEÇÃO DA TURMA E MONTA A CADERNETA DE NOTAS NO ECRÃ
 function carregarPautaGlobalProf() {
     const classeSelecionada = document.getElementById('filtro-classe').value;
     const cardPauta = document.getElementById('card-pauta-professor');
     const corpoTabela = document.getElementById('corpo-pauta-professor');
 
-    // Se o professor limpar a seleção, esconde a caderneta
     if (!classeSelecionada) {
         if(cardPauta) cardPauta.style.display = "none";
         return;
     }
 
-    // Procura os alunos reais no MySQL (Aiven) vinculados a esta turma
     fetch(`obter_pauta_prof.php?acao=carregar_alunos&classe=${encodeURIComponent(classeSelecionada)}`)
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok) throw new Error("Erro ao buscar alunos da turma.");
+        return res.json();
+    })
     .then(dados => {
         if (dados.sucesso) {
-            if(cardPauta) cardPauta.style.display = "block"; // 🌟 Torna a caderneta visível na tela
+            if(cardPauta) cardPauta.style.display = "block"; // Torna o bloco de notas visível
             
-            if (dados.alunos.length === 0) {
-                corpoTabela.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;">Nenhum estudante matriculado nesta classe.</td></tr>`;
+            if (!dados.alunos || dados.alunos.length === 0) {
+                corpoTabela.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;">Nenhum estudante matriculado nesta classe no banco.</td></tr>`;
                 return;
             }
 
-            // Injeta as linhas no #corpo-pauta-professor com inputs interativos para o docente
+            // Injeta as linhas reais extraídas da tabela utilizadores do phpMyAdmin
             corpoTabela.innerHTML = dados.alunos.map(a => {
+                // Lógica de cálculo estático simples para exibição do estatuto
+                const n1 = parseFloat(a.nota_n1) || 0;
+                const n2 = parseFloat(a.nota_n2) || 0;
+                const n3 = parseFloat(a.nota_n3) || 0;
+                const media = (n1 + n2 + n3) / 3;
+                const estatuto = media >= 10 ? "Aprovado" : "Avaliação";
+                const corBadge = media >= 10 ? "#22c55e" : "#eab308";
+
                 return `
                     <tr data-id="${a.id_utilizador}">
-                        <td><b>${a.nome}</b><br><span style="font-size:10px; color:#64748b;">${a.id_unico_escolar || 'Sem ID'}</span></td>
-                        <td style="text-align: center;"><input type="number" class="input-nota" value="${a.nota_n1 || 0}" min="0" max="20" style="width:50px; text-align:center; background:#070b14; color:#fff; border:1px solid #1e293b; padding:4px; border-radius:4px;"></td>
-                        <td style="text-align: center;"><input type="number" class="input-nota" value="${a.nota_n2 || 0}" min="0" max="20" style="width:50px; text-align:center; background:#070b14; color:#fff; border:1px solid #1e293b; padding:4px; border-radius:4px;"></td>
-                        <td style="text-align: center;"><input type="number" class="input-nota" value="${a.nota_n3 || 0}" min="0" max="20" style="width:50px; text-align:center; background:#070b14; color:#fff; border:1px solid #1e293b; padding:4px; border-radius:4px;"></td>
-                        <td style="text-align: center;"><input type="number" class="input-nota" value="${a.faltas || 0}" min="0" style="width:50px; text-align:center; background:#070b14; color:#fff; border:1px solid #1e293b; padding:4px; border-radius:4px;"></td>
-                        <td style="text-align: right;"><span class="badge" style="background:rgba(234,179,8,0.1); color:#eab308; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:bold;">Avaliando</span></td>
+                        <td>
+                            <b>${a.nome}</b><br>
+                            <span style="font-size:10px; color:#64748b;">${a.id_unico_escolar || 'Sem ID'} | Horário: 07:00-08:00</span>
+                        </td>
+                        <td style="text-align: center;"><input type="number" step="0.1" class="input-nota" value="${a.nota_n1 || 0}" min="0" max="20" style="width:60px; text-align:center; background:#070b14; color:#fff; border:1px solid #1e293b; padding:6px; border-radius:4px;"></td>
+                        <td style="text-align: center;"><input type="number" step="0.1" class="input-nota" value="${a.nota_n2 || 0}" min="0" max="20" style="width:60px; text-align:center; background:#070b14; color:#fff; border:1px solid #1e293b; padding:6px; border-radius:4px;"></td>
+                        <td style="text-align: center;"><input type="number" step="0.1" class="input-nota" value="${a.nota_n3 || 0}" min="0" max="20" style="width:60px; text-align:center; background:#070b14; color:#fff; border:1px solid #1e293b; padding:6px; border-radius:4px;"></td>
+                        <td style="text-align: center;"><input type="number" class="input-nota" value="${a.faltas || 0}" min="0" style="width:50px; text-align:center; background:#070b14; color:#fff; border:1px solid #1e293b; padding:6px; border-radius:4px;"></td>
+                        <td style="text-align: right;"><span class="badge" style="background:rgba(255,255,255,0.02); color:${corBadge}; border: 1px solid ${corBadge}33; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:bold;">${estatuto}</span></td>
                     </tr>
                 `;
             }).join('');
         }
     })
-    .catch(err => console.error("Erro ao montar caderneta:", err));
+    .catch(err => console.error("Erro ao processar caderneta docente:", err));
 }
-// Executa o carregamento das turmas ao carregar o DOM
-// 🎯 DISPARADOR ÚNICO DE CARREGAMENTO (DOM)
+
+// 🎯 DISPARADOR AUTOMÁTICO DE ENTRADA (DOM)
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Puxa os indicadores de Huambo e as turmas do MySQL
-    if (typeof carregarIndicadoresETurmas === "function") {
-        carregarIndicadoresETurmas();
-    }
-    
-    // 2. Alimenta o seletor do chat com os alunos locais ou do banco
-    if (typeof carregarAlunosNoSeletorDoChat === "function") {
-        carregarAlunosNoSeletorDoChat();
-    }
+    sincronizarPainelProfessorAutomatico(); // Carrega faturamento e turmas ao abrir
 });
-
-// Mantém a função do chat intacta para dar suporte ao gatilho acima
-function carregarAlunosNoSeletorDoChat() {
-    const listaEstudantesLocais = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
-    
-    if (listaEstudantesLocais.length > 0) {
-        console.log("A carregar seletor com alunos da base local: ", listaEstudantesLocais);
-        if (typeof atualizarSeletorAlunosChat === "function") {
-            atualizarSeletorAlunosChat(listaEstudantesLocais);
-        }
-        return;
-    }
-
-    fetch("listar_estudantes.php")
-    .then(res => res.json())
-    .then(dados => {
-        if (dados.sucesso && typeof atualizarSeletorAlunosChat === "function") {
-            atualizarSeletorAlunosChat(dados.alunos);
-        }
-    })
-    .catch(err => console.error("Falha ao sincronizar seletor do chat:", err));
-}
 
 // 🎯 GARANTE QUE O SELETOR ATUALIZA ASSIM QUE A PÁGINA ABRE
 document.addEventListener("DOMContentLoaded", () => {
@@ -946,6 +964,10 @@ setInterval(sincronizarChatProfessor, 3000);
 document.addEventListener("DOMContentLoaded", () => {
     renderizarAlunosNoPainelProfessor();
 });
+
+
+
+
 
 
 
