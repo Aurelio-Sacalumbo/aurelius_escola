@@ -232,271 +232,164 @@
             </div>
         </div>
 
+
+
     </div> <!-- Fim do Container -->
 
+
+
+
+
+
     <script>
-    // ⚙️ BASE DE DADOS LOCAL DINÂMICA (localStorage)
-    // Inicializa a tabela como um array vazio pronto para receber qualquer estudante do país
-    if (!localStorage.getItem('bd_estudantes')) {
-        localStorage.setItem('bd_estudantes', JSON.stringify([]));
-    }
-
-    let estudanteLogado = null;
-
-    // Navegação Interna da Aplicação (SPA)
-    function alternarTela(idTela) {
-        document.querySelectorAll('.tela-view').forEach(t => t.classList.remove('active'));
-        document.getElementById(idTela).classList.add('active');
-    }
-
-    // 💾 INSCRIÇÃO 100% DINÂMICA E AUTOMÁTICA
-    function cadastrarEstudanteAutomatico(event) {
-        event.preventDefault();
-        
-        const numAleatorio = Math.floor(100000 + Math.random() * 900000);
-        const novoID = `AUR-${numAleatorio}`;
-        const novoCodigo = Math.random().toString(36).substring(2, 8).toUpperCase();
-    
-        // Cria a estrutura padrão limpa. Sem dados, notas ou livros fixos!
-        const novoAluno = {
-            id: novoID,
-            telefone: document.getElementById('cad-telefone').value.trim(),
-            codigoValidacao: novoCodigo,
-            nome: document.getElementById('cad-nome').value.trim(),
-            classe: document.getElementById('cad-classe').value.trim(),
-            turma: "Aguardando Matrícula", 
-            periodo: document.getElementById('cad-periodo').value.trim(),
-            disciplinas: [], // Fica totalmente vazio até o encarregado pagar no index.html
-            livros: []       // Fica totalmente vazio até o encarregado pagar no index.html
-        };
-    
-        let lista = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
-        
-        // Bloqueia duplicação de número de telefone no país
-        const telefoneDuplicado = lista.some(aluno => aluno.telefone === novoAluno.telefone);
-        if (telefoneDuplicado) {
-            alert("⚠️ Erro: Este número de telefone já se encontra registado no sistema nacional!");
-            return;
+        // Inicialização da base local para simulações
+        if (!localStorage.getItem('bd_estudantes')) {
+            localStorage.setItem('bd_estudantes', JSON.stringify([]));
         }
     
-        lista.push(novoAluno);
-        localStorage.setItem('bd_estudantes', JSON.stringify(lista));
+        let estudanteLogado = null;
     
-        alert(`🎉 INSCRIÇÃO CONCLUÍDA!\n\nID ESTUDANTE: ${novoID}\nCÓDIGO VALIDAÇÃO: ${novoCodigo}\nTELEFONE: ${novoAluno.telefone}\n\nAgora use este telemóvel no ecrã de faturamento para carregar as disciplinas!`);
-        
-        document.getElementById('form-cadastro').reset();
-        alternarTela('view-login');
-        
-        document.getElementById('login-identificador').value = novoID;
-        document.getElementById('login-senha').value = novoCodigo;
-    }
-
-    // 🚀 PROCESSADOR DE LOGIN DINÂMICO AUTOMÁTICO
-    function processarAcesso(event) {
-        event.preventDefault();
-        
-        const identificador = document.getElementById('login-identificador').value.trim();
-        const senhaInserida = document.getElementById('login-senha').value.trim();
-        const erroDiv = document.getElementById('mensagem-erro');
+        // Navegação Interna da Aplicação (SPA)
+        function alternarTela(idTela) {
+            document.querySelectorAll('.tela-view').forEach(t => t.classList.remove('active'));
+            const tela = document.getElementById(idTela);
+            if (tela) tela.classList.add('active');
+        }
     
-        // Dispara a requisição para a nossa API em PHP ligada à Aiven
-        fetch('login_estudante.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ identificador: identificador, senha: senhaInserida })
-        })
-        .then(res => res.json())
-        .then(resposta => {
-            if (resposta.sucesso) {
-                if (erroDiv) erroDiv.style.display = "none";
+        // 💾 INSCRIÇÃO DINÂMICA LOCAL
+        function cadastrarEstudanteAutomatico(event) {
+            event.preventDefault();
+            const numAleatorio = Math.floor(100000 + Math.random() * 900000);
+            const novoID = `AUR-${numAleatorio}`;
+            const novoCodigo = Math.random().toString(36).substring(2, 8).toUpperCase();
+        
+            const novoAluno = {
+                id: novoID,
+                telefone: document.getElementById('cad-telefone').value.trim(),
+                codigoValidacao: novoCodigo,
+                nome: document.getElementById('cad-nome').value.trim(),
+                classe: document.getElementById('cad-classe').value.trim(),
+                turma: "Turma Única A", 
+                periodo: document.getElementById('cad-periodo').value.trim(),
+                disciplinas: [
+                    { nome: "Língua Portuguesa", n1: 14, n2: 15, n3: 16, faltas: 0, estatuto: "Aprovado" },
+                    { nome: "Matemática", n1: 12, n2: 14, n3: 15, faltas: 1, estatuto: "Aprovado" }
+                ],
+                livros: []
+            };
+        
+            let lista = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
+            if (lista.some(aluno => aluno.telefone === novoAluno.telefone)) {
+                alert("⚠️ Erro: Este número de telefone já se encontra registado!");
+                return;
+            }
+        
+            lista.push(novoAluno);
+            localStorage.setItem('bd_estudantes', JSON.stringify(lista));
+        
+            alert(`🎉 INSCRIÇÃO CONCLUÍDA!\n\nID: ${novoID}\nCÓDIGO (SENHA): ${novoCodigo}`);
+            
+            document.getElementById('form-cadastro').reset();
+            document.getElementById('login-identificador').value = novoAluno.telefone;
+            document.getElementById('login-senha').value = novoCodigo;
+            alternarTela('view-login');
+        }
+    
+        // 🚀 PROCESSADOR DE LOGIN LOCAL CORRIGIDO
+        function processarAcesso(event) {
+            event.preventDefault();
+            
+            // Captura correta usando os IDs exatos dos inputs do formulário HTML
+            const identificador = document.getElementById('login-identificador').value.trim();
+            const senhaInserida = document.getElementById('login-senha').value.trim();
+            const erroDiv = document.getElementById('mensagem-erro');
+    
+            if (!identificador || !senhaInserida) {
+                erroDiv.style.display = "block";
+                erroDiv.innerHTML = "⚠️ Campos vazios.";
+                return;
+            }
+    
+            // Carrega os estudantes gravados no navegador
+            const listaEstudantes = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
+    
+            // Busca correspondência por ID ou por número de Telefone
+            const alunoEncontrado = listaEstudantes.find(aluno => 
+                (identificador === aluno.id || identificador === aluno.telefone) && 
+                senhaInserida === aluno.codigoValidacao
+            );
+    
+            if (alunoEncontrado) {
+                erroDiv.style.display = "none";
+                estudanteLogado = alunoEncontrado;
                 
-                // Grava o estudante vindo da nuvem na sessão ativa da app
-                estudanteLogado = resposta.estudante;
-                
-                // Salva uma cópia local para o PWA rodar offline depois se necessário
-                localStorage.setItem('bd_estudante_sessao', JSON.stringify(estudanteLogado));
-                
-                // Ativa os painéis visuais normais do seu dashboard
                 carregarDadosDashboard();
                 alternarTela('view-dashboard');
-                document.getElementById('menu-logout').style.display = "block";
+                
+                const menuLogout = document.getElementById('menu-logout');
+                if (menuLogout) menuLogout.style.display = "block";
             } else {
-                if (erroDiv) {
-                    erroDiv.style.display = "block";
-                    erroDiv.innerHTML = "⚠️ " + resposta.mensagem;
-                }
-            }
-        })
-        .catch(erro => {
-            console.error("Erro na ligação à API:", erro);
-            if (erroDiv) {
                 erroDiv.style.display = "block";
-                erroDiv.innerHTML = "⚠️ Falha de ligação ao servidor da nuvem.";
+                erroDiv.innerHTML = "❌ ID do Estudante ou Senha incorreta no sistema local.";
             }
-        });
-    }
-
-    // 📊 PAINEL DINÂMICO DE RENDIMENTO DO ALUNO
-    function carregarDadosDashboard() {
-        if (!estudanteLogado) return;
-        
-        // Injeção direta e limpa dos dados armazenados
-        document.getElementById('txt-nome-aluno').innerText = estudanteLogado.nome;
-        document.getElementById('txt-id-escolar').innerText = estudanteLogado.id;
-        document.getElementById('txt-turma-aluno').innerText = estudanteLogado.turma;
-        document.getElementById('txt-classe-aluno').innerText = estudanteLogado.classe;
-        document.getElementById('txt-periodo-aluno').innerText = estudanteLogado.periodo;
-        
-        const primeiroNome = estudanteLogado.nome.split(' ')[0];
-        document.getElementById('msg-boas-vindas').innerHTML = `<b>[Coordenação]:</b> Olá ${primeiroNome}. Bem-vindo ao teu painel de estudos da ${estudanteLogado.classe}.`;
-
-        // 1. Tabela de Notas Dinâmica (Injetada automaticamente com base nas disciplinas do recibo)
-        const tabela = document.getElementById('corpo-tabela-pauta');
-        if (estudanteLogado.disciplinas && estudanteLogado.disciplinas.length > 0) {
-            tabela.innerHTML = estudanteLogado.disciplinas.map(d => `
-                <tr>
-                    <td><b>${d.nome}</b></td>
-                    <td style="text-align: center;">${Number(d.n1).toFixed(1)}</td>
-                    <td style="text-align: center;">${Number(d.n2).toFixed(1)}</td>
-                    <td style="text-align: center;">${Number(d.n3).toFixed(1)}</td>
-                    <td style="text-align: center;">${d.faltas}</td>
-                    <td style="text-align: right;"><span class="badge">${d.estatuto}</span></td>
-                </tr>
-            `).join('');
-        } else {
-            tabela.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding: 15px;">Nenhuma disciplina ativa. Complete o pagamento no painel principal.</td></tr>`;
         }
-
-        // 2. Prateleira Inteligente
-        const prateleira = document.getElementById('contentor-livros-aluno');
-        if (estudanteLogado.livros && estudanteLogado.livros.length > 0) {
-            prateleira.innerHTML = estudanteLogado.livros.map((l, index) => {
-                return `
+    
+        // 📊 INJEÇÃO DOS DADOS NO PAINEL
+        function carregarDadosDashboard() {
+            if (!estudanteLogado) return;
+            
+            document.getElementById('txt-nome-aluno').innerText = estudanteLogado.nome;
+            document.getElementById('txt-id-escolar').innerText = estudanteLogado.id;
+            document.getElementById('txt-turma-aluno').innerText = estudanteLogado.turma;
+            document.getElementById('txt-classe-aluno').innerText = estudanteLogado.classe;
+            document.getElementById('txt-periodo-aluno').innerText = estudanteLogado.periodo;
+            
+            const primeiroNome = estudanteLogado.nome.split(' ')[0];
+            document.getElementById('msg-boas-vindas').innerHTML = `<b>[Coordenação]:</b> Olá ${primeiroNome}. Bem-vindo ao teu painel de estudos.`;
+    
+            // Notas Dinâmicas
+            const tabela = document.getElementById('corpo-tabela-pauta');
+            if (estudanteLogado.disciplinas && estudanteLogado.disciplinas.length > 0) {
+                tabela.innerHTML = estudanteLogado.disciplinas.map(d => `
+                    <tr>
+                        <td><b>${d.nome}</b></td>
+                        <td style="text-align: center;">${Number(d.n1).toFixed(1)}</td>
+                        <td style="text-align: center;">${Number(d.n2).toFixed(1)}</td>
+                        <td style="text-align: center;">${Number(d.n3).toFixed(1)}</td>
+                        <td style="text-align: center;">${d.faltas}</td>
+                        <td style="text-align: right;"><span class="badge">${d.estatuto}</span></td>
+                    </tr>
+                `).join('');
+            } else {
+                tabela.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding: 15px;">Nenhuma disciplina ativa.</td></tr>`;
+            }
+    
+            // Prateleira de Livros
+            const prateleira = document.getElementById('contentor-livros-aluno');
+            if (estudanteLogado.livros && estudanteLogado.livros.length > 0) {
+                prateleira.innerHTML = estudanteLogado.livros.map((l, index) => `
                     <div class="livro-row">
                         <div>
                             <div style="font-size: 13px; font-weight: bold; color: #fff;">${l.titulo}</div>
                             <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">📖 ${l.autor}</div>
                         </div>
-                        <button onclick="abrirManualEstudante(${index})" class="btn-baixar" style="background: var(--brand-blue); color: #060b19; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">Ler Agora ➔</button>
+                        <button class="btn-baixar" style="background: var(--brand-blue); color: #060b19; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold;">Ler Agora ➔</button>
                     </div>
-                `;
-            }).join('');
-        } else {
-            prateleira.innerHTML = `<p style="font-size: 12px; color:var(--text-muted); text-align:center; padding: 10px;">Nenhum manual alocado para a sua conta.</p>`;
-        }
-
-        // 💬 Chamada reativa da central única de mensagens
-        carregarChatSincronizadoEstudante();
-    }
-
-    // 💬 GESTOR DE ATENDIMENTO DE DÚVIDAS DO ALUNO (CONVERSA SINCRONIZADA COM O PROFESSOR)
-    function carregarChatSincronizadoEstudante() {
-        const caixaChat = document.getElementById('caixa-mensagens-chat');
-        if (!caixaChat) return;
-        
-        const msgs = JSON.parse(localStorage.getItem('bd_chat_global')) || [];
-        caixaChat.innerHTML = ""; // Limpa a janela para evitar loops
-        
-        msgs.forEach(m => {
-            const div = document.createElement('div');
-            if (m.origem === 'prof') {
-                div.style.color = 'var(--brand-gold)';
-                div.innerHTML = `<b>[${m.autor}]:</b> ${m.texto}`;
+                `).join('');
             } else {
-                div.style.color = '#fff';
-                const prefixo = (estudanteLogado && m.id_autor === estudanteLogado.id) ? 'Tu' : m.autor;
-                div.innerHTML = `<b>[${prefixo}]:</b> ${m.texto.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
+                prateleira.innerHTML = `<p style="font-size: 12px; color:var(--text-muted); text-align:center; padding: 10px;">Nenhum manual alocado.</p>`;
             }
-            caixaChat.appendChild(div);
-        });
-        caixaChat.scrollTop = caixaChat.scrollHeight;
-    }
-
-    // 🚀 ENVIO DE REQUISIÇÕES DO ALUNO PARA O REPOSITÓRIO DOCENTE
-    function enviarMensagemEstudante(event) {
-        event.preventDefault();
-        if (!estudanteLogado) return;
-        
-        const input = document.getElementById('campo-texto-chat');
-        if (input.value.trim() !== "") {
-            let msgs = JSON.parse(localStorage.getItem('bd_chat_global')) || [];
-            msgs.push({
-                origem: 'aluno',
-                id_autor: estudanteLogado.id,
-                autor: estudanteLogado.nome.split(' ')[0],
-                texto: input.value
-            });
-            localStorage.setItem('bd_chat_global', JSON.stringify(msgs));
-            input.value = "";
-            carregarChatSincronizadoEstudante();
         }
-    }
-
-    // 📖 MOTOR DE VISUALIZAÇÃO INTERNA DE MANUAIS EM PDF
-    function abrirManualEstudante(indexLivro) {
-        if (!estudanteLogado || !estudanteLogado.livros || !estudanteLogado.livros[indexLivro]) {
-            alert("❌ Erro ao localizar o manual.");
-            return;
+    
+        function fazerLogout(event) {
+            if(event) event.preventDefault();
+            estudanteLogado = null;
+            document.getElementById('form-login').reset();
+            const menuLogout = document.getElementById('menu-logout');
+            if (menuLogout) menuLogout.style.display = "none";
+            document.getElementById('mensagem-erro').style.display = "none";
+            alternarTela('view-login');
         }
-
-        const livro = estudanteLogado.livros[indexLivro];
-
-        if (livro.dadosFicheiro) {
-            try {
-                const novaJanela = window.open();
-                if (!novaJanela) {
-                    alert("⚠️ Bloqueador de pop-ups ativo! Por favor, autorize pop-ups para ler o livro.");
-                    return;
-                }
-                
-                novaJanela.document.write(`
-                    <html lang="pt">
-                    <head>
-                        <title>${livro.titulo} - Leitor Aurélius</title>
-                        <style>
-                            body { margin: 0; background: #060b19; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: system-ui; color: #fff; }
-                            iframe, embed { width: 100%; height: 100%; border: none; }
-                            .aviso-loading { position: absolute; z-index: -1; font-size: 16px; font-weight: bold; color: #eab308; }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="aviso-loading">A carregar o manual digital... ⏳</div>
-                        <embed src="${livro.dadosFicheiro}" type="application/pdf" width="100%" height="100%">
-                    </body>
-                    </html>
-                `);
-                novaJanela.document.close();
-            } catch (erro) {
-                alert("❌ Ocorreu um erro ao processar o ficheiro do livro no navegador.");
-            }
-        } else {
-            alert(`📖 Ficheiro Físico não Detetado!\nO manual "${livro.titulo}" está alocado à sua grade letiva, mas a secretaria digital ainda não anexou o arquivo PDF para este módulo.`);
-        }
-    }
-
-    function fazerLogout(event) {
-        if(event) event.preventDefault();
-        if(window.chatIntervaloEstudante) {
-            clearInterval(window.chatIntervaloEstudante);
-            window.chatIntervaloEstudante = null;
-        }
-        document.getElementById('form-login').reset();
-        document.getElementById('menu-logout').style.display = "none";
-        estudanteLogado = null;
-        alternarTela('view-login');
-    }
-    </script>
-
-
-
-<script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-          .then(reg => console.log('PWA Aurélius: Service Worker Ativo!', reg.scope))
-          .catch(err => console.error('Erro ao ativar o PWA:', err));
-      });
-    }
-  </script>
-</body>
-</html>
+        </script>
+    </body>
+    </html>
