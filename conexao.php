@@ -12,12 +12,12 @@ if ($isLocal) {
     $password = "";
     $dbname = "aurelius_escola";
 } else {
-    // ☁️ CONFIGURAÇÕES PARA A NUVEM DO RENDER (Puxa da Aiven Cloud)
+    // ☁️ CONFIGURAÇÕES PARA A NUVEM DO RENDER (Alinhado com a Aiven)
     $host = getenv('DB_HOST');
     $port = getenv('DB_PORT') ?: "22002";
     $user = getenv('DB_USER');
     $password = getenv('DB_PASSWORD');
-    $dbname = getenv('DB_NAME');
+    $dbname = getenv('DB_NAME') ?: "defaultdb"; // 🌟 Mudado para defaultdb aqui!
 }
 
 try {
