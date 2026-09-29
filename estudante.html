@@ -252,55 +252,36 @@
     let estudianteLogado = null;
 
     // Navegação Interna da Aplicação (SPA)
-    function alternarTela(idTela) {
-        document.querySelectorAll('.tela-view').forEach(t => t.classList.remove('active'));
-        const tela = document.getElementById(idTela);
-        if (tela) tela.classList.add('active');
-    }
-
-    function cadastrarEstudanteAutomatico(event) {
-        event.preventDefault();
+    function alternarTela(idTelaAlvo) {
+        // Procura todas as telas que possuem a classe 'tela-view'
+        const telas = document.querySelectorAll('.tela-view');
         
-        const nome = document.getElementById('cad-nome').value.trim();
-        const telefone = document.getElementById('cad-telefone').value.trim();
-        const classe = document.getElementById('cad-classe').value.trim();
-        const periodo = document.getElementById('cad-periodo').value.trim();
+        if (telas.length === 0) {
+            console.warn("⚠️ Nenhuma div com a classe 'tela-view' foi encontrada no HTML.");
+            return;
+        }
     
-        const formData = new FormData();
-        formData.append('nome', nome);
-        formData.append('telefone', telefone);
-        formData.append('classe', classe);
-        formData.append('periodo', periodo);
-    
-        // 🌟 SOLUÇÃO DEFINITIVA: Rota relativa limpa (Funciona em qualquer servidor automaticamente)
-        const URL_BACKEND = "cadastrar_estudante.php";
-    
-        fetch(URL_BACKEND, {
-            method: "POST",
-            body: formData
-        })
-        .then(res => {
-            if (!res.ok) throw new Error("Falha na resposta do servidor");
-            return res.json();
-        })
-        .then(dados => {
-            if (dados.sucesso) {
-                alert(`🎉 INSCRIÇÃO REALIZADA COM SUCESSO!\n\nID ESTUDANTE: ${dados.id_estudante}\nCÓDIGO VALIDAÇÃO (SENHA): ${dados.codigo_validacao}`);
-                
-                document.getElementById('form-cadastro').reset();
-                document.getElementById('login-identificador').value = dados.id_estudante;
-                document.getElementById('login-senha').value = dados.codigo_validacao;
-                alternarTela('view-login');
-            } else {
-                alert(dados.mensagem);
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert("⚠️ Erro de rede ao conectar ao servidor.");
+        telas.forEach(tela => {
+            // Remove a classe active de todas as telas para escondê-las
+            tela.classList.remove('active');
+            
+            // Se a sua PWA usa display: none/block em vez de classes CSS, use a linha abaixo:
+            // tela.style.display = 'none';
         });
-    }
     
+        // Localiza a tela alvo pelo ID e ativa-a no ecrã
+        const telaAlvo = document.getElementById(idTelaAlvo);
+        if (telaAlvo) {
+            telaAlvo.classList.add('active');
+            
+            // Se a sua PWA usa display, descomente a linha abaixo:
+            // telaAlvo.style.display = 'block';
+            
+            console.log(`🎯 Tela alternada com sucesso para: ${idTelaAlvo}`);
+        } else {
+            console.error(`❌ Erro: A tela com o ID '${idTelaAlvo}' não existe no estudante.html`);
+        }
+    }
 
 
 
