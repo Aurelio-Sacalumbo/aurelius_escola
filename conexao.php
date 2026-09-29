@@ -1,24 +1,23 @@
 <?php
-// 🗄️ CONEXÃO DINÂMICA SEGURA - ACADEMIA AURÉLIUS
+// 🗄️ CONEXÃO DINÂMICA SEGURA E ALINHADA - ACADEMIA AURÉLIUS
 
 // Se existir a variável DB_HOST configurada no Render, assume NUVEM. Caso contrário, LOCALHOST.
 $isLocal = (getenv('DB_HOST') === false);
 
 if ($isLocal) {
-    // 🏠 CONFIGURAÇÕES PARA O XAMPP LOCAL
+    // 🏠 CONFIGURAÇÕES PARA O XAMPP LOCAL (Confirmado pelo seu phpMyAdmin)
     $host = "127.0.0.1";
     $port = "3306";
     $user = "root";
     $password = "";
-    $dbname = "escola";
+    $dbname = "aurelius_escola"; // 🌟 Corrigido de 'escola' para 'aurelius_escola'
 } else {
-    // ☁️ CONFIGURAÇÕES PARA A NUVEM DO RENDER (Alinhado com a Aiven)
-    // O getenv deve receber APENAS o nome exato da chave que colocou no painel do Render!
+    // ☁️ CONFIGURAÇÕES PARA A NUVEM DO RENDER (Carrega as chaves do painel)
     $host = getenv('DB_HOST');
     $port = getenv('DB_PORT') ?: "22002";
     $user = getenv('DB_USER');
     $password = getenv('DB_PASSWORD');
-    $dbname = getenv('DB_NAME') ?: "defaultdb"; 
+    $dbname = getenv('DB_NAME') ?: "defaultdb"; // Banco padrão na nuvem da Aiven
 }
 
 try {
