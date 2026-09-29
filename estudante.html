@@ -365,6 +365,64 @@
         });
     }
 
+
+    let idEstudanteChatAtivo = "AUR-840044"; // Mude dinamicamente para o ID do aluno selecionado
+
+// 🔁 FUNÇÃO PARA BUSCAR MENSAGENS E ATUALIZAR O VISUAL
+function sincronizarChatAcademico() {
+    if (!idEstudanteChatAtivo) return;
+
+    fetch(`chat_academico.php?id_estudante=${idEstudanteChatAtivo}`)
+    .then(res => res.json())
+    .then(dados => {
+        if (dados.sucesso) {
+            const caixaChat = document.getElementById('mensagem-erro'); // Ou a ID da sua caixa de texto do chat
+            const divCentralChat = document.querySelector('.central-atendimento-chat') || document.getElementById('chat-container'); 
+            
+            if (divCentralChat) {
+                divCentralChat.innerHTML = dados.mensagens.map(m => {
+                    const isProf = m.remetente === 'coord_prof';
+                    const label = isProf ? "[Coordenação/Prof]" : "[Aluno]";
+                    const cor = isProf ? "#eab308" : "#3b82f6";
+                    
+                    return `<div style="margin-bottom: 8px; font-size: 13px;">
+                                <span style="color: ${cor}; font-weight: bold;">${label}:</span> ${m.conteudo} 
+                                <span style="font-size: 10px; color: #64748b; float: right;">${m.hora}</span>
+                            </div>`;
+                }).join('');
+            }
+        }
+    })
+    .catch(err => console.error("Erro na sincronização do chat: ", err));
+}
+
+// 📨 FUNÇÃO PARA DISPARAR UMA NOVA MENSAGEM
+function enviarMensagemDoChat(quemEnvia) {
+    const inputTexto = document.getElementById('input-mensagem-chat'); // Ajuste o ID para o seu campo de texto
+    if (!inputTexto || inputTexto.value.trim() === "") return;
+
+    const formData = new FormData();
+    formData.append('remetente', quemEnvia); // 'coord_prof' ou 'estudante'
+    formData.append('id_estudante', idEstudanteChatAtivo);
+    formData.append('conteudo', inputTexto.value.trim());
+
+    fetch("chat_academico.php", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(dados => {
+        if (dados.sucesso) {
+            inputTexto.value = ""; // Limpa a caixa de texto
+            sincronizarChatAcademico(); // Atualiza na hora
+        }
+    });
+}
+
+// ⏱️ ATIVA O MOTOR DE SINCRONIZAÇÃO EM TEMPO REAL (Executa a cada 3 segundos)
+setInterval(sincronizarChatAcademico, 3000);
+
+
     // 🔐 PROCESSAR ACESSO (LOGIN VIA PHP)
     function processarAcesso(event) {
         if (event) event.preventDefault();
