@@ -131,62 +131,103 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
         <div id="msg_alerta_stock" class="alerta-box"></div>
 
         <form id="formFaturamento" onsubmit="gerarFaturaDigital(event)">
-            <div class="form-group">
-                <label>Pesquisar Aluno (Nome, Nº Telefone ou ID AUR):</label>
-                <input type="text" id="pesquisa_aluno" class="form-input" placeholder="Digite o nome ou AUR- ..." oninput="buscarAlunoSincronizado(this.value)" required>
+        <!-- CAMPO DE PESQUISA INICIAL -->
+        <div class="form-group">
+            <label>Pesquisar Aluno (Nome, Nº Telefone ou ID AUR):</label>
+            <input type="text" id="pesquisa_aluno" class="form-input" placeholder="Digite o nome ou AUR- ..." oninput="buscarAlunoSincronizado(this.value)" required>
+        </div>
+    
+        <!-- BLOCO DE FATURAMENTO (EXIBIDO APÓS SELECIONAR O ESTUDANTE) -->
+        <div id="bloco_faturamento_oculto" style="display: none;">
+            
+            <!-- GRID DUPLA 1: CADEIRAS E MÊS -->
+            <div class="grid-dupla">
+                <div class="form-group">
+                    <label>Disciplinas/Cadeiras Selecionadas:</label>
+                    <select id="qtd_disciplinas" class="form-input" onchange="recalcularFaturamentoEscolar()">
+                        <option value="1">1 Disciplina</option>
+                        <option value="2">2 Disciplinas</option>
+                        <option value="3">3 Disciplinas</option>
+                        <option value="4">4 Disciplinas (Ganhar 20% OFF)</option>
+                        <option value="5">5 Disciplinas (Ganhar 20% OFF)</option>
+                        <option value="6">6 Disciplinas (Ganhar 20% OFF)</option>
+                    </select>
+                </div>
+    
+                <div class="form-group">
+                    <label>Mês de Liquidação:</label>
+                    <select id="mes_referencia" class="form-input">
+                        <option value="Janeiro">Janeiro</option>
+                        <option value="Fevereiro">Fevereiro</option>
+                        <option value="Março">Março</option>
+                        <option value="Abril">Abril</option>
+                        <option value="Maio">Maio</option>
+                        <option value="Junho">Junho</option>
+                        <option value="Julho">Julho</option>
+                        <option value="Agosto">Agosto</option>
+                        <option value="Setembro">Setembro</option>
+                        <option value="Outubro">Outubro</option>
+                        <option value="Novembro">Novembro</option>
+                        <option value="Dezembro">Dezembro</option>
+                    </select>
+                </div>
             </div>
-
-            <div id="bloco_faturamento_oculto" style="display: none;">
-                <div class="grid-dupla">
-                    <div class="form-group">
-                        <label>Disciplinas/Cadeiras Selecionadas:</label>
-                        <select id="qtd_disciplinas" class="form-input" onchange="recalcularFaturamentoEscolar()">
-                            <option value="1">1 Disciplina</option>
-                            <option value="2">2 Disciplinas</option>
-                            <option value="3">3 Disciplinas</option>
-                            <option value="4">4 Disciplinas (Ganhar 20% OFF)</option>
-                            <option value="5">5 Disciplinas (Ganhar 20% OFF)</option>
-                            <option value="6">6 Disciplinas (Ganhar 20% OFF)</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Mês de Liquidação:</label>
-                        <select id="mes_referencia" class="form-input">
-                            <option value="Janeiro">Janeiro</option> <option value="Fevereiro">Fevereiro</option>
-                            <option value="Março">Março</option> <option value="Abril">Abril</option>
-                            <option value="Maio">Maio</option> <option value="Junho">Junho</option>
-                            <option value="Julho">Julho</option> <option value="Agosto">Agosto</option>
-                            <option value="Setembro">Setembro</option> <option value="Outubro">Outubro</option>
-                            <option value="Novembro">Novembro</option> <option value="Dezembro">Dezembro</option>
-                        </select>
-                    </div>
+    
+            <!-- GRID DUPLA 2: ENTRADA FINANCEIRA E CONTACTO -->
+            <div class="grid-dupla">
+                <div class="form-group">
+                    <label>Valor Entregue / Adiantado (AKZ):</label>
+                    <input type="number" id="valor_entregue_input" class="form-input" value="0" min="0" oninput="calcularTrocoECredito(this.value)">
                 </div>
-
-                <div class="grid-dupla">
-                    <div class="form-group">
-                        <label>Valor Entregue / Adiantado (AKZ):</label>
-                        <input type="number" id="valor_entregue_input" class="form-input" value="0" min="0" oninput="calcularTrocoECredito(this.value)">
-                    </div>
-                    <div class="form-group">
-                        <label>Contacto Registado:</label>
-                        <input type="text" id="telefone_input" class="form-input" readonly>
-                    </div>
+                
+                <div class="form-group">
+                    <label>Contacto Registado:</label>
+                    <input type="text" id="telefone_input" class="form-input" readonly>
                 </div>
-
-                <!-- Quadro Resumo Base das Contas -->
-                <div class="resumo-fatura">
-                    <div class="resumo-linha"><span>Preço Total das Cadeiras:</span><span id="f_servico">0,00 AKZ</span></div>
-                    <div class="resumo-linha" id="linha_divida" style="color: var(--brand-danger);"><span>Dívidas Acumuladas no Banco:</span><span id="f_divida">0,00 AKZ</span></div>
-                    <div class="resumo-linha" id="linha_desconto_vip" style="color: var(--brand-success); display: none;"><span>Desconto Cortesia (Apenas 4+ Cadeiras):</span><span id="txt_desc_vip">-0,00 AKZ</span></div>
-                    <div class="resumo-linha" id="linha_saldo_existente" style="color: #38bdf8; display: none;"><span>Saldo Abatido Automaticamente:</span><span id="f_saldo_usado">-0,00 AKZ</span></div>
-                    <div class="resumo-linha" id="linha_troco_caixa" style="color: var(--brand-gold); display: none;"><span>Troco Físico a Devolver:</span><span id="lbl_troco_caixa">0,00 AKZ</span></div>
-                    <div class="resumo-linha" id="linha_credito_futuro" style="color: #a855f7; display: none;"><span>Guardado em Stock (Adiantado):</span><span id="lbl_credito_futuro">0,00 AKZ</span></div>
-                    <div class="resumo-linha"><span>Total Líquido a Pagar no Caixa:</span><span id="txt_total_liquido">0,00 AKZ</span></div>
-                </div>
-                <button type="submit" class="btn-pay">Emitir Fatura & Confirmar Pagamento ➔</button>
             </div>
-        </form>
+    
+            <!-- QUADRO RESUMO BASE DAS CONTAS -->
+            <div class="resumo-fatura">
+                <div class="resumo-linha">
+                    <span>Preço Total das Cadeiras:</span>
+                    <span id="f_servico">0,00 AKZ</span>
+                </div>
+                
+                <div class="resumo-linha" id="linha_divida" style="color: var(--brand-danger);">
+                    <span>Dívidas Acumuladas no Banco:</span>
+                    <span id="f_divida">0,00 AKZ</span>
+                </div>
+                
+                <div class="resumo-linha" id="linha_desconto_vip" style="color: var(--brand-success); display: none;">
+                    <span>Desconto Cortesia (Apenas 4+ Cadeiras):</span>
+                    <span id="txt_desc_vip">-0,00 AKZ</span>
+                </div>
+                
+                <div class="resumo-linha" id="linha_saldo_existente" style="color: #38bdf8; display: none;">
+                    <span>Saldo Abatido Automaticamente:</span>
+                    <span id="f_saldo_usado">-0,00 AKZ</span>
+                </div>
+                
+                <div class="resumo-linha" id="linha_troco_caixa" style="color: var(--brand-gold); display: none;">
+                    <span>Troco Físico a Devolver:</span>
+                    <span id="lbl_troco_caixa">0,00 AKZ</span>
+                </div>
+                
+                <div class="resumo-linha" id="linha_credito_futuro" style="color: #a855f7; display: none;">
+                    <span>Guardado em Stock (Adiantado):</span>
+                    <span id="lbl_credito_futuro">0,00 AKZ</span>
+                </div>
+                
+                <div class="resumo-linha" style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px; padding-top: 10px; font-weight: bold;">
+                    <span>Total Líquido a Pagar no Caixa:</span>
+                    <span id="txt_total_liquido" style="color: var(--brand-success);">0,00 AKZ</span>
+                </div>
+            </div>
+    
+            <!-- BOTÃO DE CONFIRMAÇÃO DE CAIXA -->
+            <button type="submit" class="btn-pay">Emitir Fatura & Confirmar Pagamento ➔</button>
+        </div>
+    </form>
     </div>
 
     <!-- 📋 BLOCO DA FATURA DE IMPRESSÃO IMPERIAL -->
@@ -214,208 +255,247 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
 
 
 
+   
 
-    <!-- 🟢 ENGINE BANCÁRIO REATIVO -->
-    <script>
-    const PRECO_FIXO_DISCIPLINA = 5000; 
-    let nomeEstudanteAtivo = "";
-    
-    let dadosAlunoAtivo = {
-        divida: 0, saldo_interno: 0, custo_cadeiras: 0, total_necessario: 0, total_caixa: 0, desconto_ganho: 0
-    };
-
-    function buscarAlunoSincronizado(termo) {
-        // 🔍 Reduzido para 2 caracteres para apanhar nomes curtos instantaneamente!
-        if (termo.trim().length >= 2) { 
-            fetch('unitel.php?pesquisa_automatica_cliente=1&termo=' + encodeURIComponent(termo.trim()))
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'encontrado') {
-                    document.getElementById('bloco_faturamento_oculto').style.display = 'block';
-                    document.getElementById('telefone_input').value = data.telefone;
-                    nomeEstudanteAtivo = data.nome;
-                    
-                    // Injeta a classe e turma dinamicamente no objeto de controle
-                    dadosAlunoAtivo.turma = data.turma;
-                    dadosAlunoAtivo.classe = data.classe;
-                    
-                    dadosAlunoAtivo.divida = parseFloat(data.divida) || 0;
-                    dadosAlunoAtivo.saldo_interno = parseFloat(data.saldo_interno) || 0;
-    
-                    const statusBox = document.getElementById('msg_status_aluno');
-                    if (statusBox) {
-                        statusBox.style.display = 'block';
-                        statusBox.style.background = 'rgba(34, 197, 94, 0.15)';
-                        statusBox.style.color = '#4ade80';
-                        statusBox.style.borderColor = 'rgba(34, 197, 94, 0.3)';
-                        statusBox.innerHTML = `✅ ALUNO REGULARIZADO: Dados de <b>${data.nome}</b> (${data.classe}) carregados com sucesso.`;
-                    }
-    
-                    const stockBox = document.getElementById('msg_alerta_stock');
-                    if (stockBox) {
-                        if (dadosAlunoAtivo.saldo_interno > 0) {
-                            stockBox.style.display = 'block';
-                            stockBox.style.background = 'rgba(56, 189, 248, 0.15)';
-                            stockBox.style.color = '#38bdf8';
-                            stockBox.style.borderColor = 'rgba(56, 189, 248, 0.3)';
-                            stockBox.innerHTML = `💰 STOCK DISPONÍVEL: Existe um valor adiantado de ${dadosAlunoAtivo.saldo_interno.toLocaleString('pt-PT')} AKZ na conta.`;
-                        } else {
-                            stockBox.style.display = 'none';
-                        }
-                    }
-    
-                    recalcularFaturamentoEscolar();
-                } else {
-                    ocultarTelasFaturamento();
-                }
-            })
-            .catch(err => console.error("Erro na busca assíncrona: ", err));
-        } else {
-            ocultarTelasFaturamento();
-        }
+<!-- O SCRIPT DEVE COMECAR EXATAMENTE AQUI -->
+<script>
+// 📦 1. REPOSITÓRIO DE PREÇOS EXPANDIDO E REAL (HUAMBO 2026)
+const dbAcademica = {
+    regular: [
+        { id: '1c', nome: '1ª Classe (Primário)', sala: 'Sala nº 1', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}] },
+        { id: '2c', nome: '2ª Classe (Primário)', sala: 'Sala nº 2', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}] },
+        { id: '3c', nome: '3ª Classe (Primário)', sala: 'Sala nº 3', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}] },
+        { id: '4c', nome: '4ª Classe (Primário)', sala: 'Sala nº 4', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 1000}] },
+        { id: '5c', nome: '5ª Classe (Primário)', sala: 'Sala nº 5', disciplinas: [{n: 'Língua Portuguesa', p: 1000}, {n: 'Matemática', p: 1000}, {n: 'Estudo do Meio', p: 1000}] },
+        { id: '6c', nome: '6ª Classe (Primário)', sala: 'Sala nº 6', disciplinas: [{n: 'Língua Portuguesa', p: 1000}, {n: 'Matemática', p: 1000}, {n: 'Ciências da Natureza', p: 1000}] },
+        { id: '7c', nome: '7ª Classe (I Ciclo)', sala: 'Sala nº 7', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'Química', p: 1500}, {n: 'Física', p: 1500}] },
+        { id: '8c', nome: '8ª Classe (I Ciclo)', sala: 'Sala nº 8', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'Química', p: 1500}, {n: 'Física', p: 1500}] },
+        { id: '9c', nome: '9ª Classe (I Ciclo)', sala: 'Sala nº 9', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'História', p: 1500}, {n: 'Geografia', p: 1500}] },
+        { id: '10c', nome: '10ª Classe (II Ciclo)', sala: 'Sala nº 10', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}, {n: 'Física', p: 2000}] },
+        { id: '11c', nome: '11ª Classe (II Ciclo)', sala: 'Sala nº 11', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}, {n: 'Química', p: 2000}] },
+        { id: '12c', nome: '12ª Classe (II Ciclo)', sala: 'Sala nº 12', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}, {n: 'Filosofia', p: 2000}] },
+        { id: '13c', nome: '13ª Classe (Técnico)', sala: 'Sala nº 13', disciplinas: [{n: 'Matemática Aplicada', p: 2500}, {n: 'Física Avançada', p: 2500}, {n: 'Estágio Prático', p: 2500}] }
+    ],
+    superior: {
+        Economia: [
+            { id: 'eco1', nome: 'Economia - 1º Ano', disciplinas: [{n: 'Introdução à Economia', p: 5000}, {n: 'Análise Matemática I', p: 5500}] }
+        ],
+        Informatica: [
+            { id: 'inf1', nome: 'Informática - 1º Ano', disciplinas: [{n: 'Algorítmo e Lógica de Programação', p: 6000}, {n: 'Matemática Discreta', p: 6500}] }
+        ]
     }
-    function ocultarTelasFaturamento() {
-        document.getElementById('bloco_faturamento_oculto').style.display = 'none';
-        document.getElementById('msg_status_aluno').style.display = 'none';
-        document.getElementById('msg_alerta_stock').style.display = 'none';
-        document.getElementById('bloco_fatura_recibo').style.display = 'none';
+};
+
+// 🔒 VARIÁVEIS GLOBAIS EXIGIDAS PELO SEU SISTEMA DE RECIBO
+let nomeEstudanteAtivo = "";
+let dadosAlunoAtivo = {
+    divida: 0, 
+    saldo_interno: 0, 
+    custo_cadeiras: 0, 
+    total_necessario: 0, 
+    total_caixa: 0, 
+    desconto_ganho: 0,
+    classe_real: "",
+    turma: "Turma Única A"
+};
+
+// 🎯 2. FUNÇÃO DE BUSCA SÍNCRONA CONTRA A ROTA GET DO BANCO DE DADOS
+function buscarAlunoSincronizado(valorDigitado) {
+    const termo = valorDigitado.trim();
+    const blocoOculto = document.getElementById("bloco_faturamento_oculto");
+
+    if (termo.length < 2) {
+        if (blocoOculto) blocoOculto.style.display = "none";
+        nomeEstudanteAtivo = "";
+        return;
     }
 
-    function recalcularFaturamentoEscolar() {
-        const qtd = parseInt(document.getElementById('qtd_disciplinas').value) || 1;
-        dadosAlunoAtivo.custo_cadeiras = qtd * PRECO_FIXO_DISCIPLINA;
-        
-        // Desconto de 20% estritamente para 4 ou mais disciplinas
-        dadosAlunoAtivo.desconto_ganho = (qtd >= 4) ? (dadosAlunoAtivo.custo_cadeiras * 0.2) : 0;
-        
-        const subtotalMes = dadosAlunoAtivo.custo_cadeiras - dadosAlunoAtivo.desconto_ganho;
-        dadosAlunoAtivo.total_necessario = subtotalMes + dadosAlunoAtivo.divida;
+    fetch(`unitel.php?pesquisa_automatica_cliente=1&termo=${encodeURIComponent(termo)}`)
+        .then(res => res.json())
+        .then(dados => {
+            if (dados.status === 'encontrado') {
+                if (blocoOculto) blocoOculto.style.display = "block";
+                
+                const telInput = document.getElementById("telefone_input");
+                if (telInput) telInput.value = dados.telefone || "";
+                
+                nomeEstudanteAtivo = dados.nome;
+                dadosAlunoAtivo.classe_real = dados.classe; 
+                dadosAlunoAtivo.divida = parseFloat(dados.divida) || 0;
+                dadosAlunoAtivo.saldo_interno = parseFloat(dados.saldo_interno) || 0;
+                dadosAlunoAtivo.turma = dados.turma || "Turma Única A";
 
-        const saldoUtilizado = Math.min(dadosAlunoAtivo.saldo_interno, dadosAlunoAtivo.total_necessario);
-        dadosAlunoAtivo.total_caixa = dadosAlunoAtivo.total_necessario - saldoUtilizado;
-
-        document.getElementById('f_servico').innerText = dadosAlunoAtivo.custo_cadeiras.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' AKZ';
-        document.getElementById('f_divida').innerText = dadosAlunoAtivo.divida.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' AKZ';
-        document.getElementById('f_saldo_usado').innerText = '-' + saldoUtilizado.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' AKZ';
-        document.getElementById('txt_total_liquido').innerText = dadosAlunoAtivo.total_caixa.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' AKZ';
-
-        const linhaVip = document.getElementById('linha_desconto_vip');
-        if (dadosAlunoAtivo.desconto_ganho > 0) {
-            linhaVip.style.display = 'flex';
-            document.getElementById('txt_desc_vip').innerText = '-' + dadosAlunoAtivo.desconto_ganho.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' AKZ';
-        } else {
-            linhaVip.style.display = 'none';
-        }
-
-        document.getElementById('linha_divida').style.display = (dadosAlunoAtivo.divida > 0) ? 'flex' : 'none';
-        document.getElementById('linha_saldo_existente').style.display = (saldoUtilizado > 0) ? 'flex' : 'none';
-
-        const inputPago = document.getElementById('valor_entregue_input');
-        inputPago.value = dadosAlunoAtivo.total_caixa;
-        
-        calcularTrocoECredito(dadosAlunoAtivo.total_caixa);
-    }
-
-    function calcularTrocoECredito(valor) {
-        const entregue = parseFloat(valor) || 0;
-        const diferenca = entregue - dadosAlunoAtivo.total_caixa;
-
-        if (diferenca > 0) {
-            document.getElementById('linha_troco_caixa').style.display = 'flex';
-            document.getElementById('lbl_troco_caixa').innerText = diferenca.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' AKZ';
-            
-            document.getElementById('linha_credito_futuro').style.display = 'flex';
-            document.getElementById('lbl_credito_futuro').innerText = diferenca.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' AKZ';
-        } else {
-            document.getElementById('linha_troco_caixa').style.display = 'none';
-            document.getElementById('linha_credito_futuro').style.display = 'none';
-        }
-    }
-
-    function gerarFaturaDigital(event) {
-        event.preventDefault();
-        
-        // Captura os dados do formulário financeiro
-        const mes = document.getElementById('mes_referencia').value;
-        const qtd = document.getElementById('qtd_disciplinas').value;
-        const entregue = parseFloat(document.getElementById('valor_entregue_input').value) || 0;
-        const telefoneAluno = document.getElementById('telefone_input').value;
-        
-        // 📅 GERAÇÃO DINÂMICA DA DATA (Dia, Mês e Ano)
-        const dataAtual = new Date();
-        const dia = String(dataAtual.getDate()).padStart(2, '0');
-        const mesesAno = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-        const nomeMes = mesesAno[dataAtual.getMonth()];
-        const ano = dataAtual.getFullYear();
-        const dataFormatada = `${dia} de ${nomeMes} de ${ano}`;
-    
-        // 📋 INJEÇÃO DOS DADOS EXIGIDOS NO RECIBO HTML
-        if(document.getElementById('rec_nome')) document.getElementById('rec_nome').innerText = nomeEstudanteAtivo;
-        if(document.getElementById('rec_tel')) document.getElementById('rec_tel').innerText = telefoneAluno;
-        if(document.getElementById('rec_mes')) document.getElementById('rec_mes').innerText = mes;
-        if(document.getElementById('rec_data')) document.getElementById('rec_data').innerText = dataFormatada; // 🌟 Data adicionada
-        if(document.getElementById('rec_qtd')) document.getElementById('rec_qtd').innerText = qtd + " Disciplina(s)";
-        
-        // Injeta Turma e Disciplinas se existirem no objeto carregado pelo banco
-        if(document.getElementById('rec_turma')) {
-            document.getElementById('rec_turma').innerText = dadosAlunoAtivo.turma || "Turma Única A";
-        }
-        if(document.getElementById('rec_custo')) {
-            document.getElementById('rec_custo').innerText = dadosAlunoAtivo.custo_cadeiras.toLocaleString('pt-PT') + " AKZ";
-        }
-    
-        // Estrutura visual de descontos e dívidas
-        if(dadosAlunoAtivo.desconto_ganho > 0) {
-            if(document.getElementById('rec_linha_desc')) document.getElementById('rec_linha_desc').style.display = 'flex';
-            if(document.getElementById('rec_desc')) document.getElementById('rec_desc').innerText = '-' + dadosAlunoAtivo.desconto_ganho.toLocaleString('pt-PT') + " AKZ";
-        } else { if(document.getElementById('rec_linha_desc')) document.getElementById('rec_linha_desc').style.display = 'none'; }
-    
-        if(dadosAlunoAtivo.divida > 0) {
-            if(document.getElementById('rec_linha_divida')) document.getElementById('rec_linha_divida').style.display = 'flex';
-            if(document.getElementById('rec_divida')) document.getElementById('rec_divida').innerText = '+' + dadosAlunoAtivo.divida.toLocaleString('pt-PT') + " AKZ";
-        } else { if(document.getElementById('rec_linha_divida')) document.getElementById('rec_linha_divida').style.display = 'none'; }
-    
-        const sobraStock = entregue - dadosAlunoAtivo.total_caixa;
-        if(sobraStock > 0) {
-            if(document.getElementById('rec_linha_stock')) document.getElementById('rec_linha_stock').style.display = 'flex';
-            if(document.getElementById('rec_stock')) document.getElementById('rec_stock').innerText = '+' + sobraStock.toLocaleString('pt-PT') + " AKZ Retidos";
-        } else { if(document.getElementById('rec_linha_stock')) document.getElementById('rec_linha_stock').style.display = 'none'; }
-    
-        if(document.getElementById('rec_total')) document.getElementById('rec_total').innerText = entregue.toLocaleString('pt-PT') + " AKZ";
-    
-        // 🚀 DISPARO CONTRA ERRO DE REDE: FormData explícito e rota segura
-        const formData = new FormData();
-        formData.append('acao_financeira', 'registar_pagamento');
-        formData.append('telefone', telefoneAluno);
-        formData.append('valor_pago', entregue);
-        formData.append('mes_pago', mes);
-    
-        fetch("unitel.php", {
-            method: "POST",
-            body: formData
-        })
-        .then(res => {
-            if (!res.ok) throw new Error("A porta de rede do servidor rejeitou a resposta.");
-            return res.json();
-        })
-        .then(resposta => {
-            if (resposta.sucesso) {
-                console.log("🎉 Sincronização concluída com sucesso no MySQL remoto.");
-                // Exibe o bloco da fatura e desce a página com scroll suave
-                const blocoFatura = document.getElementById('bloco_fatura_recibo');
-                if(blocoFatura) {
-                    blocoFatura.style.display = 'block';
-                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-                }
+                console.log("✔️ Aluno reconhecido:", nomeEstudanteAtivo);
+                recalcularFaturamentoEscolar();
             } else {
-                alert("❌ O Banco rejeitou a transação: " + resposta.mensagem);
+                if (blocoOculto) blocoOculto.style.display = "none";
             }
         })
-        .catch(err => {
-            console.error("Erro capturado:", err);
-            alert("⚠️ Erro de rede: O dinheiro foi calculado mas não pôde ser salvo na base de dados central. Verifique o CORS ou a conexão com a Aiven.");
-        });
+        .catch(err => console.error("Erro na rota de busca:", err));
+}
+
+// 🧮 3. MOTOR DE PROCESSAMENTO FINANCEIRO REATIVO
+function recalcularFaturamentoEscolar() {
+    if (!nomeEstudanteAtivo) return;
+
+    const stringCursoCompleto = dadosAlunoAtivo.classe_real || "";
+    const matchDisciplinas = stringCursoCompleto.match(/\[(.*?)\]/);
+    let listaDisciplinasDoAluno = [];
+    if (matchDisciplinas && matchDisciplinas[1]) {
+        listaDisciplinasDoAluno = matchDisciplinas[1].split(",").map(d => d.trim()).filter(d => d !== "");
     }
-    </script>
+
+    if (listaDisciplinasDoAluno.length === 0) {
+        const selectQtd = document.getElementById("qtd_disciplinas");
+        const qtdManual = selectQtd ? parseInt(selectQtd.value) : 1;
+        for (let i = 1; i <= qtdManual; i++) {
+            listaDisciplinasDoAluno.push(`Cadeira Regular ${i}`);
+        }
+    } else {
+        const selectQtd = document.getElementById("qtd_disciplinas");
+        if (selectQtd) selectQtd.value = listaDisciplinasDoAluno.length;
+    }
+
+    let precoTotalCadeirasReal = 0;
+    let detalheArray = [];
+    const nomeNivelLimpo = stringCursoCompleto.split("[")[0].trim();
+
+    const nivelConfig = dbAcademica.regular.find(r => r.nome.toLowerCase() === nomeNivelLimpo.toLowerCase());
+    let bancoDisciplinas = nivelConfig ? nivelConfig.disciplinas : [];
+
+    listaDisciplinasDoAluno.forEach(nomeDisc => {
+        const configDisc = bancoDisciplinas.find(d => d.n.trim().toLowerCase() === nomeDisc.toLowerCase());
+        const precoVerdadeiro = configDisc ? configDisc.p : 1500;
+        precoTotalCadeirasReal += precoVerdadeiro;
+        detalheArray.push({ nome: nomeDisc, preco: precoVerdadeiro });
+    });
+
+    dadosAlunoAtivo.custo_cadeiras = precoTotalCadeirasReal;
+
+    let desconto = listaDisciplinasDoAluno.length >= 4 ? precoTotalCadeirasReal * 0.20 : 0;
+    dadosAlunoAtivo.desconto_ganho = desconto;
+    
+    const linhaDesc = document.getElementById("linha_desconto_vip");
+    if (linhaDesc) linhaDesc.style.display = desconto > 0 ? "flex" : "none";
+
+    let subTotalFatura = precoTotalCadeirasReal - desconto;
+
+    let stockDisponivel = dadosAlunoAtivo.saldo_interno;
+    let saldoAbatidoAutomático = stockDisponivel >= subTotalFatura ? subTotalFatura : stockDisponivel;
+
+    const linhaSaldo = document.getElementById("linha_saldo_existente");
+    if (linhaSaldo) linhaSaldo.style.display = saldoAbatidoAutomático > 0 ? "flex" : "none";
+
+    let totalLiquidoFinalNoCaixa = (subTotalFatura + dadosAlunoAtivo.divida) - saldoAbatidoAutomático;
+    if (totalLiquidoFinalNoCaixa < 0) totalLiquidoFinalNoCaixa = 0;
+    dadosAlunoAtivo.total_caixa = totalLiquidoFinalNoCaixa;
+
+    document.getElementById("f_servico").innerText = precoTotalCadeirasReal.toFixed(2).replace(".", ",") + " AKZ";
+    document.getElementById("f_divida").innerText = dadosAlunoAtivo.divida.toFixed(2).replace(".", ",") + " AKZ";
+    if (document.getElementById("txt_desc_vip")) document.getElementById("txt_desc_vip").innerText = "-" + desconto.toFixed(2).replace(".", ",") + " AKZ";
+    if (document.getElementById("f_saldo_usado")) document.getElementById("f_saldo_usado").innerText = "-" + saldoAbatidoAutomático.toFixed(2).replace(".", ",") + " AKZ";
+    document.getElementById("txt_total_liquido").innerText = totalLiquidoFinalNoCaixa.toFixed(2).replace(".", ",") + " AKZ";
+
+    renderizarListaDeCadeirasCliente(detalheArray);
+    
+    const inputEntregue = document.getElementById("valor_entregue_input");
+    const valorEntregue = inputEntregue ? parseFloat(inputEntregue.value) : 0;
+    calcularTrocoECredito(valorEntregue);
+}
+// 🎯 4. SUBMISSÃO DA FATURA DIGITAL, IMPRESSÃO DE RECIBO E ALTERAÇÃO NO MYSQL
+function gerarFaturaDigital(event) {
+    if (event) event.preventDefault();
+    
+    if (!nomeEstudanteAtivo) {
+        alert("⚠️ Erro: Nenhum estudante selecionado para faturamento.");
+        return;
+    }
+
+    const mes = document.getElementById('mes_referencia').value;
+    const entregue = parseFloat(document.getElementById('valor_entregue_input').value) || 0;
+    const telefoneAluno = document.getElementById('telefone_input').value;
+    const txtTotal = document.getElementById("txt_total_liquido").innerText;
+    const totalLiquido = parseFloat(txtTotal.replace(" AKZ", "").replace(".", "").replace(",", ".")) || 0;
+
+    if (entregue < totalLiquido) {
+        alert(`❌ Erro: O valor entregue (${entregue.toLocaleString('pt-PT')} AKZ) é inferior ao total líquido (${totalLiquido.toLocaleString('pt-PT')} AKZ).`);
+        return;
+    }
+
+    // 📅 GERAÇÃO DINÂMICA DA DATA EXIGIDA NO RECIBO HTML
+    const dataAtual = new Date();
+    const dia = String(dataAtual.getDate()).padStart(2, '0');
+    const mesesAno = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    const nomeMes = mesesAno[dataAtual.getMonth()];
+    const ano = dataAtual.getFullYear();
+    const dataFormatada = `${dia} de ${nomeMes} de ${ano}`;
+
+    // 📋 INJEÇÃO DOS DADOS NO RECIBO VISUAL DO PORTAL
+    if (document.getElementById('rec_nome')) document.getElementById('rec_nome').innerText = nomeEstudanteAtivo;
+    if (document.getElementById('rec_tel')) document.getElementById('rec_tel').innerText = telefoneAluno;
+    if (document.getElementById('rec_mes')) document.getElementById('rec_mes').innerText = mes;
+    if (document.getElementById('rec_data')) document.getElementById('rec_data').innerText = dataFormatada;
+    if (document.getElementById('rec_qtd')) document.getElementById('rec_qtd').innerText = document.getElementById('qtd_disciplinas').value + " Disciplina(s)";
+    
+    if (document.getElementById('rec_turma')) document.getElementById('rec_turma').innerText = dadosAlunoAtivo.turma;
+    if (document.getElementById('rec_custo')) document.getElementById('rec_custo').innerText = dadosAlunoAtivo.custo_cadeiras.toLocaleString('pt-PT') + " AKZ";
+
+    if (dadosAlunoAtivo.desconto_ganho > 0) {
+        if (document.getElementById('rec_linha_desc')) document.getElementById('rec_linha_desc').style.display = 'flex';
+        if (document.getElementById('rec_desc')) document.getElementById('rec_desc').innerText = '-' + dadosAlunoAtivo.desconto_ganho.toLocaleString('pt-PT') + " AKZ";
+    } else { 
+        if (document.getElementById('rec_linha_desc')) document.getElementById('rec_linha_desc').style.display = 'none'; 
+    }
+
+    if (dadosAlunoAtivo.divida > 0) {
+        if (document.getElementById('rec_linha_divida')) document.getElementById('rec_linha_divida').style.display = 'flex';
+        if (document.getElementById('rec_divida')) document.getElementById('rec_divida').innerText = '+' + dadosAlunoAtivo.divida.toLocaleString('pt-PT') + " AKZ";
+    } else { 
+        if (document.getElementById('rec_linha_divida')) document.getElementById('rec_linha_divida').style.display = 'none'; 
+    }
+
+    const sobraStock = entregue - totalLiquido;
+    if (sobraStock > 0) {
+        if (document.getElementById('rec_linha_stock')) document.getElementById('rec_linha_stock').style.display = 'flex';
+        if (document.getElementById('rec_stock')) document.getElementById('rec_stock').innerText = '+' + sobraStock.toLocaleString('pt-PT') + " AKZ Retidos";
+    } else { 
+        if (document.getElementById('rec_linha_stock')) document.getElementById('rec_linha_stock').style.display = 'none'; 
+    }
+
+    if (document.getElementById('rec_total')) document.getElementById('rec_total').innerText = entregue.toLocaleString('pt-PT') + " AKZ";
+
+    // Dispara as informações consolidadas contra a rota POST do seu backend unitel.php
+    const formData = new FormData();
+    formData.append('acao_financeira', 'registar_pagamento');
+    formData.append('telefone', telefoneAluno);
+    formData.append('valor_pago', entregue);
+    formData.append('mes_pago', mes);
+
+    fetch("unitel.php", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("A porta de rede rejeitou a resposta.");
+        return res.json();
+    })
+    .then(resposta => {
+        if (resposta.sucesso) {
+            console.log("🎉 Sincronização concluída com sucesso no MySQL central.");
+            const blocoFatura = document.getElementById('bloco_fatura_recibo');
+            if (blocoFatura) {
+                blocoFatura.style.display = 'block';
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }
+        } else {
+            alert("❌ O Banco rejeitou a transação: " + resposta.mensagem);
+        }
+    })
+    .catch(err => {
+        console.error("Erro capturado:", err);
+        alert("⚠️ Erro de rede: O dinheiro foi calculado mas não pôde ser salvo na base de dados central.");
+    });
+}
+</script>
 </body>
 </html>
