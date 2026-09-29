@@ -49,8 +49,13 @@ try {
 
     if ($acao === 'carregar_alunos') {
         $classe = isset($_GET['classe']) ? trim($_GET['classe']) : '';
-        $stmt = $pdo->prepare("SELECT id_utilizador, id_unico_escolar, nome, email as nota_n1, senha as nota_n2, periodo as nota_n3, saldo_propina as faltas FROM utilizadores WHERE nivel = ? ORDER BY nome ASC");
-        $stmt->execute([$classe]);
+        
+        // Compara ignorando maiúsculas/minúsculas para capturar Sabina, Moma e todos os outros
+        $stmt = $pdo->prepare("SELECT id_utilizador, id_unico_escolar, nome, email as nota_n1, senha as nota_n2, periodo as nota_n3, saldo_propina as faltas, telefone 
+                               FROM utilizadores 
+                               WHERE LOWER(nivel) = LOWER(?) OR LOWER(id_unico_escolar) = LOWER(?) 
+                               ORDER BY id_unico_escolar DESC, nome ASC");
+        $stmt->execute([$classe, $classe]);
         
         echo json_encode([
             'sucesso' => true,
@@ -58,7 +63,3 @@ try {
         ]);
         exit;
     }
-} catch (Exception $e) {
-    echo json_encode(['sucesso' => false, 'mensagem' => $e->getMessage()]);
-    exit;
-}
