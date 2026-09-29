@@ -15,40 +15,40 @@ $resposta = ['sucesso' => false];
 $acao = isset($_GET['acao']) ? $_GET['acao'] : 'indicadores';
 
 try {
-    // 🧮 AÇÃO 1: CARREGA OS INDICADORES GLOBAIS DE FATURAMENTO
     if ($acao === 'indicadores') {
-        // Conta todos os alunos reais com IDs gerados no MySQL
-        $total = $pdo->query("SELECT COUNT(*) FROM utilizadores WHERE id_unico_escolar IS NOT NULL AND id_unico_escolar != ''")->fetchColumn();
+        // 1. Total Geral de Inscritos na base de dados
+        $inscritos = $pdo->query("SELECT COUNT(*) FROM utilizadores")->fetchColumn();
         
-        // Conta alunos do Ensino Regular (que possuem a palavra 'Classe' no campo curso/nivel)
-        $regular = $pdo->query("SELECT COUNT(*) FROM utilizadores WHERE (nivel LIKE '%Classe%' OR nivel LIKE '%classe%') AND id_unico_escolar IS NOT NULL")->fetchColumn();
+        // 2. Matriculados reais (Alunos que possuem código/identificação escolar gerado)
+        $matriculados = $pdo->query("SELECT COUNT(*) FROM utilizadores WHERE id_unico_escolar IS NOT NULL AND id_unico_escolar LIKE 'AUR-%'")->fetchColumn();
         
-        // O restante entra como ensino superior / cursos livres
-        $superior = $total - $regular;
+        // 3. Regime Regular (Períodos: Manhã ou Tarde)
+        $regular = $pdo->query("SELECT COUNT(*) FROM utilizadores WHERE periodo LIKE '%Manhã%' OR periodo LIKE '%manhã%' OR periodo LIKE '%Tarde%' OR periodo LIKE '%tarde%'")->fetchColumn();
         
-        // Faturamento real calculado automaticamente (ex: propina de 15.000 Kz por aluno registado)
-        $faturamento = $total * 15000;
+        // 4. Regime Pós-Laboral (Período: Noite)
+        $posLaboral = $pdo->query("SELECT COUNT(*) FROM utilizadores WHERE periodo LIKE '%Noite%' OR periodo LIKE '%noite%'")->fetchColumn();
+        
+        // Faturamento Real baseado nos matriculados efetivos (Ex: 15.000 Kz por aluno)
+        $faturamento = $matriculados * 15000;
 
-        // Puxa as turmas únicas existentes para o dropdown do filtro
+        // Puxa as turmas do campo nivel
         $stmtTurmas = $pdo->query("SELECT DISTINCT nivel FROM utilizadores WHERE nivel IS NOT NULL AND nivel != '' ORDER BY nivel ASC");
         $turmas = $stmtTurmas->fetchAll(PDO::FETCH_COLUMN);
 
         echo json_encode([
             'sucesso' => true,
-            'total' => $total,
+            'inscritos' => $inscritos,
+            'matriculados' => $matriculados,
             'regular' => $regular,
-            'superior' => $superior,
+            'pos_laboral' => $posLaboral,
             'faturamento' => $faturamento,
             'turmas' => $turmas
         ]);
         exit;
     }
 
-    // 📚 AÇÃO 2: CARREGA OS ALUNOS REAIS NA CADERNETA PARA LANÇAMENTO DE NOTAS
     if ($acao === 'carregar_alunos') {
         $classe = isset($_GET['classe']) ? trim($_GET['classe']) : '';
-        
-        // Busca os alunos vinculados a essa classe/curso selecionada
         $stmt = $pdo->prepare("SELECT id_utilizador, id_unico_escolar, nome, email as nota_n1, senha as nota_n2, periodo as nota_n3, saldo_propina as faltas FROM utilizadores WHERE nivel = ? ORDER BY nome ASC");
         $stmt->execute([$classe]);
         

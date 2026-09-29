@@ -187,53 +187,36 @@
     </div>
 
 
-            <div class="card" style="border-top: 4px solid var(--brand-success);">
-                    <div class="titulo">📊 Indicadores Globais de Faturamento (Huambo)</div>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">Monitorização automatizada de faturamento real em tempo real baseado nas matrículas centralizadas.</p>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; text-align: center;">
-                        <div style="background: #070b14; padding: 15px; border-radius: 10px; border: 1px solid var(--border-slate-light);">
-                            <div style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">Total de Estudantes</div>
-                            <div id="estatistica-total-alunos" style="font-size: 24px; font-weight: 900; color: var(--brand-blue-glow); margin-top: 5px;">0</div>
-                        </div>
-                        <div style="background: #070b14; padding: 15px; border-radius: 10px; border: 1px solid var(--border-slate-light);">
-                            <div style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">Ensino Regular</div>
-                            <div id="estatistica-regular" style="font-size: 24px; font-weight: 900; color: #fff; margin-top: 5px;">0</div>
-                        </div>
-                        <div style="background: #070b14; padding: 15px; border-radius: 10px; border: 1px solid var(--border-slate-light);">
-                            <div style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">Ensino Superior</div>
-                            <div id="estatistica-superior" style="font-size: 24px; font-weight: 900; color: #fff; margin-top: 5px;">0</div>
-                        </div>
-                        <div style="background: #070b14; padding: 15px; border-radius: 10px; border: 1px solid var(--border-slate-light); border-color: var(--brand-success);">
-                            <div style="font-size: 11px; font-weight: bold; color: var(--brand-success); text-transform: uppercase;">Faturamento Estimado</div>
-                            <div id="estatistica-faturamento" style="font-size: 20px; font-weight: 900; color: var(--brand-success); margin-top: 8px;">0.00 Kzs</div>
-                        </div>
+    <div class="card" style="border-top: 4px solid var(--brand-success);">
+            <div class="titulo">📊 Indicadores de Faturamento e Regimes (Huambo)</div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">Monitorização automatizada de faturamento real em tempo real baseado nas matrículas centralizadas.</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; text-align: center;">
+                <!-- Coluna 1: Estado da Inscrição -->
+                <div style="background: #070b14; padding: 15px; border-radius: 10px; border: 1px solid var(--border-slate-light);">
+                    <div style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">Inscritos / Matriculados</div>
+                    <div style="font-size: 20px; font-weight: 900; margin-top: 5px;">
+                        <span id="estatistica-inscritos" style="color: #64748b;">0</span> <span style="color:#1e293b;">/</span> 
+                        <span id="estatistica-matriculados" style="color: var(--brand-blue-glow);">0</span>
                     </div>
                 </div>
-
-            <!-- LANÇAMENTO DE NOTAS -->
-            <div class="card" id="card-pauta-professor" style="display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <div class="titulo" style="margin-bottom: 0;">📊 Lançamento de Notas e Assiduidade</div>
-                    <button onclick="salvarNotasCentral()" class="btn-salvar" style="padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer;">Salvar Caderneta 💾</button>
+                <!-- Coluna 2: Regime Regular -->
+                <div style="background: #070b14; padding: 15px; border-radius: 10px; border: 1px solid var(--border-slate-light);">
+                    <div style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">Regime Regular (Manhã/Tarde)</div>
+                    <div id="estatistica-regular" style="font-size: 24px; font-weight: 900; color: #fff; margin-top: 5px;">0</div>
                 </div>
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Estudante / Disciplina</th>
-                                <th style="text-align: center;">N1</th>
-                                <th style="text-align: center;">N2</th>
-                                <th style="text-align: center;">N3</th>
-                                <th style="text-align: center;">Faltas</th>
-                                <th style="text-align: right;">Estatuto</th>
-                            </tr>
-                        </thead>
-                        <tbody id="corpo-pauta-professor"></tbody>
-                    </table>
+                <!-- Coluna 3: Regime Pós-Laboral -->
+                <div style="background: #070b14; padding: 15px; border-radius: 10px; border: 1px solid var(--border-slate-light);">
+                    <div style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">Pós-Laboral (Noite)</div>
+                    <div id="estatistica-pos-laboral" style="font-size: 24px; font-weight: 900; color: #fff; margin-top: 5px;">0</div>
+                </div>
+                <!-- Coluna 4: Faturamento Central -->
+                <div style="background: #070b14; padding: 15px; border-radius: 10px; border-color: var(--brand-success);">
+                    <div style="font-size: 11px; font-weight: bold; color: var(--brand-success); text-transform: uppercase;">Faturamento Estimado</div>
+                    <div id="estatistica-faturamento" style="font-size: 20px; font-weight: 900; color: var(--brand-success); margin-top: 8px;">0.00 Kzs</div>
                 </div>
             </div>
-
+        </div>
 
 
 
@@ -784,35 +767,31 @@ document.addEventListener("DOMContentLoaded", carregarIndicadoresETurmas);
 // 🔄 1. CARREGA OS INDICADORES DE FATURAMENTO E ALIMENTA O SELECT DE TURMAS
 function sincronizarPainelProfessorAutomatico() {
     fetch("obter_pauta_prof.php?acao=indicadores")
-    .then(res => {
-        if (!res.ok) throw new Error("Falha na ligação com o servidor.");
-        return res.json();
-    })
+    .then(res => res.json())
     .then(dados => {
         if (dados.sucesso) {
-            // Injeta os dados em tempo real nos Indicadores Globais do seu HTML
-            if(document.getElementById('estatistica-total-alunos')) document.getElementById('estatistica-total-alunos').innerText = dados.total;
+            // Injeta dados nas novas referências dinâmicas do HTML
+            if(document.getElementById('estatistica-inscritos')) document.getElementById('estatistica-inscritos').innerText = dados.inscritos;
+            if(document.getElementById('estatistica-matriculados')) document.getElementById('estatistica-matriculados').innerText = dados.matriculados;
             if(document.getElementById('estatistica-regular')) document.getElementById('estatistica-regular').innerText = dados.regular;
-            if(document.getElementById('estatistica-superior')) document.getElementById('estatistica-superior').innerText = dados.superior;
+            if(document.getElementById('estatistica-pos-laboral')) document.getElementById('estatistica-pos-laboral').innerText = dados.pos_laboral;
             if(document.getElementById('estatistica-faturamento')) {
                 document.getElementById('estatistica-faturamento').innerText = Number(dados.faturamento).toLocaleString('pt-AO', {minimumFractionDigits: 2}) + " Kzs";
             }
 
-            // Alimenta o filtro de turmas (<select id="filtro-classe">) com os cursos reais do MySQL
+            // Atualiza o select de turmas
             const seletor = document.getElementById('filtro-classe');
-            if (seletor) {
-                // Guarda a seleção atual para não resetar visualmente caso mude
+            if (seletor && dados.turmas) {
                 const valorAtual = seletor.value;
-                
                 seletor.innerHTML = '<option value="">-- Selecione uma Classe Ativa --</option>' +
                     dados.turmas.map(t => `<option value="${t}">${t}</option>`).join('');
-                
                 if (valorAtual) seletor.value = valorAtual;
             }
         }
     })
-    .catch(err => console.error("Erro ao carregar indicadores dinâmicos:", err));
+    .catch(err => console.error("Erro ao sincronizar indicadores complexos:", err));
 }
+
 
 // 🔄 2. DETETA A SELEÇÃO DA TURMA E MONTA A CADERNETA DE NOTAS NO ECRÃ
 function carregarPautaGlobalProf() {
