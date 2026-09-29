@@ -338,7 +338,11 @@ const URL_LOGIN = isLocal ? "login_estudante.php" : "https://onrender.com";
         formData.append('senha', senhaInserida);
     
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const URL_LOGIN = isLocal ? "login_estudante.php" : "https://onrender.com";
+
+// Rotas dinâmicas universais para o Cadastro e para o Login
+const URL_BACKEND = isLocal ? "cadastrar_estudante.php" : window.location.origin + "/cadastrar_estudante.php";
+const URL_LOGIN = isLocal ? "login_estudante.php" : window.location.origin + "/login_estudante.php";
+
     
         fetch(URL_LOGIN, {
             method: "POST",

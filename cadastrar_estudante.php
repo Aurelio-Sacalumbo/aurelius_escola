@@ -1,10 +1,19 @@
 <?php
 // 🗄️ PROCESSADOR DE INSCRIÇÕES - ACADEMIA AURÉLIUS
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header('Content-Type: application/json; charset=utf-8');
-require_once 'conexao.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit(0);
+}
+
+require_once 'conexao.php'; // Ligação dinâmica ao MySQL (XAMPP ou Render)
 
 $resposta = ['sucesso' => false, 'mensagem' => ''];
 
+// 🛑 AQUI: Falta esta linha no seu código para abrir o bloco POST corretamente!
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome = isset($_POST['nome']) ? trim($_POST['nome']) : '';
     $telefone = isset($_POST['telefone']) ? trim($_POST['telefone']) : '';
