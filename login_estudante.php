@@ -1,15 +1,20 @@
 <?php
 // 🗄️ AUTENTICAÇÃO ACADÉMICA - ACADEMIA AURÉLIUS
-ini_set('display_errors', 0);
-error_reporting(E_ALL);
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header('Content-Type: application/json; charset=utf-8');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit(0);
+}
 
 require_once 'conexao.php'; // Motor de conexão dinâmica
 
 $resposta = ['sucesso' => false, 'mensagem' => ''];
 
 try {
-    // Captura Híbrida (Aceita FormData e JSON puro)
+    // Captura Híbrida (FormData ou JSON puro)
     $identificador = isset($_POST['identificador']) ? trim($_POST['identificador']) : '';
     $senhaInserida = isset($_POST['senha']) ? trim($_POST['senha']) : '';
 
@@ -25,20 +30,21 @@ try {
         exit;
     }
 
-    // Consulta 100% alinhada com as colunas reais do seu phpMyAdmin da Aiven
-    $query = "SELECT id_utilizador, nome, telefone, email as codigo_senha, periodo, nivel FROM utilizadores WHERE (id_unico_escolar = ? OR telefone = ?) AND senha = 'estudante' LIMIT 1";
+    // Consulta alinhada com as colunas reais do phpMyAdmin
+    $query = "SELECT id_utilizador, nome, telefone, email as codigo_senha, periodo FROM utilizadores WHERE (id_unico_escolar = ? OR telefone = ?) LIMIT 1";
     $stmt = $pdo->prepare($query);
     $stmt->execute([$identificador, $identificador]);
     $estudante = $stmt->fetch();
 
     if ($estudante) {
+        // Validação da senha numérica guardada na coluna 'email'
         if ($senhaInserida === $estudante['codigo_senha']) {
             $resposta['sucesso'] = true;
             $resposta['estudante'] = [
                 'id' => $identificador,
                 'nome' => $estudante['nome'],
                 'telefone' => $estudante['telefone'],
-                'classe' => $estudante['nivel'] ?: '9ª Classe', 
+                'classe' => '9ª Classe',
                 'periodo' => $estudante['periodo'] ?: 'Tarde',
                 'turma' => 'Turma Única A',
                 'disciplinas' => [],

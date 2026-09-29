@@ -120,30 +120,33 @@
                     ⚠️ Acesso Rejeitado! O ID/Telefone ou o Código de Validação não estão sincronizados.
                 </div>
 
-                <form id="form-login" onsubmit="return processarAcesso(event)">
-                    <div style="margin-bottom: 16px;">
-                        <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
-                            ID do Estudante ou Nº de Telefone:
-                        </label>
-                        <input type="text" id="login-identificador" class="form-input" required>
-                    </div>
-                
-                    <div style="margin-bottom: 10px;"> <!-- Reduzido ligeiramente a margem inferior -->
-                        <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
-                            Código de Validação / Senha:
-                        </label>
-                        <input type="password" id="login-senha" class="form-input" style="font-family: monospace; letter-spacing: 2px;"  required>
-                    </div>
-                
-                    <!-- 🔑 BOTÃO / LINK DE RECUPERAÇÃO DE SENHA ADICIONADO -->
-                    <div style="text-align: right; margin-bottom: 20px;">
-                        <a href="recuperar.php" style="font-size: 12px; color: var(--brand-gold, #eab308); text-decoration: none; font-weight: 600; transition: color 0.2s;" onmouseover="this.style.color='#facc15'" onmouseout="this.style.color='var(--brand-gold, #eab308)'">
-                            Esqueceu a password?
-                        </a>
-                    </div>
-                
-                    <button type="submit" class="btn">Aceder à Plataforma ➔</button>
-                </form>
+                <form id="form-login" onsubmit="processarAcesso(event)">
+                        <div style="margin-bottom: 16px;">
+                            <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
+                                ID do Estudante ou Nº de Telefone:
+                            </label>
+                            <input type="text" id="login-identificador" class="form-input" required>
+                        </div>
+                    
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
+                                Código de Validação / Senha:
+                            </label>
+                            <input type="password" id="login-senha" class="form-input" style="font-family: monospace; letter-spacing: 2px;" required>
+                        </div>
+                    
+                        <!-- 🔑 LINK DE RECUPERAÇÃO DE SENHA -->
+                        <div style="text-align: right; margin-bottom: 15px;">
+                            <a href="recuperar.php" style="font-size: 12px; color: var(--brand-gold, #eab308); text-decoration: none; font-weight: 600; transition: color 0.2s;" onmouseover="this.style.color='#facc15'" onmouseout="this.style.color='var(--brand-gold, #eab308)'">
+                                Esqueceu a password?
+                            </a>
+                        </div>
+                    
+                        <!-- 🛑 ELEMENTO ADICIONADO: Contentor para exibir as mensagens de erro dinâmicas do PHP -->
+                        <div id="mensagem-erro" style="display: none; color: #f87171; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 15px; font-weight: 500;"></div>
+                    
+                        <button type="submit" class="btn">Aceder à Plataforma ➔</button>
+                    </form>
             </div>
         </div>
 
@@ -240,105 +243,145 @@
 
 
 
-
     <script>
-        // Inicialização da base local para simulações
-        if (!localStorage.getItem('bd_estudantes')) {
-            localStorage.setItem('bd_estudantes', JSON.stringify([]));
-        }
-    
-        let estudanteLogado = null;
-    
-        // Navegação Interna da Aplicação (SPA)
-        function alternarTela(idTela) {
-            document.querySelectorAll('.tela-view').forEach(t => t.classList.remove('active'));
-            const tela = document.getElementById(idTela);
-            if (tela) tela.classList.add('active');
-        }
-    
-        // 💾 INSCRIÇÃO DINÂMICA LOCAL
-        function cadastrarEstudanteAutomatico(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            const formData = new FormData();
-            formData.append('nome', document.getElementById('cad-nome').value.trim());
-            formData.append('telefone', document.getElementById('cad-telefone').value.trim());
-            formData.append('classe', document.getElementById('cad-classe').value.trim());
-            formData.append('periodo', document.getElementById('cad-periodo').value.trim());
+    // Inicialização da base local para simulações
+    if (!localStorage.getItem('bd_estudantes')) {
+        localStorage.setItem('bd_estudantes', JSON.stringify([]));
+    }
+
+    let estudianteLogado = null;
+
+    // Navegação Interna da Aplicação (SPA)
+    function alternarTela(idTela) {
+        document.querySelectorAll('.tela-view').forEach(t => t.classList.remove('active'));
+        const tela = document.getElementById(idTela);
+        if (tela) tela.classList.add('active');
+    }
+
+    // 💾 INSCRIÇÃO DINÂMICA LOCAL E MYSQL
+    function cadastrarEstudanteAutomatico(event) {
+        event.preventDefault();
         
-            // 🚀 MOTOR DE ROTA AUTOMÁTICA UNIVERSAL
-            // Esta linha extrai o domínio atual e garante que o fetch vá para o ficheiro PHP na mesma pasta do servidor
-            const URL_AUTOMATICA = window.location.protocol + "//" + window.location.host + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + "/cadastrar_estudante.php";
-        
-            console.log("A enviar matrícula automática para: " + URL_AUTOMATICA);
-        
-            fetch(URL_AUTOMATICA, {
-                method: "POST",
-                body: formData
-            })
-            .then(res => {
-                if (!res.ok) throw new Error("Erro na rede do servidor");
-                return res.json();
-            })
-            .then(dados => {
-                if (dados.sucesso) {
-                    alert(`🎉 MATRÍCULA GRAVADA NO MYSQL AUTOMATICAMENTE!\n\nID ESTUDANTE: ${dados.id_estudante}\nCÓDIGO VALIDAÇÃO (SENHA): ${dados.codigo_validacao}`);
-                    
-                    document.getElementById('form-cadastro').reset();
-                    document.getElementById('login-identificador').value = dados.id_estudante;
-                    document.getElementById('login-senha').value = dados.codigo_validacao;
-                    alternarTela('view-login');
-                } else {
-                    alert("❌ Rejeitado pelo Banco: " + dados.mensagem);
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert("⚠️ Erro de rede: Não foi possível alcançar o ficheiro cadastrar_estudante.php na nuvem.");
-            });
-        }
-        
-           
-            // Carrega os estudantes gravados no navegador
-            const listaEstudantes = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
+        const nome = document.getElementById('cad-nome').value.trim();
+        const telefone = document.getElementById('cad-telefone').value.trim();
+        const classe = document.getElementById('cad-classe').value.trim();
+        const periodo = document.getElementById('cad-periodo').value.trim();
     
-            // Busca correspondência por ID ou por número de Telefone
-            const alunoEncontrado = listaEstudantes.find(aluno => 
-                (identificador === aluno.id || identificador === aluno.telefone) && 
-                senhaInserida === aluno.codigoValidacao
-            );
+        const formData = new FormData();
+        formData.append('nome', nome);
+        formData.append('telefone', telefone);
+        formData.append('classe', classe);
+        formData.append('periodo', periodo);
     
-            if (alunoEncontrado) {
-                erroDiv.style.display = "none";
-                estudanteLogado = alunoEncontrado;
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const URL_BACKEND = isLocal ? "cadastrar_estudante.php" : "https://onrender.com";
+
+// CORREÇÃO PARA O LOGIN
+const URL_LOGIN = isLocal ? "login_estudante.php" : "https://onrender.com";
+    
+        fetch(URL_BACKEND, {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(dados => {
+            if (dados.sucesso) {
+                alert(`🎉 INSCRIÇÃO REALIZADA COM SUCESSO!\n\nID ESTUDANTE: ${dados.id_estudante}\nCÓDIGO VALIDAÇÃO (SENHA): ${dados.codigo_validacao}`);
                 
+                // 💾 GUARDA TAMBÉM NO LOCALSTORAGE PARA FAZER O LOGIN LOCAL FUNCIONAR IMEDIATAMENTE
+                const listaEstudantes = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
+                listaEstudantes.push({
+                    id: dados.id_estudante,
+                    nome: nome,
+                    telefone: telefone,
+                    classe: classe,
+                    periodo: periodo,
+                    codigoValidacao: String(dados.codigo_validacao), // Garante que é texto para comparar no login
+                    turma: 'Turma Única A',
+                    disciplinas: [],
+                    livros: []
+                });
+                localStorage.setItem('bd_estudantes', JSON.stringify(listaEstudantes));
+    
+                // Preenche o formulário de login automaticamente
+                document.getElementById('form-cadastro').reset();
+                document.getElementById('login-identificador').value = dados.id_estudante;
+                document.getElementById('login-senha').value = dados.codigo_validacao;
+                
+                alternarTela('view-login');
+            } else {
+                alert(dados.mensagem);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("⚠️ Erro de rede ao conectar ao servidor.");
+        });
+    }
+
+    // 🔐 PROCESSAR ACESSO (LOGIN VIA PHP)
+    function processarAcesso(event) {
+        if (event) event.preventDefault();
+        
+        const identificador = document.getElementById('login-identificador').value.trim();
+        const senhaInserida = document.getElementById('login-senha').value.trim();
+        const erroDiv = document.getElementById('mensagem-erro');
+    
+        if (identificador === "" || senhaInserida === "") {
+            erroDiv.style.display = "block";
+            erroDiv.innerHTML = "❌ Preencha todos os campos.";
+            return;
+        }
+    
+        const formData = new FormData();
+        formData.append('identificador', identificador);
+        formData.append('senha', senhaInserida);
+    
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const URL_LOGIN = isLocal ? "login_estudante.php" : "https://onrender.com";
+    
+        fetch(URL_LOGIN, {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(dados => {
+            if (dados.sucesso) {
+                erroDiv.style.display = "none";
+                estudanteLogado = dados.estudante;
                 carregarDadosDashboard();
                 alternarTela('view-dashboard');
-                
-                const menuLogout = document.getElementById('menu-logout');
-                if (menuLogout) menuLogout.style.display = "block";
+                document.getElementById('menu-logout').style.display = "block";
             } else {
+                // EXIBE A MENSAGEM REAL VINDA DO PHP (Ex: "❌ Código de validação incorreto.")
                 erroDiv.style.display = "block";
-                erroDiv.innerHTML = "❌ ID do Estudante ou Senha incorreta no sistema local.";
+                erroDiv.innerHTML = dados.mensagem;
             }
-        }
+        })
+        .catch(err => {
+            console.error(err);
+            erroDiv.style.display = "block";
+            erroDiv.innerHTML = "⚠️ Falha ao conectar ao servidor MySQL.";
+        });
+    }
     
-        // 📊 INJEÇÃO DOS DADOS NO PAINEL
-        function carregarDadosDashboard() {
-            if (!estudanteLogado) return;
-            
-            document.getElementById('txt-nome-aluno').innerText = estudanteLogado.nome;
-            document.getElementById('txt-id-escolar').innerText = estudanteLogado.id;
-            document.getElementById('txt-turma-aluno').innerText = estudanteLogado.turma;
-            document.getElementById('txt-classe-aluno').innerText = estudanteLogado.classe;
-            document.getElementById('txt-periodo-aluno').innerText = estudanteLogado.periodo;
-            
+    // 📊 INJEÇÃO DOS DADOS NO PAINEL
+    function carregarDadosDashboard() {
+        if (!estudanteLogado) return;
+        
+        if(document.getElementById('txt-nome-aluno')) document.getElementById('txt-nome-aluno').innerText = estudanteLogado.nome;
+        if(document.getElementById('txt-id-escolar')) document.getElementById('txt-id-escolar').innerText = estudanteLogado.id;
+        if(document.getElementById('txt-turma-aluno')) document.getElementById('txt-turma-aluno').innerText = estudanteLogado.turma;
+        if(document.getElementById('txt-classe-aluno')) document.getElementById('txt-classe-aluno').innerText = estudanteLogado.classe;
+        if(document.getElementById('txt-periodo-aluno')) document.getElementById('txt-periodo-aluno').innerText = estudanteLogado.periodo;
+        
+        if (document.getElementById('msg-boas-vindas')) {
             const primeiroNome = estudanteLogado.nome.split(' ')[0];
             document.getElementById('msg-boas-vindas').innerHTML = `<b>[Coordenação]:</b> Olá ${primeiroNome}. Bem-vindo ao teu painel de estudos.`;
-    
-            // Notas Dinâmicas
-            const tabela = document.getElementById('corpo-tabela-pauta');
+        }
+
+        const tabela = document.getElementById('corpo-tabela-pauta');
+        if (tabela) {
             if (estudanteLogado.disciplinas && estudanteLogado.disciplinas.length > 0) {
                 tabela.innerHTML = estudanteLogado.disciplinas.map(d => `
                     <tr>
@@ -346,132 +389,38 @@
                         <td style="text-align: center;">${Number(d.n1).toFixed(1)}</td>
                         <td style="text-align: center;">${Number(d.n2).toFixed(1)}</td>
                         <td style="text-align: center;">${Number(d.n3).toFixed(1)}</td>
-                        <td style="text-align: center;">${d.faltas}</td>
+                        <td>${d.faltas}</td>
                         <td style="text-align: right;"><span class="badge">${d.estatuto}</span></td>
                     </tr>
                 `).join('');
             } else {
                 tabela.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding: 15px;">Nenhuma disciplina ativa.</td></tr>`;
             }
-    
-            // Prateleira de Livros
-            const prateleira = document.getElementById('contentor-livros-aluno');
-            if (estudanteLogado.livros && estudanteLogado.livros.length > 0) {
-                prateleira.innerHTML = estudanteLogado.livros.map((l, index) => `
-                    <div class="livro-row">
-                        <div>
-                            <div style="font-size: 13px; font-weight: bold; color: #fff;">${l.titulo}</div>
-                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">📖 ${l.autor}</div>
-                        </div>
-                        <button class="btn-baixar" style="background: var(--brand-blue); color: #060b19; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold;">Ler Agora ➔</button>
-                    </div>
-                `).join('');
-            } else {
-                prateleira.innerHTML = `<p style="font-size: 12px; color:var(--text-muted); text-align:center; padding: 10px;">Nenhum manual alocado.</p>`;
-            }
         }
-    
-        function fazerLogout(event) {
-            if(event) event.preventDefault();
-            estudanteLogado = null;
-            document.getElementById('form-login').reset();
-            const menuLogout = document.getElementById('menu-logout');
-            if (menuLogout) menuLogout.style.display = "none";
-            document.getElementById('mensagem-erro').style.display = "none";
-            alternarTela('view-login');
-        }
-
-        function processarAcesso(event) {
-    if (event) {
-        event.preventDefault();
-        event.stopPropagation();
     }
     
-    const identificadorInput = document.getElementById('login-identificador');
-    const senhaInput = document.getElementById('login-senha');
-    const erroDiv = document.getElementById('mensagem-erro');
-
-    if (!identificadorInput || !senhaInput) {
-        alert("⚠️ Erro crítico: Campos do formulário não foram encontrados no HTML.");
-        return false;
+    // 🚪 RETROCEDER / FAZER LOGOUT
+    function fazerLogout(event) {
+        if(event) event.preventDefault();
+        estudanteLogado = null;
+        
+        const formLogin = document.getElementById('form-login');
+        if (formLogin) formLogin.reset();
+        
+        const menuLogout = document.getElementById('menu-logout');
+        if (menuLogout) menuLogout.style.display = "none";
+        
+        const erroDiv = document.getElementById('mensagem-erro');
+        if (erroDiv) erroDiv.style.display = "none";
+        
+        alternarTela('view-login');
     }
 
-    const identificador = identificadorInput.value.trim();
-    const senhaInserida = senhaInput.value.trim();
-
-    if (identificador === "" || senhaInserida === "") {
-        if (erroDiv) {
-            erroDiv.style.display = "block";
-            erroDiv.innerHTML = "❌ Por favor, preencha todos os campos antes de aceder.";
-        } else {
-            alert("❌ Por favor, preencha todos os campos antes de aceder.");
-        }
-        return false;
-    }
-
-    const formData = new FormData();
-    formData.append('identificador', identificador);
-    formData.append('senha', senhaInserida);
-
-    if (erroDiv) {
-        erroDiv.style.display = "block";
-        erroDiv.innerHTML = "⏳ A autenticar na base académica... Aguarde.";
-        erroDiv.style.color = "#eab308";
-    }
-
-    // Rota relativa direta para garantir o funcionamento dinâmico no XAMPP e Render
-    fetch("login_estudante.php", {
-        method: "POST",
-        body: formData
-    })
-    .then(res => {
-        if (!res.ok) throw new Error("Erro de rede: O servidor devolveu status " + res.status);
-        return res.json();
-    })
-    .then(dados => {
-        if (!erroDiv) return;
-
-        if (dados.sucesso) {
-            erroDiv.style.display = "none";
-            
-            // Grava os dados do estudante autenticado pelo banco na memória global
-            estudanteLogado = dados.estudante;
-            
-            // Injeta reativamente os dados no Dashboard principal
-            const txtNome = document.getElementById('txt-nome-aluno');
-            const txtId = document.getElementById('txt-id-escolar');
-            
-            if (txtNome) txtNome.innerText = estudanteLogado.nome;
-            if (txtId) txtId.innerText = estudanteLogado.id;
-            
-            // Executa os carregamentos internos e alterna a tela visual
-            if (typeof carregarDadosDashboard === "function") carregarDadosDashboard();
-            if (typeof alternarTela === "function") alternarTela('view-dashboard');
-            
-            const menuLogout = document.getElementById('menu-logout');
-            if (menuLogout) menuLogout.style.display = "block";
-            
-            alert(`🎉 Bem-vindo de volta, ${estudanteLogado.nome}! Acesso autorizado.`);
-        } else {
-            erroDiv.style.display = "block";
-            erroDiv.style.color = "#ef4444";
-            erroDiv.innerHTML = dados.mensagem || "❌ Identificador ou código incorreto.";
-            alert(dados.mensagem || "❌ Credenciais inválidas. Verifique os dados introduzidos.");
-        }
-    })
-    .catch(err => {
-        console.error(err);
-        if (erroDiv) {
-            erroDiv.style.display = "block";
-            erroDiv.style.color = "#ef4444";
-            erroDiv.innerHTML = "⚠️ Falha de ligação ao servidor da nuvem.";
-        }
-        alert("⚠️ Erro de comunicação: Não foi possível receber resposta do arquivo login_estudante.php. Verifique a consola (F12).");
+    // Inicialização segura ao carregar a página
+    document.addEventListener("DOMContentLoaded", () => {
+        alternarTela('view-login');
     });
+</script>
 
-    return false;
-}
-
-        </script>
     </body>
     </html>
