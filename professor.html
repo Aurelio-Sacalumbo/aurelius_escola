@@ -182,7 +182,9 @@
                 <input type="file" id="livro-ficheiro" accept="application/pdf" class="form-input" required>
             </div>
             <button type="submit" class="btn" style="background: var(--brand-blue-glow); color: #000;">Publicar Livro Digital 🚀</button>
-        </form>
+                    </form>
+        
+           
     </div>
 
 
@@ -234,13 +236,26 @@
             </div>
 
 
-         <!-- Cole isto na secção onde deseja gerir as turmas dentro do professor.html -->
-         <div class="container-gestao" style="padding: 20px; font-family: sans-serif; background: #0d1527; color: #fff; border-radius: 8px;">
-            <h3 style="color: #eab308; text-align: center;">Painel de Administração: Direcionamento & Aprovação</h3>
+
+
+
+
+
+
+
+
+
             
-            <!-- Formulário Exclusivo do Professor -->
-            <form id="pautaForm" style="margin-bottom: 25px; background: #060b19; padding: 20px; border-radius: 6px;">
+<!-- =========================================================================
+     🏫 SEÇÃO DE GESTÃO DE TURMAS (PROFESSOR.HTML)
+     ========================================================================= -->
+     <div class="container-gestao" style="padding: 20px; font-family: sans-serif; background: #0d1527; color: #fff; border-radius: 8px;">
+            <h3 style="color: #eab308; text-align: center; margin-bottom: 20px;">Painel de Administração: Direcionamento & Aprovação</h3>
+            
+            <!-- 📄 Formulário Exclusivo do Professor -->
+            <form id="pautaFormLocal" onsubmit="event.preventDefault(); event.stopPropagation();" style="margin-bottom: 25px; background: #060b19; padding: 20px; border-radius: 6px;">
                 <input type="hidden" id="id_matricula">
+                
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
                     <div>
                         <label style="color:#94a3b8; font-size:12px;">Nome do Aluno</label>
@@ -278,128 +293,164 @@
                         </select>
                     </div>
                     <div>
+                        <!-- 🌟 BOTÃO DE SALVAR REGISTO PERFEITAMENTE ENQUADRADO NA GRID -->
                         <button type="submit" style="background:#eab308; color:#000; width:100%; padding:9px; font-weight:bold; border:none; border-radius:4px; margin-top:20px; cursor:pointer;">Salvar Registo</button>
                     </div>
                 </div>
             </form>
         
-            <!-- Tabela Operacional com Controlos Totais -->
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                    <thead>
-                        <tr style="background: #111c35; color: #eab308;">
-                            <th style="padding:10px;">Aluno</th>
-                            <th style="padding:10px;">Classe</th>
-                            <th style="padding:10px;">Período</th>
-                            <th style="padding:10px;">Hora</th>
-                            <th style="padding:10px;">Disciplina</th>
-                            <th style="padding:10px;">Professor</th>
-                            <th style="padding:10px;">Estado</th>
-                            <th style="padding:10px;">Ações de Controlo</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dadosPautaProfessor"></tbody>
-                </table>
+            <!-- 🌟 BLOCO DE BOTÕES DE CONTROLO DA ABA (ACIMA DA TABELA) -->
+            <div style="margin: 15px 0; text-align: left; display: flex; gap: 10px;">
+                <button type="button" id="btnAbrirAba" onclick="gerenciarAbaLocal(true)" style="background: #111c35; color: #eab308; border: 1px solid #eab308; padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer;">📁 Abrir Aba</button>
+                <button type="button" id="btnFecharAba" onclick="gerenciarAbaLocal(false)" style="background: #1e293b; color: #94a3b8; border: 1px solid #1e293b; padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; display: none;">📂 Fechar Aba</button>
             </div>
-        </div>
         
-        <script>
-            // Toda a lógica JavaScript de carregamento, submissão (POST), 
-            // alteração de estado (Aprovar/Rejeitar) e eliminação fica aqui dentro do professor.html!
-            const form = document.getElementById('pautaForm');
+            <!-- 🌟 DIV CONTROLADORA DA ABA (OCULTA POR PADRÃO NO F5) -->
+            <div id="abaTabelaProfessor" style="display: none;">
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="background: #111c35; color: #eab308;">
+                                <th style="padding:10px;">Aluno</th>
+                                <th style="padding:10px;">Classe</th>
+                                <th style="padding:10px;">Período</th>
+                                <th style="padding:10px;">Hora</th>
+                                <th style="padding:10px;">Disciplina</th>
+                                <th style="padding:10px;">Professor</th>
+                                <th style="padding:10px;">Estado</th>
+                                <th style="padding:10px;">Ações de Controlo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dadosPautaProfessor">
+                            <!-- Injetado via LocalStorage -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div> <!-- Fim do container-gestao -->
+       <script>
+    // 🧠 GESTOR DE ABA LOCAL CORRIGIDO E SEM TRAVAMENTOS
+    if (!localStorage.getItem('bd_pautas_professor')) {
+        localStorage.setItem('bd_pautas_professor', JSON.stringify([]));
+    }
+
+    // Força o fecho absoluto e prepara a contagem inicial no carregamento da página
+    document.addEventListener("DOMContentLoaded", () => {
+        gerenciarAbaLocal(false); 
+        
+        // Sincroniza o clique do botão de fechar fisicamente se ele existir no seu ecrã
+        const btnFecharVisual = document.getElementById('btnFecharAba');
+        if (btnFecharVisual) {
+            btnFecharVisual.onclick = () => { gerenciarAbaLocal(false); };
+        }
+    });
+    setTimeout(() => { gerenciarAbaLocal(false); }, 100);
+
+    function gerenciarAbaLocal(deveAbrir) {
+        const containerAba = document.getElementById('abaTabelaProfessor');
+        const btnAbrir = document.getElementById('btnAbrirAba'); 
+        const btnFechar = document.getElementById('btnFecharAba'); 
+        const tbodyProf = document.getElementById('dadosPautaProfessor');
+
+        if (!containerAba) return;
+
+        const dadosLocais = JSON.parse(localStorage.getItem('bd_pautas_professor')) || [];
+
+        if (deveAbrir) {
+            containerAba.style.setProperty('display', 'block', 'important');
+            if(btnAbrir) btnAbrir.style.display = 'none';
+            if(btnFechar) btnFechar.style.display = 'inline-block';
+            
+            renderizarTabelaLocal(dadosLocais, tbodyProf);
+        } else {
+            containerAba.style.setProperty('display', 'none', 'important');
+            if(btnAbrir) {
+                btnAbrir.style.display = 'inline-block';
+                btnAbrir.innerText = `📁 Abrir Aba (${dadosLocais.length} Alunos)`;
+            }
+            if(btnFechar) btnFechar.style.display = 'none';
+        }
+    }
+
+    function renderizarTabelaLocal(dadosLocais, tbodyProf) {
+        if (!tbodyProf) return;
+        tbodyProf.innerHTML = "";
+        
+        if (dadosLocais.length === 0) {
+            tbodyProf.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:#cbd5e1; font-size:12px;">Nenhum registo de turma encontrado localmente.</td></tr>`;
+            return;
+        }
+
+        dadosLocais.forEach(row => {
+            let badgeColor = row.estado === 'aprovado' ? '#10b981' : (row.estado === 'rejeitado' ? '#ef4444' : '#f59e0b');
+            tbodyProf.innerHTML += `
+                <tr style="border-bottom: 1px solid #1e293b; font-size: 13px;">
+                    <td style="padding:10px;"><b>${row.nome_aluno}</b></td>
+                    <td style="padding:10px;">${row.classe}</td>
+                    <td style="padding:10px;">${row.periodo}</td>
+                    <td style="padding:10px;"><code>${row.hora}</code></td>
+                    <td style="padding:10px;">${row.disciplina}</td>
+                    <td style="padding:10px;">${row.professor}</td>
+                    <td style="padding:10px;"><span style="background:${badgeColor}; color:#000; padding:3px 6px; font-size:11px; font-weight:bold; border-radius:3px; text-transform:uppercase;">${row.estado}</span></td>
+                    <td style="padding:10px;">
+                        <button type="button" style="background:#ef4444; border:none; padding:4px 8px; border-radius:3px; font-size:12px; color:#fff; cursor:pointer;" onclick="eliminarRegistoDireto('${row.id_matricula}')">Eliminar</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // Processamento do Formulário Local
+    const formLocal = document.getElementById('pautaFormLocal');
+    if (formLocal) {
+        formLocal.onsubmit = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            let dadosLocais = JSON.parse(localStorage.getItem('bd_pautas_professor')) || [];
+            
+            const novoRegisto = {
+                id_matricula: 'MAT-' + Math.floor(100000 + Math.random() * 900000),
+                nome_aluno: document.getElementById('nome_aluno').value.trim(),
+                classe: document.getElementById('classe').value.trim(),
+                periodo: document.getElementById('periodo').value,
+                hora: document.getElementById('hora').value.trim(),
+                disciplina: document.getElementById('disciplina').value.trim(),
+                professor: document.getElementById('professor').value.trim(),
+                estado: document.getElementById('estado').value
+            };
+    
+            dadosLocais.push(novoRegisto);
+            localStorage.setItem('bd_pautas_professor', JSON.stringify(dadosLocais));
+            
+            this.reset();
+            alert("🎉 Registo salvo com sucesso na base local!");
+            gerenciarAbaLocal(false); // Mantém recolhido para economizar espaço
+        };
+    }
+
+    function eliminarRegistoDireto(id) {
+        if (confirm("Deseja eliminar esta pauta/turma?")) {
+            let dadosLocais = JSON.parse(localStorage.getItem('bd_pautas_professor')) || [];
+            
+            // 🌟 CORREÇÃO CIRÚRGICA: Transforma o ID em String para garantir o casamento exato do filtro
+            dadosLocais = dadosLocais.filter(item => String(item.id_matricula) !== String(id));
+            localStorage.setItem('bd_pautas_professor', JSON.stringify(dadosLocais));
+            
             const tbodyProf = document.getElementById('dadosPautaProfessor');
-        
-            document.addEventListener("DOMContentLoaded", carregarPautaGerencial);
-        
-            function carregarPautaGerencial() {
-                fetch('gerir_pauta.php')
-                    .then(res => res.json())
-                    .then(res => {
-                        if(res.sucesso) {
-                            tbodyProf.innerHTML = "";
-                            res.dados.forEach(row => {
-                                let badgeColor = row.estado === 'aprovado' ? '#10b981' : (row.estado === 'rejeitado' ? '#ef4444' : '#f59e0b');
-                                tbodyProf.innerHTML += `
-                                    <tr style="border-bottom: 1px solid #1e293b;">
-                                        <td style="padding:10px;"><b>${row.nome_aluno}</b></td>
-                                        <td style="padding:10px;">${row.classe}</td>
-                                        <td style="padding:10px;">${row.periodo}</td>
-                                        <td style="padding:10px;"><code>${row.hora}</code></td>
-                                        <td style="padding:10px;">${row.disciplina}</td>
-                                        <td style="padding:10px;">${row.professor}</td>
-                                        <td style="padding:10px;"><span style="background:${badgeColor}; color:#000; padding:3px 6px; font-size:11px; font-weight:bold; border-radius:3px; text-transform:uppercase;">${row.estado}</span></td>
-                                        <td style="padding:10px;">
-                                            ${row.estado === 'pendente' ? `
-                                                <button style="background:#10b981; border:none; padding:4px 8px; border-radius:3px; font-size:12px; cursor:pointer;" onclick="alterarEstado(\${row.id_matricula}, 'aprovado')">Aprovar</button>
-                                                <button style="background:#f97316; border:none; padding:4px 8px; border-radius:3px; font-size:12px; color:#fff; cursor:pointer;" onclick="alterarEstado(\${row.id_matricula}, 'rejeitado')">Rejeitar</button>
-                                            ` : ''}
-                                            <button style="background:#38bdf8; border:none; padding:4px 8px; border-radius:3px; font-size:12px; cursor:pointer;" onclick="prepararEdicao(${JSON.stringify(row).replace(/"/g, '&quot;')})">Editar</button>
-                                            <button style="background:#ef4444; border:none; padding:4px 8px; border-radius:3px; font-size:12px; color:#fff; cursor:pointer;" onclick="eliminarRegisto(${row.id_matricula})">Eliminar</button>
-                                        </td>
-                                    </tr>
-                                `;
-                            });
-                        }
-                    });
+            renderizarTabelaLocal(dadosLocais, tbodyProf);
+            
+            // Atualiza o contador de alunos do botão sem fechar a janela ativa
+            const btnAbrir = document.getElementById('btnAbrirAba');
+            if(btnAbrir) btnAbrir.innerText = `📁 Abrir Aba (${dadosLocais.length} Alunos)`;
+            
+            // Se limpou o último aluno, esconde a pauta automaticamente
+            if(dadosLocais.length === 0) {
+                gerenciarAbaLocal(false);
             }
-        
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                fetch('gerir_pauta.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        acao: 'salvar',
-                        id_matricula: document.getElementById('id_matricula').value,
-                        nome_aluno: document.getElementById('nome_aluno').value,
-                        classe: document.getElementById('classe').value,
-                        periodo: document.getElementById('periodo').value,
-                        hora: document.getElementById('hora').value,
-                        disciplina: document.getElementById('disciplina').value,
-                        professor: document.getElementById('professor').value,
-                        estado: document.getElementById('estado').value
-                    })
-                }).then(res => res.json()).then(res => {
-                    alert(res.mensagem);
-                    form.reset();
-                    document.getElementById('id_matricula').value = "";
-                    carregarPautaGerencial();
-                });
-            });
-        
-            function alterarEstado(id, novoEstado) {
-                fetch('gerir_pauta.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ acao: 'alterar_estado', id_matricula: id, novo_estado: novoEstado })
-                }).then(res => res.json()).then(() => carregarPautaGerencial());
-            }
-        
-            function prepararEdicao(obj) {
-                document.getElementById('id_matricula').value = obj.id_matricula;
-                document.getElementById('nome_aluno').value = obj.nome_aluno;
-                document.getElementById('classe').value = obj.classe;
-                document.getElementById('periodo').value = obj.periodo;
-                document.getElementById('hora').value = obj.hora;
-                document.getElementById('disciplina').value = obj.disciplina;
-                document.getElementById('professor').value = obj.professor;
-                document.getElementById('estado').value = obj.estado;
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        
-            function eliminarRegisto(id) {
-                if(confirm("Tem a certeza que deseja remover este estudante?")) {
-                    fetch('gerir_pauta.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ acao: 'eliminar', id_matricula: id })
-                    }).then(res => res.json()).then(res => {
-                        alert(res.mensagem);
-                        carregarPautaGerencial();
-                    });
-                }
-            }
-        </script>
+        }
+    }
+</script>
 
 
 
