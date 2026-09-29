@@ -10,14 +10,15 @@ if ($isLocal) {
     $port = "3306";
     $user = "root";
     $password = "";
-    $dbname = "aurelius_escola";
+    $dbname = "escola";
 } else {
     // ☁️ CONFIGURAÇÕES PARA A NUVEM DO RENDER (Alinhado com a Aiven)
+    // O getenv deve receber APENAS o nome exato da chave que colocou no painel do Render!
     $host = getenv('DB_HOST');
     $port = getenv('DB_PORT') ?: "22002";
     $user = getenv('DB_USER');
     $password = getenv('DB_PASSWORD');
-    $dbname = getenv('DB_NAME') ?: "defaultdb"; // 🌟 Mudado para defaultdb aqui!
+    $dbname = getenv('DB_NAME') ?: "defaultdb"; 
 }
 
 try {
