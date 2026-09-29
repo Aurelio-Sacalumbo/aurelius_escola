@@ -258,7 +258,6 @@
         if (tela) tela.classList.add('active');
     }
 
-    // 💾 INSCRIÇÃO DINÂMICA LOCAL E MYSQL
     function cadastrarEstudanteAutomatico(event) {
         event.preventDefault();
         
@@ -273,41 +272,24 @@
         formData.append('classe', classe);
         formData.append('periodo', periodo);
     
-        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const URL_BACKEND = isLocal ? "cadastrar_estudante.php" : "https://onrender.com";
-
-// CORREÇÃO PARA O LOGIN
-const URL_LOGIN = isLocal ? "login_estudante.php" : "https://onrender.com";
+        // 🌟 SOLUÇÃO DEFINITIVA: Rota relativa limpa (Funciona em qualquer servidor automaticamente)
+        const URL_BACKEND = "cadastrar_estudante.php";
     
         fetch(URL_BACKEND, {
             method: "POST",
             body: formData
         })
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error("Falha na resposta do servidor");
+            return res.json();
+        })
         .then(dados => {
             if (dados.sucesso) {
                 alert(`🎉 INSCRIÇÃO REALIZADA COM SUCESSO!\n\nID ESTUDANTE: ${dados.id_estudante}\nCÓDIGO VALIDAÇÃO (SENHA): ${dados.codigo_validacao}`);
                 
-                // 💾 GUARDA TAMBÉM NO LOCALSTORAGE PARA FAZER O LOGIN LOCAL FUNCIONAR IMEDIATAMENTE
-                const listaEstudantes = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
-                listaEstudantes.push({
-                    id: dados.id_estudante,
-                    nome: nome,
-                    telefone: telefone,
-                    classe: classe,
-                    periodo: periodo,
-                    codigoValidacao: String(dados.codigo_validacao), // Garante que é texto para comparar no login
-                    turma: 'Turma Única A',
-                    disciplinas: [],
-                    livros: []
-                });
-                localStorage.setItem('bd_estudantes', JSON.stringify(listaEstudantes));
-    
-                // Preenche o formulário de login automaticamente
                 document.getElementById('form-cadastro').reset();
                 document.getElementById('login-identificador').value = dados.id_estudante;
                 document.getElementById('login-senha').value = dados.codigo_validacao;
-                
                 alternarTela('view-login');
             } else {
                 alert(dados.mensagem);
@@ -316,6 +298,70 @@ const URL_LOGIN = isLocal ? "login_estudante.php" : "https://onrender.com";
         .catch(err => {
             console.error(err);
             alert("⚠️ Erro de rede ao conectar ao servidor.");
+        });
+    }
+    
+    // 🔐 PROCESSAR ACESSO (LOGIN)
+    function processarAcesso(event) {
+        if (event) event.preventDefault();
+        
+        const identificadorInput = document.getElementById('login-identificador');
+        const senhaInput = document.getElementById('login-senha');
+        const erroDiv = document.getElementById('mensagem-erro');
+    
+        if (!identificadorInput || !senhaInput) {
+            alert("⚠️ Erro crítico: Campos do formulário não foram encontrados no HTML.");
+            return;
+        }
+    
+        const identificador = identificadorInput.value.trim();
+        const senhaInserida = senhaInput.value.trim();
+    
+        if (identificador === "" || senhaInserida === "") {
+            if (erroDiv) {
+                erroDiv.style.display = "block";
+                erroDiv.innerHTML = "❌ Por favor, preencha todos os campos antes de aceder.";
+            }
+            return;
+        }
+    
+        const formData = new FormData();
+        formData.append('identificador', identificador);
+        formData.append('senha', senhaInserida);
+    
+        // 🌟 SOLUÇÃO DEFINITIVA: Rota relativa limpa para o login
+        const URL_LOGIN = "login_estudante.php";
+    
+        fetch(URL_LOGIN, {
+            method: "POST",
+            body: formData
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("Erro de comunicação com o servidor.");
+            return res.json();
+        })
+        .then(dados => {
+            if (dados.sucesso) {
+                if (erroDiv) erroDiv.style.display = "none";
+                estudanteLogado = dados.estudante;
+                carregarDadosDashboard();
+                alternarTela('view-dashboard');
+                
+                const menuLogout = document.getElementById('menu-logout');
+                if (menuLogout) menuLogout.style.display = "block";
+            } else {
+                if (erroDiv) {
+                    erroDiv.style.display = "block";
+                    erroDiv.innerHTML = dados.mensagem;
+                }
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            if (erroDiv) {
+                erroDiv.style.display = "block";
+                erroDiv.innerHTML = "⚠️ Falha ao conectar ao servidor académico.";
+            }
         });
     }
 
