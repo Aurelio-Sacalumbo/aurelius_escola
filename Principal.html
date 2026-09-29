@@ -189,15 +189,7 @@
                                     <span>➔</span>
                                 </button>
         
-                                <!-- Botão 4: Cadeiras Isoladas -->
-                                <button class="menu-btn" onclick="iniciarFluxo('cadeiras')">
-                                    <span style="font-size: 18px;">✒️</span>
-                                    <div style="flex: 1; display: flex; flex-direction: column; text-align: left;">
-                                        <span>Disciplinas Por Cadeiras</span>
-                                        <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">Inscrições Isoladas e Avançadas</span>
-                                    </div>
-                                    <span>➔</span>
-                                </button>
+                               
         
                                 <!-- Botão 5: Preparatórios Escolares -->
                                 <button class="menu-btn" onclick="verificarPreparatorios()">
@@ -572,137 +564,113 @@
     let fluxoAtual = 'regular';
     let itemSelecionado = null;
 
-    // 1. REPOSITÓRIO DE DADOS EXPANDIDO (HUAMBO 2026)
+    
     const dbAcademica = {
         regular: [
-            { id: '1c', nome: '1ª Classe (Primário)', sala: 'Sala nº 1', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}] },
-            { id: '2c', nome: '2ª Classe (Primário)', sala: 'Sala nº 2', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}] },
-            { id: '3c', nome: '3ª Classe (Primário)', sala: 'Sala nº 3', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}] },
-            { id: '4c', nome: '4ª Classe (Primário)', sala: 'Sala nº 4', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 1000}] },
-            { id: '5c', nome: '5ª Classe (Primário)', sala: 'Sala nº 5', disciplinas: [{n: 'Língua Portuguesa', p: 1000}, {n: 'Matemática', p: 1000}, {n: 'Estudo do Meio', p: 1000}] },
-            { id: '6c', nome: '6ª Classe (Primário)', sala: 'Sala nº 6', disciplinas: [{n: 'Língua Portuguesa', p: 1000}, {n: 'Matemática', p: 1000}, {n: 'Ciências da Natureza', p: 1000}] },
-            { id: '7c', nome: '7ª Classe (I Ciclo)', sala: 'Sala nº 7', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'Química', p: 1500}, {n: 'Física', p: 1500}] },
-            { id: '8c', nome: '8ª Classe (I Ciclo)', sala: 'Sala nº 8', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'Química', p: 1500}, {n: 'Física', p: 1500}] },
-            { id: '9c', nome: '9ª Classe (I Ciclo)', sala: 'Sala nº 9', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'História', p: 1500}, {n: 'Geografia', p: 1500}] },
-            { id: '10c', nome: '10ª Classe (II Ciclo)', sala: 'Sala nº 10', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}, {n: 'Física', p: 2000}] },
-            { id: '11c', nome: '11ª Classe (II Ciclo)', sala: 'Sala nº 11', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}, {n: 'Química', p: 2000}] },
-            { id: '12c', nome: '12ª Classe (II Ciclo)', sala: 'Sala nº 12', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}, {n: 'Filosofia', p: 2000}] },
-            { id: '13c', nome: '13ª Classe (Técnico)', sala: 'Sala nº 13', disciplinas: [{n: 'Matemática Aplicada', p: 2500}, {n: 'Física Avançada', p: 2500}, {n: 'Estágio Prático', p: 2500}] }
+            { id: '1c', nome: '1ª Classe (Primário)', sala: 'Sala nº 1', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'Inglês', p: 1200}, {n: 'Biologia', p: 1200}, {n: 'História', p: 1000}] },
+            { id: '2c', nome: '2ª Classe (Primário)', sala: 'Sala nº 2', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'Inglês', p: 1200}, {n: 'Biologia', p: 1200}, {n: 'Geografia', p: 1000}] },
+            { id: '3c', nome: '3ª Classe (Primário)', sala: 'Sala nº 3', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}, {n: 'Inglês', p: 1500}, {n: 'Biologia', p: 1500}, {n: 'História', p: 1200}] },
+            { id: '4c', nome: '4ª Classe (Primário)', sala: 'Sala nº 4', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 1000}, {n: 'Inglês', p: 1500}, {n: 'Física', p: 1500}, {n: 'Geografia', p: 1200}] },
+            { id: '5c', nome: '5ª Classe (Primário)', sala: 'Sala nº 5', disciplinas: [{n: 'Língua Portuguesa', p: 1000}, {n: 'Matemática', p: 1000}, {n: 'Química', p: 1200}, {n: 'Física', p: 1200}, {n: 'Inglês', p: 1000}, {n: 'Biologia', p: 1000}] },
+            { id: '6c', nome: '6ª Classe (Primário)', sala: 'Sala nº 6', disciplinas: [{n: 'Língua Portuguesa', p: 1000}, {n: 'Matemática', p: 1000}, {n: 'Química', p: 1200}, {n: 'Física', p: 1200}, {n: 'Inglês', p: 1000}, {n: 'Biologia', p: 1000}] },
+            { id: '7c', nome: '7ª Classe (I Ciclo)', sala: 'Sala nº 7', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'Química', p: 1500}, {n: 'Física', p: 1500}, {n: 'Inglês', p: 1200}, {n: 'Biologia', p: 1200}] },
+            { id: '8c', nome: '8ª Classe (I Ciclo)', sala: 'Sala nº 8', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'Química', p: 1500}, {n: 'Física', p: 1500}, {n: 'Inglês', p: 1500}, {n: 'Biologia', p: 1500}] },
+            { id: '9c', nome: '9ª Classe (I Ciclo)', sala: 'Sala nº 9', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'História', p: 1500}, {n: 'Geografia', p: 1500}, {n: 'Inglês', p: 1500}, {n: 'Biologia', p: 1500}] },
+            { id: '10c', nome: '10ª Classe (II Ciclo)', sala: 'Sala nº 10', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}, {n: 'Física', p: 2000}, {n: 'Química', p: 2000}, {n: 'Inglês', p: 1800}, {n: 'Biologia', p: 1800}] },
+            { id: '11c', nome: '11ª Classe (II Ciclo)', sala: 'Sala nº 11', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}, {n: 'Química', p: 2000}, {n: 'Física', p: 2000}, {n: 'Inglês', p: 1800}, {n: 'Biologia', p: 1800}] },
+            { id: '12c', nome: '12ª Classe (II Ciclo)', sala: 'Sala nº 12', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}, {n: 'História', p: 1800}, {n: 'Geografia', p: 1800}, {n: 'Inglês', p: 1800}, {n: 'Biologia', p: 1800}] },
+            { id: '13c', nome: '13ª Classe (Técnico)', sala: 'Sala nº 13', disciplinas: [{n: 'Matemática Aplicada', p: 2500}, {n: 'Física Avançada', p: 2500}, {n: 'Química Industrial', p: 2500}, {n: 'Inglês Técnico', p: 2200}, {n: 'Biologia Aplicada', p: 2200}] }
         ],
         superior: {
             Economia: [
-                { id: 'eco1', nome: 'Economia - 1º Ano', sala: 'Auditório de Economia A', disciplinas: [{n: 'Introdução à Economia', p: 5000}, {n: 'Análise Matemática I', p: 5500}] },
-                { id: 'eco2', nome: 'Economia - 2º Ano', sala: 'Auditório de Economia B', disciplinas: [{n: 'Microeconomia I', p: 9000}, {n: 'Estatística I', p: 6000}] },
-                { id: 'eco3', nome: 'Economia - 3º Ano', sala: 'Auditório de Economia C', disciplinas: [{n: 'Macroeconomia II', p: 9500}, {n: 'Contabilidade Geral', p: 9500}] },
-                { id: 'eco4', nome: 'Economia - 4º Ano', sala: 'Auditório de Economia D', disciplinas: [{n: 'Econometria I', p: 7000}, {n: 'Finanças Públicas', p: 8000}] },
-                { id: 'eco5', nome: 'Economia - 5º Ano', sala: 'Sala de Monografias', disciplinas: [{n: 'Política Económica', p: 8000}, {n: 'Seminário de Tese', p: 8000}] }
+                { id: 'eco1', nome: 'Economia - 1º Ano', sala: 'Auditório de Economia A', disciplinas: [{n: 'Introdução à Economia', p: 5000}, {n: 'Análise Matemática I', p: 5500}, {n: 'Contabilidade I', p: 5000}, {n: 'História Económica', p: 4500}, {n: 'Sociologia Geral', p: 4000}] },
+                { id: 'eco2', nome: 'Economia - 2º Ano', sala: 'Auditório de Economia B', disciplinas: [{n: 'Microeconomia I', p: 9000}, {n: 'Estatística I', p: 6000}, {n: 'Análise Matemática II', p: 6500}, {n: 'Macroeconomia I', p: 7000}, {n: 'Contabilidade Geral', p: 6000}] },
+                { id: 'eco3', nome: 'Economia - 3º Ano', sala: 'Auditório de Economia C', disciplinas: [{n: 'Macroeconomia II', p: 9500}, {n: 'Contabilidade Geral', p: 9500}, {n: 'Finanças da Empresa', p: 8000}, {n: 'Investigação Operacional', p: 7500}, {n: 'Economia Monetária', p: 8500}] },
+                { id: 'eco4', nome: 'Economia - 4º Ano', sala: 'Auditório de Economia D', disciplinas: [{n: 'Econometria I', p: 7000}, {n: 'Finanças Públicas', p: 8000}, {n: 'Economia Internacional', p: 8500}, {n: 'Planeamento Estratégico', p: 9000}, {n: 'Auditoria Financeira', p: 9500}] },
+                { id: 'eco5', nome: 'Economia - 5º Ano', sala: 'Sala de Monografias', disciplinas: [{n: 'Política Económica', p: 8000}, {n: 'Seminário de Tese', p: 8000}, {n: 'Ética Profissional', p: 6000}, {n: 'Gestão de Projetos', p: 9000}, {n: 'Mercados Financeiros', p: 8500}] }
             ],
             Medicina: [
-                { id: 'med1', nome: 'Medicina - 1º Ano', sala: 'Laboratório de Anatomia 1', disciplinas: [{n: 'Anatomia Humana I', p: 8500}, {n: 'Biologia Celular', p: 7000}] },
-                { id: 'med2', nome: 'Medicina - 2º Ano', sala: 'Laboratório de Anatomia 2', disciplinas: [{n: 'Fisiologia Humana', p: 6500}, {n: 'Histologia', p: 8500}] },
-                { id: 'med3', nome: 'Medicina - 3º Ano', sala: 'Anfiteatro Clínico A', disciplinas: [{n: 'Farmacologia Geral', p: 7600}, {n: 'Patologia Geral', p: 9500}] },
-                { id: 'med4', nome: 'Medicina - 4º Ano', sala: 'Anfiteatro Clínico B', disciplinas: [{n: 'Semiologia Médica', p: 9000}, {n: 'Pediatria I', p: 10000}] },
-                { id: 'med5', nome: 'Medicina - 5º Ano', sala: 'Bloco de Estágio Hospitalar', disciplinas: [{n: 'Ginecologia e Obstetrícia', p: 9000}, {n: 'Cirurgia Geral', p: 16000}] }
+                { id: 'med1', nome: 'Medicina - 1º Ano', sala: 'Laboratório de Anatomia 1', disciplinas: [{n: 'Anatomia Humana I', p: 8500}, {n: 'Biologia Celular', p: 7000}, {n: 'Bioquímica Médica I', p: 7500}, {n: 'Histologia Humana', p: 6500}, {n: 'Biofísica Médica', p: 6000}] },
+                { id: 'med2', nome: 'Medicina - 2º Ano', sala: 'Laboratório de Anatomia 2', disciplinas: [{n: 'Fisiologia Humana', p: 6500}, {n: 'Histologia', p: 8500}, {n: 'Anatomia Humana II', p: 9000}, {n: 'Bioquímica II', p: 8000}, {n: 'Embriologia Médica', p: 7500}] },
+                { id: 'med3', nome: 'Medicina - 3º Ano', sala: 'Anfiteatro Clínico A', disciplinas: [{n: 'Farmacologia Geral', p: 7600}, {n: 'Patologia Geral', p: 9500}, {n: 'Microbiologia Médica', p: 8000}, {n: 'Imunologia Clínica', p: 8500}, {n: 'Semiologia Médica I', p: 9000}] },
+                { id: 'med4', nome: 'Medicina - 4º Ano', sala: 'Anfiteatro Clínico B', disciplinas: [{n: 'Semiologia Médica', p: 9000}, {n: 'Pediatria I', p: 10000}, {n: 'Cardiologia', p: 11000}, {n: 'Pneumologia', p: 10500}, {n: 'Gastrenterologia', p: 11500}] },
+                { id: 'med5', nome: 'Medicina - 5º Ano', sala: 'Bloco de Estágio Hospitalar', disciplinas: [{n: 'Ginecologia e Obstetrícia', p: 9000}, {n: 'Cirurgia Geral', p: 16000}, {n: 'Pediatria II', p: 12000}, {n: 'Medicina Interna', p: 14000}, {n: 'Psiquiatria Clínica', p: 11000}] }
             ],
             Direito: [
-                { id: 'dir1', nome: 'Direito - 1º Ano', sala: 'Auditório de Direito 1', disciplinas: [{n: 'Introdução ao Estudo do Direito', p: 8500}, {n: 'História do Direito', p: 8000}] },
-                { id: 'dir2', nome: 'Direito - 2º Ano', sala: 'Auditório de Direito 2', disciplinas: [{n: 'Direito Político e Constitucional', p: 9500}, {n: 'Teoria Geral do Direito Civil', p: 9500}] },
-                { id: 'dir3', nome: 'Direito - 3º Ano', sala: 'Auditório de Direito 3', disciplinas: [{n: 'Direito das Obrigações', p: 10500}, {n: 'Direito Penal I', p: 10500}] },
-                { id: 'dir4', nome: 'Direito - 4º Ano', sala: 'Auditório de Direito 4', disciplinas: [{n: 'Direito Processual Civil I', p: 11500}, {n: 'Direito do Trabalho', p: 11000}] },
-                { id: 'dir5', nome: 'Direito - 5º Ano', sala: 'Tribunal Simulado', disciplinas: [{n: 'Direito Internacional Público', p: 13000}, {n: 'Prática Jurídica', p: 14000}] }
+                { id: 'dir1', nome: 'Direito - 1º Ano', sala: 'Auditório de Direito 1', disciplinas: [{n: 'Introdução ao Estudo do Direito', p: 8500}, {n: 'História do Direito', p: 8000}, {n: 'Direito Romano', p: 7500}, {n: 'Ciência Política', p: 7000}, {n: 'Filosofia do Direito', p: 6500}] },
+                { id: 'dir2', nome: 'Direito - 2º Ano', sala: 'Auditório de Direito 2', disciplinas: [{n: 'Direito Político e Constitucional', p: 9500}, {n: 'Teoria Geral do Direito Civil', p: 9500}, {n: 'Direito Internacional Público', p: 8500}, {n: 'Direito Administrativo I', p: 9000}, {n: 'Economia Política', p: 7500}] },
+                { id: 'dir3', nome: 'Direito - 3º Ano', sala: 'Auditório de Direito 3', disciplinas: [{n: 'Direito das Obrigações', p: 10500}, {n: 'Direito Penal I', p: 10500}, {n: 'Direito Administrativo II', p: 10000}, {n: 'Direito da Família', p: 9500}, {n: 'Direito Comercial I', p: 11000}] },
+                { id: 'dir4', nome: 'Direito - 4º Ano', sala: 'Auditório de Direito 4', disciplinas: [{n: 'Direito Processual Civil I', p: 11500}, {n: 'Direito do Trabalho', p: 11000}, {n: 'Direito Penal II', p: 12000}, {n: 'Direito Comercial II', p: 12500}, {n: 'Direito Internacional Privado', p: 11500}] },
+                { id: 'dir5', nome: 'Direito - 5º Ano', sala: 'Tribunal Simulado', disciplinas: [{n: 'Direito Internacional Público', p: 13000}, {n: 'Prática Jurídica', p: 14000}, {n: 'Direito Processual Penal', p: 13500}, {n: 'Direito das Sucessões', p: 12000}, {n: 'Deontologia Profissional', p: 10000}] }
             ],
             Informatica: [
-                { id: 'inf1', nome: 'Informática - 1º Ano', sala: 'Lab Informática 1', disciplinas: [{n: 'Algorítmo e Lógica de Programação', p: 6000},
-                 {n: ' Matemática Discreta', p: 6500},
-                 {n: 'Análise Matemática I', p: 6500},
-                 {n: 'Álgebra Linear', p: 6500},
-                 {n: 'Arquitetura de Computadores', p: 6500},
-                 {n: 'Física', p: 6500},
-                 {n: 'Química', p: 6500},
-                 {n: 'Inglês', p: 6500}] },
-
-                { id: 'inf2', nome: 'Informática - 2º Ano', sala: 'Lab Informática 2', disciplinas: [{n: 'Análise Matemática II', p: 6500}, {n: 'Programação I', p: 6000},
-                {n: 'Física I', p: 6000},
-                {n: 'Redes de Computadores', p: 6000},
-                {n: 'Estatística e .... ', p: 7000}] },
-                
-                { id: 'inf3', nome: 'Informática - 3º Ano', sala: 'Lab Redes', disciplinas: [{n: 'Engenharia de Software', p: 5000}, {n: 'Sistemas Operativos', p: 5000},
-                {n: 'Programação Web (html, css, e JS)', p: 5000}] },
-
-                { id: 'inf4', nome: 'Informática - 4º Ano', sala: 'Lab Redes Avançado', disciplinas: [{n: 'Segurança Informática', p: 9000}, {n: 'Programação Web ( html, css, JS, php/NodeJs)', p: 9000},
-                {n: 'Tipos de Bancos de Dado e sua integração', p: 9000}] }
+                { id: 'inf1', nome: 'Informática - 1º Ano', sala: 'Lab Informática 1', disciplinas: [{n: 'Algorítmo e Lógica de Programação', p: 6000}, {n: 'Matemática Discreta', p: 6500}, {n: 'Análise Matemática I', p: 6500}, {n: 'Álgebra Linear', p: 6500}, {n: 'Arquitetura de Computadores', p: 6500}, {n: 'Física', p: 6500}, {n: 'Química', p: 6500}, {n: 'Inglês', p: 6500}] },
+                { id: 'inf2', nome: 'Informática - 2º Ano', sala: 'Lab Informática 2', disciplinas: [{n: 'Análise Matemática II', p: 6500}, {n: 'Programação I', p: 6000}, {n: 'Física I', p: 6000}, {n: 'Redes de Computadores', p: 6000}, {n: 'Estatística', p: 7000}] },
+                { id: 'inf3', nome: 'Informática - 3º Ano', sala: 'Lab Redes', disciplinas: [{n: 'Engenharia de Software', p: 5000}, {n: 'Sistemas Operativos', p: 5000}, {n: 'Programação Web (html, css, e JS)', p: 5000}, {n: 'Bancos de Dados I', p: 5500}, {n: 'Probabilidades e Estatística', p: 5000}] },
+                { id: 'inf4', nome: 'Informática - 4º Ano', sala: 'Lab Redes Avançado', disciplinas: [{n: 'Segurança Informática', p: 9000}, {n: 'Programação Web ( html, css, JS, php/NodeJs)', p: 9000}, {n: 'Tipos de Bancos de Dado e sua integração', p: 9000}, {n: 'Inteligência Artificial Básica', p: 9500}, {n: 'Projecto Final de Licenciatura', p: 10000}] }
             ],
             Enfermagem: [
-                { id: 'enf1', nome: 'Enfermagem - 1º Ano', sala: 'Sala de Enfermagem A', disciplinas: [{n: 'Fundamentos de Enfermagem', p: 8500}, {n: 'Anatomia Descritiva', p: 9000}] },
-                { id: 'enf2', nome: 'Enfermagem - 2º Ano', sala: 'Sala de Enfermagem B', disciplinas: [{n: 'Farmacologia Clínica', p: 9500}, {n: 'Enfermagem Médica', p: 9500}] },
-                { id: 'enf3', nome: 'Enfermagem - 3º Ano', sala: 'Laboratório Clínico 1', disciplinas: [{n: 'Enfermagem Cirúrgica', p: 10500}, {n: 'Saúde Comunitária', p: 10000}] },
-                { id: 'enf4', nome: 'Enfermagem - 4º Ano', sala: 'Hospital do Huambo (Estágio)', disciplinas: [{n: 'Ética Deontológica', p: 11000}, {n: 'Estágio Integrado', p: 13000}] }
+                { id: 'enf1', nome: 'Enfermagem - 1º Ano', sala: 'Sala de Enfermagem A', disciplinas: [{n: 'Fundamentos de Enfermagem', p: 8500}, {n: 'Anatomia Descritiva', p: 9000}, {n: 'Fisiologia Geral', p: 8000}, {n: 'Histologia', p: 7500}, {n: 'Bioquímica Aplicada', p: 8000}] },
+                { id: 'enf2', nome: 'Enfermagem - 2º Ano', sala: 'Sala de Enfermagem B', disciplinas: [{n: 'Farmacologia Clínica', p: 9500}, {n: 'Enfermagem Médica', p: 9500}, {n: 'Microbiologia e Parasitologia', p: 8500}, {n: 'Nutrição e Dietética', p: 8000}, {n: 'Patologia Geral', p: 9000}] },
+                { id: 'enf3', nome: 'Enfermagem - 3º Ano', sala: 'Laboratório Clínico 1', disciplinas: [{n: 'Enfermagem Cirúrgica', p: 10500}, {n: 'Saúde Comunitária', p: 10000}, {n: 'Pediatria e Puericultura', p: 9500}, {n: 'Saúde Mental', p: 9500}, {n: 'Ética e Deontologia', p: 8500}] },
+                { id: 'enf4', nome: 'Enfermagem - 4º Ano', sala: 'Hospital do Huambo (Estágio)', disciplinas: [{n: 'Ética Deontológica', p: 11000}, {n: 'Estágio Integrado', p: 13000}, {n: 'Administração de Serviços de Saúde', p: 10500}, {n: 'Metodologia de Investigação Científica', p: 11500}, {n: 'Ginecologia e Obstetrícia Aplicada', p: 12000}] }
             ],
             Veterinária: [
-                { id: 'ac1', nome: 'Veterinária - 1º Ano', sala: 'Lab de Biologia', disciplinas: [{n: 'Química Biológica', p: 9000}, {n: 'Citologia Humana', p: 9000}] },
-                { id: 'ac2', nome: 'Veterinária - 2º Ano', sala: 'Lab de Bioquímica', disciplinas: [{n: 'Bioquímica Clínica', p: 10000}, {n: 'Hematologia Geral', p: 10500}] },
-                { id: 'ac3', nome: 'Veterinária - 3º Ano', sala: 'Lab de Microbiologia', disciplinas: [{n: 'Microbiology Médica', p: 11500}, {n: 'Imunologia', p: 11500}] },
-                { id: 'ac4', nome: 'Veterinária - 4º Ano', sala: 'Centro Clínico Universitário', disciplinas: [{n: 'Parasitologia Humana', p: 12500}, {n: 'Controlo de Qualidade', p: 13000}] }
+                { id: 'vet1', nome: 'Veterinária - 1º Ano', sala: 'Lab de Biologia', disciplinas: [{n: 'Química Biológica', p: 9000}, {n: 'Citologia Humana', p: 9000}, {n: 'Anatomia Animal I', p: 9500}, {n: 'Histologia Veterinária', p: 8500}, {n: 'Matemática Aplicada', p: 7500}] },
+                { id: 'vet2', nome: 'Veterinária - 2º Ano', sala: 'Lab de Bioquímica', disciplinas: [{n: 'Bioquímica Clínica', p: 10000}, {n: 'Hematologia Geral', p: 10500}, {n: 'Fisiologia Animal', p: 9500}, {n: 'Genética Quantitativa', p: 9000}, {n: 'Nutrição Animal Básica', p: 9500}] },
+                { id: 'vet3', nome: 'Veterinária - 3º Ano', sala: 'Lab de Microbiologia', disciplinas: [{n: 'Microbiology Médica', p: 11500}, {n: 'Imunologia', p: 11500}, {n: 'Farmacologia Veterinária', p: 11000}, {n: 'Patologia Veterinária I', p: 12000}, {n: 'Parasitologia I', p: 10500}] },
+                { id: 'vet4', nome: 'Veterinária - 4º Ano', sala: 'Centro Clínico Universitário', disciplinas: [{n: 'Parasitologia Humana', p: 12500}, {n: 'Controlo de Qualidade', p: 13000}, {n: 'Cirurgia Animal Básica', p: 14000}, {n: 'Clínica Médica de Grandes Animais', p: 14500}, {n: 'Doenças Infeciosas Animais', p: 15000}] }
             ],
             Hidráulica: [
-                { id: 'derm1', nome: 'Hidráulica - 1º Ano', sala: 'Anfiteatro de Especialidades', disciplinas: [{n: 'Anatomia e Histologia Cutânea', p: 11000}, {n: 'Fisiopatologia da Pele', p: 11000}] },
-                { id: 'derm2', nome: 'Hidráulica - 2º Ano', sala: 'Gabinete Clínico Dermatológico', disciplinas: [{n: 'Semiologia Cutânea', p: 13000}, {n: 'Dermatologia Infeciosa', p: 14000}] },
-                { id: 'derm3', nome: 'Hidráulica - 3º Ano', sala: 'Sala de Pequenas Cirurgias', disciplinas: [{n: 'Terapêutica Dermatológica', p: 15000}, {n: 'Cirurgia Dermatológica Básica', p: 16000}] }
+                { id: 'hid1', nome: 'Hidráulica - 1º Ano', sala: 'Anfiteatro de Especialidades', disciplinas: [{n: 'Anatomia e Histologia Cutânea', p: 11000}, {n: 'Fisiopatologia da Pele', p: 11000}, {n: 'Mecânica dos Fluidos I', p: 9500}, {n: 'Álgebra Linear e Geometria Analítica', p: 9000}, {n: 'Química Geral', p: 8500}] },
+                { id: 'hid2', nome: 'Hidráulica - 2º Ano', sala: 'Gabinete Clínico Dermatológico', disciplinas: [{n: 'Semiologia Cutânea', p: 13000}, {n: 'Dermatologia Infeciosa', p: 14000}, {n: 'Hidráulica Geral I', p: 11000}, {n: 'Topografia Geral', p: 10500}, {n: 'Análise Matemática II', p: 11000}] },
+                { id: 'hid3', nome: 'Hidráulica - 3º Ano', sala: 'Sala de Pequenas Cirurgias', disciplinas: [{n: 'Terapêutica Dermatológica', p: 15000}, {n: 'Cirurgia Dermatológica Básica', p: 16000}, {n: 'Hidrologia Engenharia', p: 12500}, {n: 'Abastecimento de Água', p: 13000}, {n: 'Saneamento e Águas Residuais', p: 14000}] }
             ],
             Análises_Clínica: [
-                { id: 'fisio1', nome: 'Análises Clínica - 1º Ano', sala: 'Anfiteatro de Ciências Médicas', disciplinas: [{n: 'Fisiologia Celular Básica', p: 9000}, {n: 'Biofísica Geral', p: 9000}] },
-                { id: 'fisio2', nome: 'Análises Clínica - 2º Ano', sala: 'Lab de Fisiologia Aplicada', disciplinas: [{n: 'Fisiologia Neuro-Muscular', p: 10500}, {n: 'Fisiologia Cardiovascular', p: 11000}] },
-                { id: 'fisio3', nome: 'Análises Clínica - 3º Ano', sala: 'Centro de Reabilitação Universitário', disciplinas: [{n: 'Fisiologia do Exercício', p: 12000}, {n: 'Integração Fisiológica', p: 13500}] }
+                { id: 'ac1', nome: 'Análises Clínica - 1º Ano', sala: 'Anfiteatro de Ciências Médicas', disciplinas: [{n: 'Fisiologia Celular Básica', p: 9000}, {n: 'Biofísica Geral', p: 9000}, {n: 'Química Biológica Geral', p: 8500}, {n: 'Anatomia Sistémica', p: 9500}, {n: 'Biologia Molecular', p: 9000}] },
+                { id: 'ac2', nome: 'Análises Clínica - 2º Ano', sala: 'Lab de Fisiologia Aplicada', disciplinas: [{n: 'Fisiologia Neuro-Muscular', p: 10500}, {n: 'Fisiologia Cardiovascular', p: 11000}, {n: 'Hematologia Clínica I', p: 10000}, {n: 'Bioquímica Clínica I', p: 10500}, {n: 'Microbiologia Médica I', p: 10000}] },
+                { id: 'ac3', nome: 'Análises Clínica - 3º Ano', sala: 'Centro de Diagnóstico', disciplinas: [{n: 'Imunologia Laboratorial', p: 11500}, {n: 'Parasitologia Clínica', p: 12000}, {n: 'Uroanálise', p: 10000}, {n: 'Líquidos Corporais', p: 9500}, {n: 'Estágio Técnico', p: 13000}] }
             ],
             Marketing: [
-                { id: 'mkt1', nome: 'Marketing - 1º Ano', sala: 'Sala de Redação e Criação', disciplinas: [{n: 'Fundamentos de Marketing', p: 7500}, {n: 'Comportamento do Consumidor', p: 8000}] },
-                { id: 'mkt2', nome: 'Marketing - 2º Ano', sala: 'Lab de Estratégia Digital', disciplinas: [{n: 'Marketing Digital e Redes Sociais', p: 9000}, {n: 'Pesquisa de Mercado', p: 8500}] },
-                { id: 'mkt3', nome: 'Marketing - 3º Ano', sala: 'Sala de Empreendedorismo', disciplinas: [{n: 'Gestão de Marcas (Branding)', p: 10000}, {n: 'Plano de Marketing Estratégico', p: 11000}] }
+                { id: 'mkt1', nome: 'Marketing - 1º Ano', sala: 'Sala de Redação', disciplinas: [{n: 'Fundamentos de Marketing', p: 7500}, {n: 'Comportamento do Consumidor', p: 8000}, {n: 'Introdução à Gestão', p: 7000}, {n: 'Economia Geral', p: 7500}, {n: 'Comunicação', p: 6500}] },
+                { id: 'mkt2', nome: 'Marketing - 2º Ano', sala: 'Lab Digital', disciplinas: [{n: 'Marketing Digital', p: 9000}, {n: 'Pesquisa de Mercado', p: 8500}, {n: 'Estratégia de Preços', p: 8000}, {n: 'Canais de Distribuição', p: 8000}, {n: 'Estatística', p: 7500}] },
+                { id: 'mkt3', nome: 'Marketing - 3º Ano', sala: 'Sala de Empreendedorismo', disciplinas: [{n: 'Gestão de Marcas (Branding)', p: 10000}, {n: 'Plano de Marketing', p: 11000}, {n: 'Marketing Internacional', p: 9500}, {n: 'Ética Social', p: 8000}, {n: 'Trabalho de Fim de Curso', p: 12000}] }
             ],
             Electrónica: [
-                { id: 'mkt1', nome: 'Eng. Electrónica - 1º Ano', sala: 'Sala de Redação e Criação', disciplinas: [{n: 'Fundamentos de Marketing', p: 7500}, {n: 'Comportamento do Consumidor', p: 8000}] },
-                { id: 'mkt2', nome: 'Eng. Electrónica - 2º Ano', sala: 'Lab de Estratégia Digital', disciplinas: [{n: 'Marketing Digital e Redes Sociais', p: 9000}, {n: 'Pesquisa de Mercado', p: 8500}] },
-                { id: 'mkt3', nome: 'Eng. Electrónica - 3º Ano', sala: 'Sala de Empreendedorismo', disciplinas: [{n: 'Gestão de Marcas (Branding)', p: 10000}, {n: 'Plano de Marketing Estratégico', p: 11000}] }
+                { id: 'el1', nome: 'Eng. Electrónica - 1º Ano', sala: 'Lab de Circuitos I', disciplinas: [{n: 'Circuitos Eléctricos I', p: 7500}, {n: 'Álgebra Linear Aplicada', p: 8000}, {n: 'Análise Matemática I', p: 7500}, {n: 'Introdução à Programação', p: 7000}, {n: 'Física Geral', p: 8000}] },
+                { id: 'el2', nome: 'Eng. Electrónica - 2º Ano', sala: 'Lab de Electrónica Analógica', disciplinas: [{n: 'Electrónica Analógica I', p: 9000}, {n: 'Sistemas Digitais I', p: 8500}, {n: 'Circuitos Eléctricos II', p: 9000}, {n: 'Análise Matemática II', p: 8500}, {n: 'Electromagnetismo', p: 9500}] },
+                { id: 'el3', nome: 'Eng. Electrónica - 3º Ano', sala: 'Lab de Microcontroladores', disciplinas: [{n: 'Microcontroladores e Sistemas', p: 10000}, {n: 'Processamento de Sinal', p: 11000}, {n: 'Electrónica de Potência', p: 10500}, {n: 'Instrumentação Electrónica', p: 10000}, {n: 'Projecto de Engenharia I', p: 12500}] }
             ],
             Segurança_Pública: [
-                { id: 'mkt1', nome: 'Segurança_Pública - 1º Ano', sala: 'Sala de Redação e Criação', disciplinas: [{n: 'Fundamentos de Marketing', p: 7500}, {n: 'Comportamento do Consumidor', p: 8000}] },
-                { id: 'mkt2', nome: 'Segurança_Pública - 2º Ano', sala: 'Lab de Estratégia Digital', disciplinas: [{n: 'Marketing Digital e Redes Sociais', p: 9000}, {n: 'Pesquisa de Mercado', p: 8500}] },
-                { id: 'mkt3', nome: 'Segurança_Pública - 3º Ano', sala: 'Sala de Empreendedorismo', disciplinas: [{n: 'Gestão de Marcas (Branding)', p: 10000}, {n: 'Plano de Marketing Estratégico', p: 11000}] }
+                { id: 'sp1', nome: 'Segurança_Pública - 1º Ano', sala: 'Sala de Criminologia I', disciplinas: [{n: 'Introdução à Segurança Pública', p: 7500}, {n: 'Criminologia Geral', p: 8000}, {n: 'Direito Constitucional Aplicado', p: 7500}, {n: 'Sociologia da Violência', p: 7000}, {n: 'Direitos Humanos', p: 6500}] },
+                { id: 'sp2', nome: 'Segurança_Pública - 2º Ano', sala: 'Sala de Gestão de Crises', disciplinas: [{n: 'Gestão de Crises e Conflitos', p: 9000}, {n: 'Policiamento Comunitário', p: 8500}, {n: 'Direito Processual Penal', p: 9000}, {n: 'Análise de Risco Criminal', p: 8500}, {n: 'Estatística Criminal', p: 7500}] },
+                { id: 'sp3', nome: 'Segurança_Pública - 3º Ano', sala: 'Gabinete de Planeamento', disciplinas: [{n: 'Planeamento Estratégico', p: 10000}, {n: 'Segurança Interna e Fronteiras', p: 11000}, {n: 'Políticas Públicas de Segurança', p: 10000}, {n: 'Cibersegurança e Crime Digital', p: 10500}, {n: 'Projecto Técnico Integrado', p: 12000}] }
             ],
             Gest_Rec_Humanos: [
-                { id: 'mkt1', nome: 'Gest_Rec_Humanos - 1º Ano', sala: 'Sala de Redação e Criação', disciplinas: [{n: 'Fundamentos de Marketing', p: 7500}, {n: 'Comportamento do Consumidor', p: 8000}] },
-                { id: 'mkt2', nome: 'Gest_Rec_Humanos - 2º Ano', sala: 'Lab de Estratégia Digital', disciplinas: [{n: 'Marketing Digital e Redes Sociais', p: 9000}, {n: 'Pesquisa de Mercado', p: 8500}] },
-                { id: 'mkt3', nome: 'Gest_Rec_Humanos - 3º Ano', sala: 'Sala de Empreendedorismo', disciplinas: [{n: 'Gestão de Marcas (Branding)', p: 10000}, {n: 'Plano de Marketing Estratégico', p: 11000}] }
+                { id: 'grh1', nome: 'Gest_Rec_Humanos - 1º Ano', sala: 'Sala de Comportamento', disciplinas: [{n: 'Introdução à Gestão de RH', p: 7500}, {n: 'Comportamento Organizacional', p: 8000}, {n: 'Psicologia do Trabalho', p: 7000}, {n: 'Teoria da Administração', p: 7000}, {n: 'Direito do Trabalho I', p: 7500}] },
+                { id: 'grh2', nome: 'Gest_Rec_Humanos - 2º Ano', sala: 'Lab de Recrutamento', disciplinas: [{n: 'Recrutamento e Selecção', p: 9000}, {n: 'Gestão do Desempenho', p: 8500}, {n: 'Sistemas de Remunerações', p: 8500}, {n: 'Formação e Desenvolvimento', p: 8000}, {n: 'Estatística Aplicada', p: 7500}] },
+                { id: 'grh3', nome: 'Gest_Rec_Humanos - 3º Ano', sala: 'Gabinete de Auditoria', disciplinas: [{n: 'Estratégia e Planeamento', p: 10000}, {n: 'Auditoria e Controlo de RH', p: 11000}, {n: 'Relações Laborais', p: 10000}, {n: 'Higiene e Segurança', p: 9500}, {n: 'Projecto de Intervenção', p: 12000}] }
             ]
-        },
+        }, // 🌟 Fim do bloco 'superior'
+
+        // ☀️ REPOSITÓRIO UNIFICADO: CURSOS DE FÉRIAS E CADEIRAS ISOLADAS JUNTOS
         ferias: [
-            { id: 'elec', nome: 'Curso de Electricidade', sala: 'Oficina Técnico-Profissional', disciplinas: [{n: 'Módulo Técnico Prático', p: 12000}] },
-            { id: 'cabelo', nome: 'Curso de Cortes de Cabelo', sala: 'Oficina Estética', disciplinas: [{n: 'Tipos e Prática', p: 10000},
-             {n: 'Design de Sobrancelas', p: 5000},
-            {n: 'Tipos e Prática', p: 10000}] },
-
-            { id: 'cabelo', nome: 'Curso de Cabelereiro', sala: 'Oficina Estética', disciplinas: [{n: 'Tipos e Prática', p: 10000},
-             {n: 'Design de Sobrancelas', p: 5000},
-            {n: 'Tipos e Prática', p: 10000}] },
-
-            { id: 'piano', nome: 'Curso de Piano e Guitarra', sala: 'Sala de Música', disciplinas: [{n: 'Módulo Instrumental', p: 15000}] },
-
-            { id: 'piano', nome: 'Curso de Manicuri/Pedicuri', sala: 'Gel, Gelinho', disciplinas: [{n: 'Módulo Instrumental', p: 15000}] },
-
-            { id: 'piano', nome: 'Curso de Corte e Costura', sala: 'Sala de Música', disciplinas: [{n: 'Módulo Instrumental', p: 15000}] },
-
-            { id: 'piano', nome: 'Serralharia Industrial', sala: 'Da Base ao avançado', disciplinas: [{n: 'Módulo Instrumental', p: 15000}] },
-
-            { id: 'piano', nome: 'Curso de Integração ao EMIS Angola', sala: 'UnitelMoney e Xpress MCX ', disciplinas: [{n: 'Módulo Instrumental', p: 15000}] },
-
-            { id: 'prog', nome: 'Curso de Programação', sala: 'Construção de um Site operacional', disciplinas: [{n: 'Lógica e Desenvolvimento Web', p: 25000}] }
-        ],
-        
-        cadeiras: [
-            { id: 'av-mat', nome: 'Matemática Completa', sala: 'Auditório 1', disciplinas: [{n: 'Álgebra Linear', p: 6000}, {n: 'Análise Matemática I', p: 6000}] },
-            { id: 'av-mat', nome: 'Física Completa', sala: 'Auditório 1', disciplinas: [{n: 'Álgebra Linear', p: 6000}, {n: 'Análise Matemática I', p: 6000}] }
-        ]
-    };
+            { id: 'f-elec', nome: 'Curso de Electricidade', sala: 'Oficina Técnico-Profissional', disciplinas: [{n: 'Módulo Técnico Prático', p: 12000}] },
+            { id: 'f-cortes', nome: 'Curso de Cortes de Cabelo', sala: 'Oficina Estética A', disciplinas: [{n: 'Tipos e Prática', p: 10000}, {n: 'Design de Sobrancelhas', p: 5000}, {n: 'Visagismo Básico', p: 5000}] },
+            { id: 'f-cabelo', nome: 'Curso de Cabeleireiro', sala: 'Oficina Estética B', disciplinas: [{n: 'Química Capilar', p: 10000}, {n: 'Tratamentos Avançados', p: 5000}, {n: 'Penteados e Estilo', p: 10000}] },
+            { id: 'f-piano', nome: 'Curso de Piano e Guitarra', sala: 'Sala de Música', disciplinas: [{n: 'Módulo Instrumental', p: 15000}, {n: 'Teoria Musical Aplicada', p: 5000}] },
+            { id: 'f-mani', nome: 'Curso de Manicuri/Pedicuri', sala: 'Gel, Gelinho', disciplinas: [{n: 'Módulo Instrumental unhas', p: 15000}, {n: 'Prática de Verniz Gel', p: 5000}] },
+            { id: 'f-costura', nome: 'Curso de Corte e Costura', sala: 'Oficina Têxtil', disciplinas: [{n: 'Módulo Instrumental Têxtil', p: 15000}, {n: 'Modelagem Avançada', p: 5000}] },
+            { id: 'f-serra', nome: 'Serralharia Industrial', sala: 'Da Base ao avançado', disciplinas: [{n: 'Módulo Instrumental Industrial', p: 15000}, {n: 'Soldadura de Precisão', p: 5000}] },
+            { id: 'f-emis', nome: 'Curso de Integração ao EMIS Angola', sala: 'UnitelMoney e Xpress MCX', disciplinas: [{n: 'Módulo Instrumental de Integração', p: 15000}, {n: 'Configuração de Webhooks AppyPay', p: 5000}] },
+            { id: 'f-prog', nome: 'Curso de Programação', sala: 'Construção de um Site operacional', disciplinas: [{n: 'Lógica e Desenvolvimento Web', p: 25000}, {n: 'Estruturas de Banco de Dados', p: 10000}] },
+            
+            // 📚 CADEIRAS ISOLADAS INJETADAS DIRETAMENTE NO MESMO FLUXO
+            { id: 'av-mat', nome: 'Matemática Completa (Isolada)', sala: 'Auditório 1', disciplinas: [{n: 'Álgebra Linear', p: 6000}, {n: 'Análise Matemática I', p: 6000}, {n: 'Estatística Aplicada', p: 5000}] },
+            { id: 'av-fis', nome: 'Física Completa (Isolada)', sala: 'Auditório 2', disciplinas: [{n: 'Mecânica Clássica', p: 6000}, {n: 'Electromagnetismo Avançado', p: 6000}, {n: 'Termodinâmica', p: 5000}] }
+        ] // 🌟 Fecho correto do array 'ferias'
+    }; // 🎯 Fecho correto do objeto global 'dbAcademica'
+    
     // =========================================================================
     // 🎛️ 2. CONTROLADORES DE INTERFACE SPA (NAVEGAÇÃO COMPACTA)
     // =========================================================================
@@ -715,10 +683,6 @@
     function voltarTela(num) { 
         proximaTela(num); 
     }
-
-    // =========================================================================
-    // 🚀 3. MOTOR DE RENDERIZAÇÃO DE BOTÕES E GRID DE CURSOS
-    // =========================================================================
     function iniciarFluxo(tipo) {
         fluxoAtual = tipo;
         const grid = document.getElementById('lista-barbearias');
@@ -734,38 +698,46 @@
         
         const elementoTitulo = document.getElementById('titulo-tela-2');
         if (elementoTitulo) elementoTitulo.innerText = titulos[tipo] || 'Selecione uma Opção';
-
-        // Filtro Secundário: Ensino Superior subdividido por Faculdades
+    
+        // 🏛️ FLUXO 1: Ensino Superior subdividido por Faculdades
         if (tipo === 'superior') {
-            Object.keys(dbAcademica.superior).forEach(nomeFaculdade => {
-                const card = document.createElement('div');
-                card.className = "quadrado-card";
-                card.onclick = function() { carregarAnosFaculdade(nomeFaculdade); };
-                card.innerHTML = `
-                    <div style="font-size:30px; margin-bottom:6px;">🏛️</div>
-                    <strong>  ${nomeFaculdade}</strong>
-                    <p style="font-size:11px; margin-top:4px; opacity:0.8;">Huambo</p>
-                `;
-                grid.appendChild(card);
-            });
-        } else if (dbAcademica[tipo]) {
-            // Fluxo Regular, Férias e Cadeiras Isoladas
+            if (dbAcademica.superior) {
+                Object.keys(dbAcademica.superior).forEach(nomeFaculdade => {
+                    const card = document.createElement('div');
+                    card.className = "quadrado-card";
+                    card.onclick = function() { carregarAnosFaculdade(nomeFaculdade); };
+                    card.innerHTML = `
+                        <div style="font-size:30px; margin-bottom:6px;">🏛️</div>
+                        <strong>${nomeFaculdade}</strong>
+                        <p style="font-size:11px; margin-top:4px; opacity:0.8;">Huambo</p>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+        } 
+        // 🎓 FLUXO 2: Regular, Férias e Cadeiras Isoladas (Mapeamento Dinâmico)
+        else if (dbAcademica[tipo]) {
             dbAcademica[tipo].forEach(item => {
                 const card = document.createElement('div');
                 card.className = "quadrado-card";
+                
+                // Define o ícone com base no tipo para ficar visualmente perfeito
+                let iconeVisual = "🎓";
+                if (tipo === 'ferias') iconeVisual = "☀️";
+                if (tipo === 'cadeiras') iconeVisual = "📚";
+    
                 card.onclick = function() { carregarConfiguradorItem(item); };
                 card.innerHTML = `
-                    <div style="font-size:30px; margin-bottom:6px;">🎓</div>
+                    <div style="font-size:30px; margin-bottom:6px;">${iconeVisual}</div>
                     <strong>${item.nome}</strong>
-                    <p style="font-size:11px; margin-top:4px; opacity:0.8;">${item.sala}</p>
+                    <p style="font-size:11px; margin-top:4px; opacity:0.8;">${item.sala || 'Geral'}</p>
                 `;
                 grid.appendChild(card);
             });
         }
+        
         proximaTela(2);
     }
-
-
     let gatilhoInstalacaoPWA = null;
 
 // Escuta o navegador avisar que o site está pronto para ser instalado
@@ -957,7 +929,7 @@ function submeterMatriculaEscolaReal(event) {
     const disciplinasMarcadas = document.querySelectorAll('input[type="checkbox"]:checked');
     
     if (disciplinasMarcadas.length === 0) {
-        alert("❌ Erro de Validação: É obrigatório selecionar pelo menos UMA disciplina/módulo para efetuar a matrícula!");
+        alert("Não., assim Nao meu amigo/a: É obrigatório selecionar pelo menos UMA disciplina/módulo para efetuar a matrícula 😃😂!");
         return;
     }
 
