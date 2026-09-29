@@ -721,260 +721,237 @@ function carregarIndicadoresETurmas() {
 
 // 🔄 2. DETETA A SELEÇÃO DA TURMA E MONTA A PAUTA DE NOTAS NO ECRÃ
 function carregarPautaGlobalProf() {
-    const classeSelecionada = document.getElementById('filtro-classe').value;
-    const cardPauta = document.getElementById('card-pauta-professor');
-    const corpoTabela = document.getElementById('corpo-pauta-professor');
+    const classeSelecionada = document.getElementById("filtro-classe").value;
+    const cardPauta = document.getElementById("card-pauta-global");
+    const tabelaAlunos = document.getElementById("tabela-pauta-alunos");
 
     if (!classeSelecionada) {
-        if(cardPauta) cardPauta.style.display = "none";
+        cardPauta.style.display = "none";
         return;
     }
 
-    fetch(`obter_pauta_prof.php?acao=carregar_alunos&classe=${encodeURIComponent(classeSelecionada)}`)
-    .then(res => res.json())
-    .then(dados => {
-        if (dados.sucesso) {
-            if(cardPauta) cardPauta.style.display = "block"; // Mostra o card de notas
-            
-            if (dados.alunos.length === 0) {
-                corpoTabela.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px;">Nenhum estudante matriculado nesta classe.</td></tr>`;
+    // Exibe o card da pauta com feedback visual de carregamento
+    cardPauta.style.display = "block";
+    tabelaAlunos.innerHTML = `
+        <tr>
+            <td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">
+                🔄 A mapear e carregar pauta dos estudantes...
+            </td>
+        </tr>
+    `;
+
+    // Conecta diretamente ao seu ficheiro especialista do servidor
+    fetch(`obter_pauta_prof.php?classe=${encodeURIComponent(classeSelecionada)}`)
+        .then(response => response.json())
+        .then(dados => {
+            tabelaAlunos.innerHTML = ""; // Limpa o estado de carregamento
+
+            if (!dados.sucesso || !dados.alunos || dados.alunos.length === 0) {
+                tabelaAlunos.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">
+                            ⚠️ Nenhum estudante matriculado nesta classe/período.
+                        </td>
+                    </tr>
+                `;
                 return;
             }
 
-            // Renderiza as linhas da tabela com inputs para o professor conseguir digitar as notas
-            corpoTabela.innerHTML = dados.alunos.map(a => {
-                return `
-                    <tr data-id="${a.id_utilizador}">
-                        <td><b>${a.nome}</b><br><span style="font-size:10px; color:#64748b;">${a.id_unico_escolar || 'Sem ID'}</span></td>
-                        <td style="text-align: center;"><input type="number" class="input-nota" value="${a.nota_n1 || 0}" min="0" max="20" style="width:50px; text-align:center; background:#070b14; color:#fff; border:1px solid #1e293b; padding:4px; border-radius:4px;"></td>
-                        <td style="text-align: center;"><input type="number" class="input-nota" value="${a.nota_n2 || 0}" min="0" max="20" style="width:50px; text-align:center; background:#070b14; color:#fff; border:1px solid #1e293b; padding:4px; border-radius:4px;"></td>
-                        <td style="text-align: center;"><input type="number" class="input-nota" value="${a.nota_n3 || 0}" min="0" max="20" style="width:50px; text-align:center; background:#070b14; color:#fff; border:1px solid #1e293b; padding:4px; border-radius:4px;"></td>
-                        <td style="text-align: center;"><input type="number" class="input-nota" value="${a.faltas || 0}" min="0" style="width:50px; text-align:center; background:#070b14; color:#fff; border:1px solid #1e293b; padding:4px; border-radius:4px;"></td>
-                        <td style="text-align: right;"><span class="badge" style="background:rgba(234,179,8,0.1); color:#eab308; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:bold;">Avaliando</span></td>
-                    </tr>
+            // Popula os registos reais obtidos do phpMyAdmin
+            dados.alunos.forEach(aluno => {
+                const tr = document.createElement("tr");
+                tr.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
+                
+                tr.innerHTML = `
+                    <td style="padding: 10px; color: var(--text-muted); font-size: 13px; font-weight: bold;">
+                        ${aluno.id_unico_escolar || 'Inscrito'}
+                    </td>
+                    <td style="padding: 10px; color: #fff; font-weight: 500; font-size: 13px;">
+                        ${aluno.nome}
+                    </td>
+                    <td style="padding: 10px; text-align: center; color: var(--text-muted); font-size: 13px;">
+                        ${aluno.periodo || 'Não Definido'}
+                    </td>
+                    <td style="padding: 10px; text-align: center;">
+                        <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">
+                            Ativo
+                        </span>
+                    </td>
                 `;
-            }).join('');
-        }
-    })
-    .catch(err => console.error("Erro ao montar caderneta:", err));
+                tabelaAlunos.appendChild(tr);
+            });
+        })
+        .catch(error => {
+            console.error("Erro na requisição da pauta:", error);
+            tabelaAlunos.innerHTML = `
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 20px; color: #ef4444; font-size: 13px;">
+                        ❌ Erro ao ligar ao servidor académico.
+                    </td>
+                </tr>
+            `;
+        });
 }
-
-// Inicializa os indicadores assim que o painel abre
-document.addEventListener("DOMContentLoaded", carregarIndicadoresETurmas);
-
-
 
 
 // =========================================================================
 // 🚀 MOTOR DE SINCRONIZAÇÃO AUTOMÁTICA E DINÂMICA VIA MYSQL
 // =========================================================================
+
+// 🔄 1. CARREGA OS INDICADORES DE FATURAMENTO E ALIMENTA O SELECT DE TURMAS
+// 🔄 FUNÇÃO QUE VAI BUSCAR AS TURMAS DO BANCO E MONTA AS OPÇÕES DO SELECT
 function sincronizarPainelProfessorAutomatico() {
-    console.log("A executar sincronização do painel docente...");
-    
     const seletor = document.getElementById('filtro-classe');
     if (!seletor) {
-        console.error("Erro Crítico: O elemento #filtro-classe não foi encontrado no HTML.");
+        console.error("Erro: Elemento #filtro-classe não foi encontrado no HTML.");
         return;
     }
 
-    // 🛡️ RECURSO DE FORÇA BRUTA: Injeta as opções reais do seu phpMyAdmin imediatamente
-    // para garantir que o menu NUNCA fique vazio, independentemente da resposta do PHP
-    seletor.innerHTML = `
-        <option value="">-- Selecione uma Classe Ativa --</option>
-        <option value="Tarde">Tarde (Moma, Aurio, Aurios, Aurioh, Ambrosio)</option>
-        <option value="manhã">manhã (Auriose, Aurior, Ambrosio dj)</option>
-        <option value="tarde">tarde (Aurio, Aurios, Aurioh, Ambrosio)</option>
-        <option value="Noite (18h - 21h)">Noite (18h - 21h) (Sabina Bongo)</option>
-        <option value="Manhã | Longonjo (Goia)">Manhã | Longonjo (Goia) (Moma)</option>
-    `;
-
-    // 📊 Bate no banco para atualizar os contadores e tentar puxar turmas adicionais
     fetch("obter_pauta_prof.php?acao=indicadores")
     .then(res => res.json())
     .then(dados => {
         if (dados.sucesso) {
-            // Injeta as estatísticas reais vindas do MySQL
+            // Atualiza os contadores no topo
             if(document.getElementById('estatistica-inscritos')) document.getElementById('estatistica-inscritos').innerText = dados.inscritos;
             if(document.getElementById('estatistica-matriculados')) document.getElementById('estatistica-matriculados').innerText = dados.matriculados;
             if(document.getElementById('estatistica-regular')) document.getElementById('estatistica-regular').innerText = dados.regular;
             if(document.getElementById('estatistica-pos-laboral')) document.getElementById('estatistica-pos-laboral').innerText = dados.pos_laboral;
-            
             if(document.getElementById('estatistica-faturamento')) {
                 document.getElementById('estatistica-faturamento').innerText = Number(dados.faturamento).toLocaleString('pt-AO', {minimumFractionDigits: 2}) + " Kzs";
             }
 
-            // Se o banco trouxe turmas estruturadas, reorganiza o seletor mantendo a compatibilidade
-            if (dados.turmas && dados.turmas.length > 0) {
-                seletor.innerHTML = '<option value="">-- Selecione uma Classe Ativa --</option>' +
-                    dados.turmas.map(t => `<option value="${t}">${t}</option>`).join('');
-            }
+            // Alimenta as opções com os dados vindos da coluna 'periodo'
+            const listaTurmas = (dados.turmas && dados.turmas.length > 0) ? dados.turmas : ["manhã", "tarde", "Tarde", "Noite (18h - 21h)"];
+            
+            seletor.innerHTML = '<option value="">-- Selecione uma Classe Ativa --</option>' +
+                listaTurmas.map(t => `<option value="${t}">${t}</option>`).join('');
         }
     })
     .catch(err => {
-        console.warn("Aviso de rede: A carregar utilizando o mapeamento de contingência local.", err);
+        console.error("Falha ao ler o PHP, aplicando dados de contingência:", err);
+        // Garante que o select NUNCA fica vago no ecrã
+        seletor.innerHTML = `
+            <option value="">-- Selecione uma Classe Ativa --</option>
+            <option value="manhã">manhã</option>
+            <option value="tarde">tarde</option>
+            <option value="Tarde">Tarde</option>
+            <option value="Noite (18h - 21h)">Noite (18h - 21h)</option>
+            <option value="Manhã | Longonjo (Goia)">Manhã | Longonjo (Goia)</option>
+        `;
     });
 }
-// 🎯 GARANTE QUE CHAMA A FUNÇÃO LOGO APÓS O LOGIN OU CARREGAMENTO DA PÁGINA
-// Se o seu login estiver ativo, chame esta função imediatamente quando o login der sucesso!
-document.addEventListener("DOMContentLoaded", () => {
-    sincronizarPainelProfessorAutomatico();
-});
+// 🔐 ESTA É A SUA FUNÇÃO DE LOGIN QUE ATIVA O PAINEL
+function processarAcessoProfessor(event) {
+    event.preventDefault();
+    
+    const fone = document.getElementById('prof-telefone').value.trim();
+    const codigo = document.getElementById('prof-codigo').value.trim();
+    const erroDiv = document.getElementById('mensagem-erro-prof');
 
+    // Validação estrita usando a sua credencial administrativa cadastrada
+    if (fone === credencialProfessor.telefone && codigo === credencialProfessor.codigoForte) {
+        erroDiv.style.display = "none";
+        
+        const statusSessao = document.getElementById('status-sessao');
+        if (statusSessao) {
+            statusSessao.innerText = "● Administrador Mestre Conectado";
+            statusSessao.style.color = "var(--brand-success)";
+        }
+        
+        // 🎯 CHAMA AS FUNÇÕES PARA PREENCHER OS DADOS DO BANCO REAL
+        popularFiltroClasses(); 
+        carregarChatSincronizado();
+        alternarTela('view-dashboard-prof');
+        
+        // Sincronização automática contínua do Chat a cada 3 segundos
+        setInterval(carregarChatSincronizado, 3000);
+    } else {
+        erroDiv.style.display = "block";
+        erroDiv.innerHTML = "❌ Acesso Negado! Tentativa ilegal de acesso detetada. As credenciais administrativas introduzidas não são válidas.";
+        document.getElementById('form-login-prof').reset();
+    }
+}
 
+// 🎯 ESTA É A FUNÇÃO CRUCIAL QUE PREENCHE O SEU FILTRO PARA NÃO FICAR VAZIO
+function popularFiltroClasses() {
+    const selectClasse = document.getElementById("filtro-classe");
+    if (!selectClasse) return;
 
+    // Bate no seu arquivo especialista para extrair as turmas/períodos reais do phpMyAdmin
+    fetch("obter_pauta_prof.php?acao=indicadores")
+        .then(response => response.json())
+        .then(dados => {
+            selectClasse.innerHTML = '<option value="">-- Selecione uma Classe Ativa --</option>';
+            
+            if (dados.sucesso && dados.turmas && dados.turmas.length > 0) {
+                dados.turmas.forEach(turma => {
+                    // Limpa o lixo que possa ter de testes no banco (como zeros ou campos nulos)
+                    if (turma && turma !== "0") {
+                        const option = document.createElement("option");
+                        option.value = turma;
+                        option.innerText = turma;
+                        selectClasse.appendChild(option);
+                    }
+                });
+            } else {
+                console.warn("Nenhuma turma ativa foi devolvida pelo banco de dados.");
+            }
+        })
+        .catch(error => console.error("Erro ao popular seletor de classes:", error));
+}
 
-
-// 🔄 2. DETETA A SELEÇÃO DA TURMA E MONTA A CADERNETA DE NOTAS NO ECRÃ
+// 📋 CARREGA OS ALUNOS NA TABELA DA PAUTA ASSIM QUE CLICAM NA CLASSE DO SELETOR
 function carregarPautaGlobalProf() {
-    const classeSelecionada = document.getElementById('filtro-classe').value;
-    const cardPauta = document.getElementById('card-pauta-professor');
-    const corpoTabela = document.getElementById('corpo-pauta-professor');
+    const classeSelecionada = document.getElementById("filtro-classe").value;
+    const cardPauta = document.getElementById("card-pauta-global");
+    const tabelaAlunos = document.getElementById("tabela-pauta-alunos");
 
     if (!classeSelecionada) {
-        if(cardPauta) cardPauta.style.display = "none";
+        cardPauta.style.display = "none";
         return;
     }
 
-    fetch(`obter_pauta_prof.php?acao=carregar_alunos&classe=${encodeURIComponent(classeSelecionada)}`)
-    .then(res => {
-        if (!res.ok) throw new Error("Erro ao buscar alunos da turma.");
-        return res.json();
-    })
-    .then(dados => {
-        if (dados.sucesso) {
-            if(cardPauta) cardPauta.style.display = "block"; // Torna o bloco de notas visível
-            
-            if (!dados.alunos || dados.alunos.length === 0) {
-                corpoTabela.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;">Nenhum estudante matriculado nesta classe no banco.</td></tr>`;
+    cardPauta.style.display = "block";
+    tabelaAlunos.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">🔄 A carregar estudantes da turma...</td></tr>`;
+
+    fetch(`obter_pauta_prof.php?classe=${encodeURIComponent(classeSelecionada)}`)
+        .then(response => response.json())
+        .then(dados => {
+            tabelaAlunos.innerHTML = "";
+
+            if (!dados.sucesso || !dados.alunos || dados.alunos.length === 0) {
+                tabelaAlunos.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">⚠️ Nenhum estudante matriculado nesta classe.</td></tr>`;
                 return;
             }
 
-            // Injeta as linhas reais extraídas da tabela utilizadores do phpMyAdmin
-            corpoTabela.innerHTML = dados.alunos.map(a => {
-                // Lógica de cálculo estático simples para exibição do estatuto
-                const n1 = parseFloat(a.nota_n1) || 0;
-                const n2 = parseFloat(a.nota_n2) || 0;
-                const n3 = parseFloat(a.nota_n3) || 0;
-                const media = (n1 + n2 + n3) / 3;
-                const estatuto = media >= 10 ? "Aprovado" : "Avaliação";
-                const corBadge = media >= 10 ? "#22c55e" : "#eab308";
-
-                return `
-                    <tr data-id="${a.id_utilizador}">
-                        <td>
-                            <b>${a.nome}</b><br>
-                            <span style="font-size:10px; color:#64748b;">${a.id_unico_escolar || 'Sem ID'} | Horário: 07:00-08:00</span>
-                        </td>
-                        <td style="text-align: center;"><input type="number" step="0.1" class="input-nota" value="${a.nota_n1 || 0}" min="0" max="20" style="width:60px; text-align:center; background:#070b14; color:#fff; border:1px solid #1e293b; padding:6px; border-radius:4px;"></td>
-                        <td style="text-align: center;"><input type="number" step="0.1" class="input-nota" value="${a.nota_n2 || 0}" min="0" max="20" style="width:60px; text-align:center; background:#070b14; color:#fff; border:1px solid #1e293b; padding:6px; border-radius:4px;"></td>
-                        <td style="text-align: center;"><input type="number" step="0.1" class="input-nota" value="${a.nota_n3 || 0}" min="0" max="20" style="width:60px; text-align:center; background:#070b14; color:#fff; border:1px solid #1e293b; padding:6px; border-radius:4px;"></td>
-                        <td style="text-align: center;"><input type="number" class="input-nota" value="${a.faltas || 0}" min="0" style="width:50px; text-align:center; background:#070b14; color:#fff; border:1px solid #1e293b; padding:6px; border-radius:4px;"></td>
-                        <td style="text-align: right;"><span class="badge" style="background:rgba(255,255,255,0.02); color:${corBadge}; border: 1px solid ${corBadge}33; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:bold;">${estatuto}</span></td>
-                    </tr>
+            dados.alunos.forEach((aluno, index) => {
+                const tr = document.createElement("tr");
+                tr.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
+                
+                tr.innerHTML = `
+                    <td style="padding: 10px; color: var(--text-muted); font-size: 13px; font-weight: bold;">
+                        ${aluno.id_unico_escolar || 'Inscrito'}
+                    </td>
+                    <td style="padding: 10px; color: #fff; font-weight: 500; font-size: 13px;">
+                        ${aluno.nome}
+                    </td>
+                    <td style="padding: 10px; text-align: center; color: var(--text-muted); font-size: 13px;">
+                        ${aluno.periodo || 'Geral'}
+                    </td>
+                    <td style="padding: 10px; text-align: center;">
+                        <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">
+                            Ativo
+                        </span>
+                    </td>
                 `;
-            }).join('');
-        }
-    })
-    .catch(err => console.error("Erro ao processar caderneta docente:", err));
+                tabelaAlunos.appendChild(tr);
+            });
+        })
+        .catch(error => {
+            console.error("Erro ao processar estudantes na pauta:", error);
+            tabelaAlunos.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: #ef4444; font-size: 13px;">❌ Erro na comunicação com o servidor.</td></tr>`;
+        });
 }
-
-// 🎯 DISPARADOR AUTOMÁTICO DE ENTRADA (DOM)
-document.addEventListener("DOMContentLoaded", () => {
-    sincronizarPainelProfessorAutomatico(); // Carrega faturamento e turmas ao abrir
-});
-
-// 🎯 GARANTE QUE O SELETOR ATUALIZA ASSIM QUE A PÁGINA ABRE
-document.addEventListener("DOMContentLoaded", () => {
-    carregarAlunosNoSeletorDoChat();
-});
-// 🎯 DISPARADOR AUTOMÁTICO: Executa assim que o painel abre no navegador
-document.addEventListener("DOMContentLoaded", () => {
-    carregarAlunosNoSeletorDoChat();
-});
-// ⏱️ ATIVA O MONITOR EM TEMPO REAL A CADA 3 SEGUNDOS
-setInterval(sincronizarChatProfessor, 3000);
-    // 🔐 MOTOR DE AUTENTICAÇÃO RIGOROSO (BLOCO ADMINISTRATIVO ÚNICO)
-    function processarAcessoProfessor(event) {
-        event.preventDefault();
-        
-        const fone = document.getElementById('prof-telefone').value.trim();
-        const codigo = document.getElementById('prof-codigo').value.trim();
-        const erroDiv = document.getElementById('mensagem-erro-prof');
-
-        // Validação estrita: Rejeita qualquer dado que não seja a chave mestra
-        if (fone === credencialProfessor.telefone && codigo === credencialProfessor.codigoForte) {
-            erroDiv.style.display = "none";
-            
-            // Atualiza os indicadores visuais para o estado logado seguro
-            const statusSessao = document.getElementById('status-sessao');
-            if (statusSessao) {
-                statusSessao.innerText = "● Administrador Mestre Conectado";
-                statusSessao.style.color = "var(--brand-success)";
-            }
-            
-            // Inicializa as ferramentas e dados do painel único
-            popularFiltroClasses();
-            carregarChatSincronizado();
-            alternarTela('view-dashboard-prof');
-            
-            // Sincronização automática contínua do Chat a cada 3 segundos
-            setInterval(carregarChatSincronizado, 3000);
-        } else {
-            // Se um aluno tentar adivinhar, bloqueia imediatamente o ecrã
-            erroDiv.style.display = "block";
-            erroDiv.innerHTML = "❌ Acesso Negado! Tentativa ilegal de acesso detetada. As credenciais administrativas introduzidas não são válidas.";
-            document.getElementById('form-login-prof').reset();
-        }
-    }
-
-
-    function renderizarAlunosNoPainelProfessor() {
-    // Bate no arquivo PHP que calcula as métricas e lista os utilizadores do banco
-    fetch("faturamento_admin.php")
-    .then(res => res.json())
-    .then(dados => {
-        if (dados.sucesso) {
-            // 1. Atualiza os contadores no ecrã (O seu já marca 5, mas isto garante o automatismo)
-            if (document.getElementById('estatistica-total-alunos')) {
-                document.getElementById('estatistica-total-alunos').innerText = dados.total_estudantes;
-            }
-
-            // 2. Localiza o corpo da tabela de Administração / Aprovação
-            // 🌟 Verifique se o ID do seu <tbody> é exatamente este ou ajuste
-            const corpoTabelaAdmin = document.getElementById('corpo-tabela-admin') || document.querySelector('.table-wrapper tbody');
-            
-            if (corpoTabelaAdmin) {
-                if (dados.alunos.length > 0) {
-                    // Injeta dinamicamente as linhas vindas diretamente do DBeaver
-                    corpoTabelaAdmin.innerHTML = dados.alunos.map(aluno => `
-                        <tr>
-                            <td><b>${aluno.nome}</b></td>
-                            <td>${aluno.classe || '9ª Classe'}</td>
-                            <td>${aluno.periodo || 'Tarde'}</td>
-                            <td>07:00-08:00</td>
-                            <td>Geral</td>
-                            <td>Prof. Responsável</td>
-                            <td>
-                                <span class="badge" style="background: rgba(234, 179, 8, 0.15); color: #eab308; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">
-                                    Pendente
-                                </span>
-                            </td>
-                        </tr>
-                    `).join('');
-                } else {
-                    corpoTabelaAdmin.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px; color:#64748b;">Nenhum estudante pendente no banco.</td></tr>`;
-                }
-            }
-        }
-    })
-    .catch(err => console.error("Erro ao sincronizar listagem do professor:", err));
-}
-
-// 🎯 GATILHO AUTOMÁTICO: Executa a procura assim que o portal do professor abre
-document.addEventListener("DOMContentLoaded", () => {
-    renderizarAlunosNoPainelProfessor();
-});
-
 
 
 

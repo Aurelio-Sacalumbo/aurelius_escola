@@ -849,12 +849,10 @@ function verificarPreparatorios() {
 
 
 
-
-// 💾 SUBMISSÃO REAL E DINÂMICA DA MATRÍCULA PARA O MYSQL
 function submeterMatriculaEscolaReal(event) {
     if (event) event.preventDefault();
 
-    // 🔍 Captura cirúrgica através dos IDs reais do seu HTML
+    // 🔍 Captura cirúrgica dos elementos do formulário
     const inputNome = document.getElementById('input-nome-aluno');
     const inputEncarregado = document.getElementById('input-nome-encarregado');
     const inputTelefone = document.getElementById('input-input-telefone') || document.getElementById('input-telefone');
@@ -863,80 +861,128 @@ function submeterMatriculaEscolaReal(event) {
     const selectMunicipio = document.getElementById('input-municipio');
     const inputBairro = document.getElementById('input-bairro');
 
-    if (!inputNome || !inputTelefone) {
-        alert("⚠️ Erro Crítico: Elementos do formulário não foram localizados no DOM.");
+    // 🛑 1. VERIFICAÇÃO DE EXISTÊNCIA DOS ELEMENTOS NO DOM
+    if (!inputNome || !inputTelefone || !selectMunicipio || !inputBairro) {
+        alert("⚠️ Erro Crítico: Elementos obrigatórios do formulário não foram localizados na página.");
         return;
     }
 
     const nomeAluno = inputNome.value.trim();
     const nomeEncarregado = inputEncarregado ? inputEncarregado.value.trim() : "";
     const telefone = inputTelefone.value.trim();
-    const periodo = selectPeriodo ? selectPeriodo.value : "Tarde";
-    const classe = divCurso ? divCurso.innerText.trim() : "9ª Classe";
-    const municipio = selectMunicipio ? selectMunicipio.value : "";
-    const bairro = inputBairro ? inputBairro.value.trim() : "";
+    const periodo = selectPeriodo ? selectPeriodo.value : "";
+    const classe = divCurso ? divCurso.innerText.trim() : "1ª Classe";
+    const municipio = selectMunicipio.value;
+    const bairro = inputBairro.value.trim();
 
-    // 🛑 VALIDAÇÃO DE SEGURANÇA SEVERA AGAINST DADOS VAZIOS
-    if (nomeAluno === "" || telefone === "") {
-        alert("⚠️ Por favor, preencha o Nome do Aluno e o Número de Telefone antes de prosseguir!");
+    // 🛡️ 2. TRAVA DE DISCIPLINAS OBRIGATÓRIAS (Captura todas as marcadas no contêiner)
+    // Ajuste o seletor querySelectorAll se as suas checkboxes tiverem uma classe específica
+    const disciplinasMarcadas = document.querySelectorAll('input[type="checkbox"]:checked');
+    
+    if (disciplinasMarcadas.length === 0) {
+        alert("❌ Erro de Validação: É obrigatório selecionar pelo menos UMA disciplina/módulo para efetuar a matrícula!");
         return;
     }
 
-    if (municipio === "" || bairro === "") {
-        alert("⚠️ Por favor, indique o Município e o Bairro para efeitos de localização em Huambo!");
-        return;
-    }
-
-    // Unifica o nome do aluno ao encarregado e anexa a localização para o banco central
-    const nomeCompletoParaBanco = nomeEncarregado !== "" ? `${nomeAluno} (Enc: ${nomeEncarregado})` : nomeAluno;
-    const periodoComLocalizacao = `${periodo} | ${municipio} (${bairro})`;
-
-    const formData = new FormData();
-    formData.append('nome', nomeCompletoParaBanco);
-    formData.append('telefone', telefone);
-    formData.append('classe', classe);
-    formData.append('periodo', periodoComLocalizacao);
-
-    console.log(`Disparando matrícula via AJAX: ${nomeCompletoParaBanco} -> ${classe}`);
-
-    fetch("cadastrar_estudante.php", {
-        method: "POST",
-        body: formData
-    })
-    .then(res => {
-        if (!res.ok) throw new Error("O servidor recusou a requisição.");
-        return res.json();
-    })
-    .then(dados => {
-        if (dados.sucesso) {
-            // 🎉 SUCESSO DO BANCO REVELADO NA TELA
-            alert(`🎉 MATRÍCULA INTEGRADA NO MYSQL COM SUCESSO!\n\nID ESTUDANTE: ${dados.id_estudante}\nCÓDIGO VALIDAÇÃO (SENHA): ${dados.codigo_validacao}\n\nO registo está ativo em todas as centrais.`);
-            
-            // Limpa o formulário reativamente
-            inputNome.value = "";
-            if(inputEncarregado) inputEncarregado.value = "";
-            inputTelefone.value = "";
-            if(inputBairro) inputBairro.value = "";
-            if(selectMunicipio) selectMunicipio.value = "";
-
-            // 🔄 CONTROLADOR SPA: Executa a sua função nativa de navegação para voltar à tela de Login/Home
-            if (typeof proximaTela === "function") {
-                proximaTela(1); 
-            } else if (typeof alternarTela === "function") {
-                alternarTela('view-login');
-            }
-        } else {
-            alert("❌ O Banco de Dados rejeitou: " + dados.mensagem);
-        }
-    })
-    .catch(err => {
-        console.error(err);
-        alert("⚠️ Erro de rede: Não foi possível alcançar o barramento do MySQL remoto.");
+    // Coleta os nomes das disciplinas selecionadas para enviar ao banco
+    let listaDisciplinas = [];
+    disciplinasMarcadas.forEach(cb => {
+        // Pega o texto explicativo ou valor associado à checkbox
+        const labelText = cb.parentElement ? cb.parentElement.innerText.trim().split('\n')[0] : cb.value;
+        listaDisciplinas.push(labelText);
     });
+
+    // 🛑 3. VALIDAÇÃO SEVERA DE CAMPOS OBRIGATÓRIOS VAZIOS
+    if (nomeAluno === "") {
+        alert("⚠️ Preenchimento Obrigatório: Introduza o Nome Completo do Aluno!");
+        inputNome.focus();
+        return;
+    }
+    if (telefone === "") {
+        alert("⚠️ Preenchimento Obrigatório: Introduza o Número de Telefone!");
+        inputTelefone.focus();
+        return;
+    }
+    if (periodo === "" || periodo === "0" || periodo === "-- Selecione --") {
+        alert("⚠️ Preenchimento Obrigatório: Selecione o Período da Formação!");
+        if(selectPeriodo) selectPeriodo.focus();
+        return;
+    }
+    if (municipio === "" || municipio === "0") {
+        alert("⚠️ Preenchimento Obrigatório: Escolha o Município no Huambo!");
+        selectMunicipio.focus();
+        return;
+    }
+    if (bairro === "") {
+        alert("⚠️ Preenchimento Obrigatório: Indique o Bairro / Rua Exata!");
+        inputBairro.focus();
+        return;
+    }
+
+    // 🔍 4. VALIDAÇÃO DO BANCO: Garante que só matricula quem possui inscrição ativa
+    fetch(`listar_estudantes.php?acao=verificar_telefone&telefone=${encodeURIComponent(telefone)}`)
+        .then(response => {
+            if (!response.ok) throw new Error();
+            return response.json();
+        })
+        .then(dados => {
+            if (!dados.sucesso || !dados.existe) {
+                alert("❌ Acesso Recusado: O número de telefone (" + telefone + ") não possui uma inscrição ativa no sistema!\n\nPor favor, realize a sua inscrição prévia antes de prosseguir com os módulos da matrícula.");
+                return;
+            }
+
+            // 🚀 TUDO VALIDADO E APROVADO: Envia para o arquivo guardar_matricula.php
+            executarSalvamentoMatricula({
+                nome: nomeAluno,
+                encarregado: nomeEncarregado,
+                telefone: telefone,
+                periodo: periodo,
+                classe: classe,
+                municipio: municipio,
+                bairro: bairro,
+                disciplinas: listaDisciplinas.join(", ")
+            });
+        })
+        .catch(() => {
+            alert("❌ Erro de Ligação: Não foi possível validar a inscrição. Verifique o servidor Apache/MySQL.");
+        });
 }
 
 
-
+function executarSalvamentoMatricula(dadosMatricula) {
+    // Envia o payload limpo e unificado diretamente para o PHP
+    fetch("guardar_matricula.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        body: JSON.stringify(dadosMatricula)
+    })
+    .then(res => {
+        if (!res.ok) {
+            throw new Error("Erro de resposta do servidor Apache (Status HTTP: " + res.status + ")");
+        }
+        return res.json();
+    })
+    .then(resultado => {
+        if (resultado.sucesso) {
+            alert("🎉 Perfeito! Matrícula guardada com sucesso e sincronizada nos Portais!");
+            
+            // Limpa o formulário de matrícula após o sucesso
+            const form = document.getElementById('form-matricula') || document.querySelector('form');
+            if (form) form.reset();
+            
+            // Recarrega a página para limpar os estados de preços da tela anterior
+            window.location.reload();
+        } else {
+            alert("⚠️ O servidor recusou o registo: " + (resultado.mensagem || "Erro de processamento interno."));
+        }
+    })
+    .catch(err => {
+        console.error("Detalhes do erro detetado:", err);
+        alert("❌ Erro de Execução: Não foi possível sincronizar os dados.\n\nCertifique-se de que o ficheiro 'guardar_matricula.php' está com o código unificado JSON ativo.");
+    });
+}
 
 // =========================================================================
 // 🚀 5. PROCESSADOR DE SUBMISSÃO DINÂMICA COMPLETO (ORDEM DE VARIÁVEIS SEGURA)
