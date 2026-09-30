@@ -44,23 +44,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $alunoExiste = $check->fetch();
 
             if ($alunoExiste) {
-                echo json_encode(['sucesso' => true, 'mensagem' => 'Aluno já se encontra registado no sistema.']);
+                echo json_encode(['sucesso' => true, 'mensagem' => 'Aluno já se encontra registado no sistema.'], JSON_UNESCAPED_UNICODE);
             } else {
                 // Insere com a senha em texto limpo de 6 dígitos
                 $stmt = $pdo->prepare("INSERT INTO utilizadores (nome, telefone, email, senha, nivel, id_unico_escolar, curso, periodo, saldo_propina) VALUES (?, ?, ?, ?, 'estudante', ?, ?, ?, 0)");
                 $executo = $stmt->execute([$nomeCompleto, $telefone, $validacao, $validacao, $id_escolar, $curso, $periodo]);
                 
-                echo json_encode(['sucesso' => $executo, 'mensagem' => '🎉 Novo aluno integrado com sucesso no MySQL!']);
+                echo json_encode(['sucesso' => $executo, 'mensagem' => '🎉 Novo aluno integrado com sucesso no MySQL!'], JSON_UNESCAPED_UNICODE);
             }
         } catch (Exception $e) {
-            echo json_encode(['sucesso' => false, 'mensagem' => 'Vai até a Pagina Principal, (Home) e Faz sua Matrícula, selecionando sua classe e disciplinas ou Cursos que pretendes estudar 😎🤠🧏 , Venha fazer parte da Nossa Família.........................................................................................................................................................................................................................................................................'. $e->getMessage()]);
+            echo json_encode(['sucesso' => false, 'mensagem' => 'Erro crítico: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
         }
         exit;
     }
 }
 
 // =========================================================================
-// 🔍 ROTA 2: PROCESSAMENTO GET CORRIGIDO (BLINDADO PARA ÁURIO E CARACTERES EXTRA)
+// 🔍 ROTA 2: PROCESSAMENTO GET DINÂMICO (BLINDADO CONTRA COLUNAS DESALINHADAS)
 // =========================================================================
 if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     header('Content-Type: application/json; charset=utf-8');
@@ -78,8 +78,9 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
             // 🔍 1. LOCALIZAÇÃO DA STRING DE CURSO/DISCIPLINAS EM QUALQUER COLUNA
             $cursoBruto = "";
             foreach ($aluno as $coluna => $valor) {
-                if (strpos($valor, '[') !== false || strpos($valor, 'classe') !== false || strpos($valor, 'Classe') !== false) {
-                    $cursoBruto = $valor;
+                $valorStr = (string)$valor;
+                if (strpos($valorStr, '[') !== false || strpos($valorStr, 'classe') !== false || strpos($valorStr, 'Classe') !== false) {
+                    $cursoBruto = $valorStr;
                     break;
                 }
             }
@@ -91,20 +92,19 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
             $disciplinasEstruturadas = [];
             $precoTotalOriginal = 0;
             
-            // 🔍 2. PARSER INTELIGENTE DE DISCIPLINAS
+            // 🔍 2. PARSER DE DISCIPLINAS
             if (strpos($cursoBruto, '[') !== false) {
-                // Caso do José Gomes Nduva: tem colchetes com cadeiras explícitas
+                // Caso estruturado (ex: José Gomes Nduva)
                 preg_match('/\[(.*?)\]/', $cursoBruto, $matches);
                 $apenasDisciplinas = isset($matches[1]) ? $matches[1] : $cursoBruto;
                 $apenasDisciplinas = str_replace('Inscrição', '', $apenasDisciplinas);
                 $partes = explode(',', $apenasDisciplinas);
             } else {
-                // Caso do Áurio: tem apenas o nome do curso/classe bruto como "9ª classe"
-                // Forçamos uma lista padrão baseada na 9ª Classe para preencher a pauta perfeitamente
+                // Caso simplificado (ex: Áurio / AmbrósioF) - Grade padrão da 9ª Classe
                 $partes = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
             }
 
-            // Consulta os preços na tabela do MySQL central
+            // Consulta os preços originais na tabela cursos_disciplinas
             $stmtPreco = $pdo->prepare("SELECT preco_base FROM cursos_disciplinas WHERE nome = ? LIMIT 1");
             
             foreach ($partes as $parte) {
@@ -114,12 +114,12 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
                 $stmtPreco->execute([$nomeItem]);
                 $precoBanco = $stmtPreco->fetchColumn();
                 
-                // Padrão de 1500 Kzs se a cadeira individual não estiver na tabela de preços
                 $precoReal = ($precoBanco !== false) ? floatval($precoBanco) : 1500.00;
                 $precoTotalOriginal += $precoReal;
                 
+                // 🌟 REMOVIDO utf8_encode(): O JSON_UNESCAPED_UNICODE trata os acentos agora!
                 $disciplinasEstruturadas[] = [
-                    'nome' => utf8_encode($nomeItem), // Garante compatibilidade de acentos no JSON do Render
+                    'nome' => $nomeItem, 
                     'preco' => $precoReal
                 ];
             }
@@ -130,170 +130,7 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
             $totalAPagarFinal = max(0, $precoTotalOriginal - $descontoCortesia);
             $saldoReal = (isset($aluno['saldo_propina']) && $aluno['saldo_propina'] > 0) ? floatval($aluno['saldo_propina']) : 0;
 
-            // Retorno limpo em JSON sem caracteres corrompidos
-            echo json_encode([
-                'status' => 'encontrado',
-                'nome' => utf8_encode($aluno['nome']),
-                'telefone' => $aluno['telefone'],
-                'turma' => 'Turma Única A',
-                'classe' => utf8_encode($cursoBruto),
-                'saldo_interno' => $saldoReal,
-                'preco_total' => $precoTotalOriginal,
-                'desconto' => $descontoCortesia,
-                'total_a_pagar' => $totalAPagarFinal,
-                'disciplinas' => $disciplinasEstruturadas
-            ]);
-        } else {
-            echo json_encode(['status' => 'nao_encontrado']);
-        }
-    } catch (Exception $e) {
-        echo json_encode(['status' => 'erro', 'mensagem' => 'Erro no Engine: ' . $e->getMessage()]);
-    }
-    exit;
-}
-?>
-<?php
-// Adicione estes cabeçalhos no topo do unitel.php para evitar bloqueios de rede (CORS)
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
-}
-
-// =========================================================================
-// 📥 ROTA 1: PROCESSAMENTO POST (REGISTAR PAGAMENTO)
-// =========================================================================
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    header('Content-Type: application/json; charset=utf-8');
-    require_once 'conexao.php';
-
-    // Captura tanto JSON do Render quanto FormData tradicional
-    $inputRaw = file_get_contents("php://input");
-    $dadosJson = json_decode($inputRaw, true);
-
-    if ($dadosJson) {
-        $acao         = isset($dadosJson['acao_financeira']) ? trim($dadosJson['acao_financeira']) : 'registar_pagamento';
-        $nome         = isset($dadosJson['nome']) ? trim($dadosJson['nome']) : '';
-        $telefone     = isset($dadosJson['telefone']) ? trim($dadosJson['telefone']) : '';
-        $curso        = isset($dadosJson['curso']) ? trim($dadosJson['curso']) : '';
-        $periodo      = isset($dadosJson['periodo']) ? trim($dadosJson['periodo']) : '';
-        $id_escolar   = isset($dadosJson['id_unico_escolar']) ? trim($dadosJson['id_unico_escolar']) : '';
-        $validacao    = isset($dadosJson['codigo_validacao']) ? trim($dadosJson['codigo_validacao']) : '';
-        $saldoAbatido = isset($dadosJson['saldo_abatido']) ? floatval($dadosJson['saldo_abatido']) : 0;
-    } else {
-        $acao         = isset($_POST['acao_financeira']) ? trim($_POST['acao_financeira']) : 'registar_pagamento';
-        $nome         = isset($_POST['nome']) ? trim($_POST['nome']) : '';
-        $telefone     = isset($_POST['telefone']) ? trim($_POST['telefone']) : '';
-        $curso        = isset($_POST['curso']) ? trim($_POST['curso']) : '';
-        $periodo      = isset($_POST['periodo']) ? trim($_POST['periodo']) : '';
-        $id_escolar   = isset($_POST['id_unico_escolar']) ? trim($_POST['id_unico_escolar']) : '';
-        $validacao    = isset($_POST['codigo_validacao']) ? trim($_POST['codigo_validacao']) : '';
-        $saldoAbatido = 0;
-    }
-
-    if ($acao === 'registar_pagamento') {
-        if (empty($telefone)) {
-            echo json_encode(['sucesso' => false, 'mensagem' => 'Contacto do aluno em falta.']);
-            exit;
-        }
-
-        try {
-            // 🔍 1. Verifica se o aluno já existe na tabela utilizadores
-            $check = $pdo->prepare("SELECT id_utilizador, id_unico_escolar FROM utilizadores WHERE telefone = ?");
-            $check->execute([$telefone]);
-            $alunoExiste = $check->fetch(PDO::FETCH_ASSOC);
-
-            $senha_padrao_hash = md5($validacao); 
-            $nomeCompleto = !empty($nome) ? $nome : "Estudante Inscrito";
-
-            if ($alunoExiste) {
-                // 🔄 Se o aluno já existe, ATUALIZA com os novos códigos e turma gerados para entrar na plataforma
-                $stmt = $pdo->prepare("UPDATE utilizadores SET nome = ?, id_unico_escolar = ?, email = ?, senha = ?, curso = ?, periodo = ?, nivel = 'estudante' WHERE telefone = ?");
-                $executo = $stmt->execute([$nomeCompleto, $id_escolar, $validacao, $senha_padrao_hash, $curso, $periodo, $telefone]);
-                $msg = "Inscrição e códigos atualizados com sucesso para o aluno existente!";
-            } else {
-                // 🆕 Se o aluno NÃO existe, faz o INSERT real com os códigos gerados
-                $stmt = $pdo->prepare("INSERT INTO utilizadores (nome, telefone, email, senha, nivel, id_unico_escolar, curso, periodo, saldo_propina) VALUES (?, ?, ?, ?, 'estudante', ?, ?, ?, 0)");
-                $executo = $stmt->execute([$nomeCompleto, $telefone, $validacao, $senha_padrao_hash, $id_escolar, $curso, $periodo]);
-                $msg = "Novo aluno gravado com sucesso no banco de dados central!";
-            }
-
-            echo json_encode([
-                'sucesso' => $executo, 
-                'mensagem' => $msg,
-                'id_unico' => $id_escolar,
-                'codigo_validacao' => $validacao,
-                'telefone' => $telefone
-            ]);
-        } catch (Exception $e) {
-            echo json_encode(['sucesso' => false, 'mensagem' => 'Erro crítico MySQL: ' . $e->getMessage()]);
-        }
-        exit;
-    }
-}
-// =========================================================================
-// 🔍 ROTA 2: PROCESSAMENTO GET (PESQUISA AUTOMÁTICA DO ALUNO)
-// =========================================================================
-// =========================================================================
-// 🔍 ROTA 2: PROCESSAMENTO GET (MÓDULOS REAIS E DESCONTO SINCRONIZADO)
-// =========================================================================
-if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
-    header('Content-Type: application/json; charset=utf-8');
-    require_once 'conexao.php';
-    
-    $termo = trim($_GET['termo']);
-    
-    try {
-        $stmt = $pdo->prepare("SELECT id_utilizador, nome, telefone, saldo_propina, curso, id_unico_escolar FROM utilizadores WHERE (id_unico_escolar = ? OR nome LIKE ? OR telefone = ?) AND nivel = 'estudante' LIMIT 1");
-        $stmt->execute([$termo, "%$termo%", $termo]);
-        $aluno = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if ($aluno) {
-            $cursoBruto = !empty($aluno['curso']) ? $aluno['curso'] : "";
-            
-            // 💰 TABELA UNIFICADA DE PREÇOS ORIGINAIS (AKZ)
-            $tabelaPrecos = [
-                'Língua Portuguesa' => 1500.00, 'Ling. Portuguesa' => 1500.00, 'Ling. Potuguesa' => 1500.00,
-                'Matemática'        => 1500.00, 'Matematica'        => 1500.00,
-                'História'          => 1500.00, 'Historia'          => 1500.00,
-                'Física'            => 1500.00, 'Fisica'            => 1500.00,
-                'Química'           => 1500.00, 'Quimica'           => 1500.00,
-                'Inglês'            => 1500.00, 'Ingles'            => 1500.00,
-                'Biologia'          => 1500.00
-            ];
-            
-            $disciplinasEstruturadas = [];
-            $precoTotalOriginal = 0;
-            
-            if (!empty($cursoBruto)) {
-                // Remove os colchetes textuais gerados na string da matrícula
-                $limpaCurso = str_replace(['[Inscrição]', '[', ']'], '', $cursoBruto);
-                $partes = explode(',', $limpaCurso);
-                
-                foreach ($partes as $parte) {
-                    $nomeCadeira = trim($parte);
-                    if (empty($nomeCadeira)) continue;
-                    
-                    // Associa ao preço oficial ou assume 1500,00 se não estiver listada
-                    $precoCadeira = isset($tabelaPrecos[$nomeCadeira]) ? $tabelaPrecos[$nomeCadeira] : 1500.00;
-                    $precoTotalOriginal += $precoCadeira;
-                    
-                    $disciplinasEstruturadas[] = [
-                        'nome' => $nomeCadeira,
-                        'preco' => $precoCadeira
-                    ];
-                }
-            }
-
-            // 🎯 LÓGICA DO DESCONTO DE CORTESIA SINCRONIZADA (Apenas 4 ou mais cadeiras)
-            $contagemCadeiras = count($disciplinasEstruturadas);
-            $descontoCortesia = ($contagemCadeiras >= 4) ? 1800.00 : 0.00;
-            $totalAPagarFinal = $precoTotalOriginal - $descontoCortesia;
-            
-            $saldoReal = ($aluno['saldo_propina'] > 0) ? floatval($aluno['saldo_propina']) : 0;
-
+            // 🌟 RETORNO SEGURO EM JSON: Adicionado JSON_UNESCAPED_UNICODE para aceitar o "ª" e acentos sem travar
             echo json_encode([
                 'status' => 'encontrado',
                 'nome' => $aluno['nome'],
@@ -305,16 +142,19 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
                 'desconto' => $descontoCortesia,
                 'total_a_pagar' => $totalAPagarFinal,
                 'disciplinas' => $disciplinasEstruturadas
-            ]);
+            ], JSON_UNESCAPED_UNICODE);
+            
         } else {
-            echo json_encode(['status' => 'nao_encontrado']);
+            echo json_encode(['status' => 'nao_encontrado'], JSON_UNESCAPED_UNICODE);
         }
     } catch (Exception $e) {
-        echo json_encode(['status' => 'erro', 'mensagem' => $e->getMessage()]);
+        echo json_encode(['status' => 'erro', 'mensagem' => 'Erro no Engine: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
     }
     exit;
 }
 ?>
+
+
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
