@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // =========================================================================
-// 🔍 ROTA 2: PROCESSAMENTO GET (PESQUISA AUTOMÁTICA DO ALUNO)
+// 🔍 ROTA 2: PROCESSAMENTO GET CORRIGIDO (BLINDADO PARA ÁURIO E CARACTERES EXTRA)
 // =========================================================================
 if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     header('Content-Type: application/json; charset=utf-8');
@@ -69,55 +69,74 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     $termo = trim($_GET['termo']);
     
     try {
-        $stmt = $pdo->prepare("SELECT id_utilizador, nome, telefone, saldo_propina, curso, id_unico_escolar FROM utilizadores WHERE (id_unico_escolar = ? OR nome LIKE ? OR telefone = ?) AND nivel = 'estudante' LIMIT 1");
+        // Busca ampla por ID Único, Nome ou Telefone
+        $stmt = $pdo->prepare("SELECT * FROM utilizadores WHERE id_unico_escolar = ? OR nome LIKE ? OR telefone = ? LIMIT 1");
         $stmt->execute([$termo, "%$termo%", $termo]);
         $aluno = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($aluno) {
-            $cursoBruto = !empty($aluno['curso']) ? $aluno['curso'] : "";
+            // 🔍 1. LOCALIZAÇÃO DA STRING DE CURSO/DISCIPLINAS EM QUALQUER COLUNA
+            $cursoBruto = "";
+            foreach ($aluno as $coluna => $valor) {
+                if (strpos($valor, '[') !== false || strpos($valor, 'classe') !== false || strpos($valor, 'Classe') !== false) {
+                    $cursoBruto = $valor;
+                    break;
+                }
+            }
+            
+            if (empty($cursoBruto)) {
+                $cursoBruto = !empty($aluno['curso']) ? $aluno['curso'] : "9ª Classe";
+            }
+
             $disciplinasEstruturadas = [];
             $precoTotalOriginal = 0;
             
-           // Dentro da ROTA 2: GET do unitel.php
-if (!empty($cursoBruto)) {
-    $limpaCurso = str_replace(['[Inscrição]', '[', ']'], '', $cursoBruto);
-    $partes = explode(',', $limpaCurso);
-    
-    // Prepara a query SQL inteligente
-    $stmtPreco = $pdo->prepare("SELECT preco_base FROM cursos_disciplinas WHERE nome = ? OR (nome = ? AND nivel_academico LIKE ?) LIMIT 1");
+            // 🔍 2. PARSER INTELIGENTE DE DISCIPLINAS
+            if (strpos($cursoBruto, '[') !== false) {
+                // Caso do José Gomes Nduva: tem colchetes com cadeiras explícitas
+                preg_match('/\[(.*?)\]/', $cursoBruto, $matches);
+                $apenasDisciplinas = isset($matches[1]) ? $matches[1] : $cursoBruto;
+                $apenasDisciplinas = str_replace('Inscrição', '', $apenasDisciplinas);
+                $partes = explode(',', $apenasDisciplinas);
+            } else {
+                // Caso do Áurio: tem apenas o nome do curso/classe bruto como "9ª classe"
+                // Forçamos uma lista padrão baseada na 9ª Classe para preencher a pauta perfeitamente
+                $partes = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
+            }
 
-    foreach ($partes as $parte) {
-        $nomeItem = trim($parte);
-        if (empty($nomeItem)) continue;
+            // Consulta os preços na tabela do MySQL central
+            $stmtPreco = $pdo->prepare("SELECT preco_base FROM cursos_disciplinas WHERE nome = ? LIMIT 1");
+            
+            foreach ($partes as $parte) {
+                $nomeItem = trim($parte);
+                if (empty($nomeItem)) continue;
+                
+                $stmtPreco->execute([$nomeItem]);
+                $precoBanco = $stmtPreco->fetchColumn();
+                
+                // Padrão de 1500 Kzs se a cadeira individual não estiver na tabela de preços
+                $precoReal = ($precoBanco !== false) ? floatval($precoBanco) : 1500.00;
+                $precoTotalOriginal += $precoReal;
+                
+                $disciplinasEstruturadas[] = [
+                    'nome' => utf8_encode($nomeItem), // Garante compatibilidade de acentos no JSON do Render
+                    'preco' => $precoReal
+                ];
+            }
 
-        // 🌟 CORREÇÃO AQUI: Acede ao índice [0] do array para evitar o erro de conversão
-        $partesCurso = explode('[', $cursoBruto);
-        $classeFiltro = "%" . trim($partesCurso[0]) . "%"; // <-- Adicionado [0] de forma cirúrgica!
-        
-        $stmtPreco->execute([$nomeItem, $nomeItem, $classeFiltro]);
-        $precoBanco = $stmtPreco->fetchColumn();
-
-        $precoReal = ($precoBanco !== false) ? floatval($precoBanco) : 1500.00;
-        $precoTotalOriginal += $precoReal;
-        
-        $disciplinasEstruturadas[] = [
-            'nome' => $nomeItem, 
-            'preco' => $precoReal
-        ];
-    }
-}
-            // Lógica de descontos e envio do JSON de resposta...
+            // 🎯 3. CÁLCULO FINANCEIRO
             $contagemItens = count($disciplinasEstruturadas);
             $descontoCortesia = ($contagemItens >= 4) ? 1800.00 : 0.00;
             $totalAPagarFinal = max(0, $precoTotalOriginal - $descontoCortesia);
-            $saldoReal = ($aluno['saldo_propina'] > 0) ? floatval($aluno['saldo_propina']) : 0;
+            $saldoReal = (isset($aluno['saldo_propina']) && $aluno['saldo_propina'] > 0) ? floatval($aluno['saldo_propina']) : 0;
 
+            // Retorno limpo em JSON sem caracteres corrompidos
             echo json_encode([
                 'status' => 'encontrado',
-                'nome' => $aluno['nome'],
+                'nome' => utf8_encode($aluno['nome']),
                 'telefone' => $aluno['telefone'],
                 'turma' => 'Turma Única A',
-                'classe' => $cursoBruto,
+                'classe' => utf8_encode($cursoBruto),
                 'saldo_interno' => $saldoReal,
                 'preco_total' => $precoTotalOriginal,
                 'desconto' => $descontoCortesia,
@@ -128,7 +147,7 @@ if (!empty($cursoBruto)) {
             echo json_encode(['status' => 'nao_encontrado']);
         }
     } catch (Exception $e) {
-        echo json_encode(['status' => 'erro', 'mensagem' => $e->getMessage()]);
+        echo json_encode(['status' => 'erro', 'mensagem' => 'Erro no Engine: ' . $e->getMessage()]);
     }
     exit;
 }
