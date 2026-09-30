@@ -15,65 +15,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json; charset=utf-8');
     require_once 'conexao.php';
 
-    // Captura tanto JSON do Render quanto FormData tradicional
     $inputRaw = file_get_contents("php://input");
     $dadosJson = json_decode($inputRaw, true);
 
     if ($dadosJson) {
-        $acao         = isset($dadosJson['acao_financeira']) ? trim($dadosJson['acao_financeira']) : 'registar_pagamento';
         $nome         = isset($dadosJson['nome']) ? trim($dadosJson['nome']) : '';
         $telefone     = isset($dadosJson['telefone']) ? trim($dadosJson['telefone']) : '';
         $curso        = isset($dadosJson['curso']) ? trim($dadosJson['curso']) : '';
         $periodo      = isset($dadosJson['periodo']) ? trim($dadosJson['periodo']) : '';
         $id_escolar   = isset($dadosJson['id_unico_escolar']) ? trim($dadosJson['id_unico_escolar']) : '';
         $validacao    = isset($dadosJson['codigo_validacao']) ? trim($dadosJson['codigo_validacao']) : '';
-        $saldoAbatido = isset($dadosJson['saldo_abatido']) ? floatval($dadosJson['saldo_abatido']) : 0;
     } else {
-        $acao         = isset($_POST['acao_financeira']) ? trim($_POST['acao_financeira']) : 'registar_pagamento';
         $nome         = isset($_POST['nome']) ? trim($_POST['nome']) : '';
         $telefone     = isset($_POST['telefone']) ? trim($_POST['telefone']) : '';
         $curso        = isset($_POST['curso']) ? trim($_POST['curso']) : '';
         $periodo      = isset($_POST['periodo']) ? trim($_POST['periodo']) : '';
         $id_escolar   = isset($_POST['id_unico_escolar']) ? trim($_POST['id_unico_escolar']) : '';
         $validacao    = isset($_POST['codigo_validacao']) ? trim($_POST['codigo_validacao']) : '';
-        $saldoAbatido = 0;
     }
 
-    if ($acao === 'registar_pagamento') {
-        if (empty($telefone)) {
-            echo json_encode(['sucesso' => false, 'mensagem' => 'Contacto do aluno em falta.']);
-            exit;
-        }
-
+    if (!empty($telefone)) {
         try {
-            // 🔍 1. Verifica se o aluno já existe na tabela utilizadores
-            $check = $pdo->prepare("SELECT id_utilizador FROM utilizadores WHERE telefone = ?");
-            $check->execute([$telefone]);
+            $nomeCompleto = !empty($nome) ? $nome : "Estudante Inscrito";
+
+            // 🌟 DUPLA VERIFICAÇÃO: Só barra se for o MESMO NOME e o MESMO TELEFONE!
+            $check = $pdo->prepare("SELECT id_utilizador FROM utilizadores WHERE telefone = ? AND nome = ?");
+            $check->execute([$telefone, $nomeCompleto]);
             $alunoExiste = $check->fetch();
 
             if ($alunoExiste) {
-                // 🔄 Se o aluno já existe, faz o UPDATE do saldo de propina
-                $stmt = $pdo->prepare("UPDATE utilizadores SET saldo_propina = saldo_propina - ? WHERE telefone = ? AND nivel = 'estudante'");
-                $executo = $stmt->execute([$saldoAbatido, $telefone]);
-                $msg = "Saldo atualizado com sucesso!";
+                echo json_encode(['sucesso' => true, 'mensagem' => 'Aluno já se encontra registado no sistema.']);
             } else {
-                // 🆕 FIX CIRÚRGICO: Guarda a senha e o email em TEXTO LIMPO sem md5()
-                // Evita o erro de coluna ignorando termos fantasmas e usando a tabela real do phpMyAdmin
-                $nomeCompleto = !empty($nome) ? $nome : "Estudante Inscrito";
-
+                // Insere com a senha em texto limpo de 6 dígitos
                 $stmt = $pdo->prepare("INSERT INTO utilizadores (nome, telefone, email, senha, nivel, id_unico_escolar, curso, periodo, saldo_propina) VALUES (?, ?, ?, ?, 'estudante', ?, ?, ?, 0)");
                 $executo = $stmt->execute([$nomeCompleto, $telefone, $validacao, $validacao, $id_escolar, $curso, $periodo]);
-                $msg = "Novo aluno gravado com sucesso no banco de dados central!";
+                
+                echo json_encode(['sucesso' => $executo, 'mensagem' => '🎉 Novo aluno integrado com sucesso no MySQL!']);
             }
-
-            echo json_encode(['sucesso' => $executo, 'mensagem' => $msg]);
         } catch (Exception $e) {
-            echo json_encode(['sucesso' => false, 'mensagem' => 'Erro crítico MySQL: ' . $e->getMessage()]);
+            echo json_encode(['sucesso' => false, 'mensagem' => 'Erro MySQL: ' . $e->getMessage()]);
         }
         exit;
     }
 }
-
 // =========================================================================
 // 🔍 ROTA 2: PROCESSAMENTO GET (PESQUISA AUTOMÁTICA DO ALUNO)
 // =========================================================================
