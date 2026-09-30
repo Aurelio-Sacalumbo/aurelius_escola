@@ -265,7 +265,7 @@
         }
     }
     function cadastrarEstudanteAutomatico(event) {
-        // 🛑 Bloqueio absoluto do recarregamento de página (?#)
+        // 🛑 Bloqueio absoluto do recarregamento de página (?#) que causava a tela preta
         if (event) {
             event.preventDefault();
             event.stopPropagation();
@@ -276,34 +276,57 @@
         const inputClasse = document.getElementById("cad-classe");
         const inputPeriodo = document.getElementById("cad-periodo");
     
+        if (!inputNome || !inputTelefone || !inputClasse || !inputPeriodo) {
+            alert("⚠️ Erro Estrutural: Campos do formulário de cadastro não foram localizados na página.");
+            return false;
+        }
+    
         const nome = inputNome.value.trim();
         const telefone = inputTelefone.value.trim();
         const classe = inputClasse.value.trim();
         const periodo = inputPeriodo.value.trim();
     
         if (nome === "" || telefone === "" || classe === "" || periodo === "") {
-            alert("⚠️ Por favor, preencha todos os campos!");
+            alert("⚠️ Por favor, preencha todos os campos obrigatórios do formulário!");
             return false;
         }
     
-        // 🎲 Gera os códigos na hora
+        // 🎲 GERAÇÃO REATIVA E DINÂMICA DE IDS ESCOLARES E CÓDIGOS DE VALIDAÇÃO (6 DÍGITOS)
         const idEscolarGerado = "AUR-" + Math.floor(100000 + Math.random() * 900000);
         const codigoValidacaoGerado = Math.floor(100000 + Math.random() * 900000).toString();
     
-        // 📋 INJETA IMEDIATAMENTE NA FATURA
-        if (document.getElementById("rec_nome")) document.getElementById("rec_nome").innerText = nome;
-        if (document.getElementById("rec_tel")) document.getElementById("rec_tel").innerText = telefone;
-        if (document.getElementById("rec_id_escolar")) document.getElementById("rec_id_escolar").innerText = idEscolarGerado;
-        if (document.getElementById("rec_codigo_val")) document.getElementById("rec_codigo_val").innerText = codigoValidacaoGerado;
+        // Guarda na memória do navegador para consistência do ecossistema
+        localStorage.setItem("telefone_estudante", telefone);
     
-        // ✨ Exibe a fatura/recibo e esconde o formulário para evitar sobreposição
+        // 📋 🌟 INJEÇÃO COMPLETA E IMEDIATA DE DADOS NA FATURA IMPERIAL (Antes do Fetch e do Reset)
+        try {
+            if (document.getElementById("rec_nome")) document.getElementById("rec_nome").innerText = nome;
+            if (document.getElementById("rec_tel")) document.getElementById("rec_tel").innerText = telefone;
+            if (document.getElementById("rec_mes")) document.getElementById("rec_mes").innerText = "Inscrição Inicial";
+            if (document.getElementById("rec_turma")) document.getElementById("rec_turma").innerText = periodo;
+            if (document.getElementById("rec_qtd")) document.getElementById("rec_qtd").innerText = classe;
+            
+            // Exibe de forma visível o ID AUR e a Senha que o aluno usará para fazer o login
+            if (document.getElementById("rec_id_escolar")) document.getElementById("rec_id_escolar").innerText = idEscolarGerado;
+            if (document.getElementById("rec_codigo_val")) document.getElementById("rec_codigo_val").innerText = codigoValidacaoGerado;
+    
+            // Gera a data atual de emissão formatada por extenso para o Huambo
+            if (document.getElementById("rec_data")) {
+                const d = new Date();
+                const mesesAno = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                document.getElementById("rec_data").innerText = `${String(d.getDate()).padStart(2, '0')} de ${mesesAno[d.getMonth()]} de ${d.getFullYear()}`;
+            }
+        } catch (erroDom) {
+            console.warn("Aviso: Alguns contêineres visuais do recibo imperial não foram localizados.", erroDom);
+        }
+    
+        // Garante que o bloco oculto da fatura de impressão fica visível no ecrã
         const blocoFatura = document.getElementById("bloco_fatura_recibo");
         if (blocoFatura) {
             blocoFatura.style.display = "block";
-            blocoFatura.scrollIntoView({ behavior: 'smooth' }); // Move o ecrã para ver a fatura
         }
     
-        // 🚀 ENVIO ADAPTADO: Como formulário tradicional FormData
+        // 🚀 ENVIO ADAPTADO: Como formulário tradicional FormData para o Render/Aiven aceitar nativamente
         const formData = new FormData();
         formData.append('acao_financeira', 'registar_pagamento');
         formData.append('nome', nome);
@@ -323,91 +346,36 @@
             return res.json();
         })
         .then(resposta => {
-            if(resposta.sucesso || resposta.status === "sucesso") {
-                alert(`🎉 Inscrição integrada com sucesso no MySQL!\n\nUse o ID Único ou Telefone para aceder ao Portal.`);
+            if (resposta.sucesso || resposta.status === "sucesso") {
+                // Alerta Imperial completo exibindo todas as variáveis geradas de forma clara
+                alert(`🎉 Inscrição integrada com sucesso no MySQL!\n\nEstudante: ${nome}\nID Único: ${idEscolarGerado}\nCódigo Validação / Senha: ${codigoValidacaoGerado}\n\nUse o ID Único ou o Telefone para aceder ao Portal.`);
                 
-                // Remove o # da URL de forma limpa
+                // Remove o # da URL de forma limpa via Histórico do Navegador
                 if (window.location.href.includes('#')) {
                     window.history.pushState("", document.title, window.location.pathname);
                 }
                 
-                // Limpa apenas o formulário de cadastro, mantendo a fatura visível
+                // Limpa apenas o formulário de cadastro, mantendo a fatura visível por trás
                 document.getElementById("form-cadastro").reset();
+                
+                // Faz scroll suave até ao recibo gerado
+                window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
             } else {
                 alert(`⚠️ Atenção: O servidor processou, mas retornou um aviso: ${resposta.mensagem}`);
             }
         })
         .catch(err => {
             console.error("Erro no fetch:", err);
-            // Fallback offline visível
-            alert(`🚨 Modo Offline/Lento Activo:\nAnote os seus dados de acesso obrigatoriamente antes de fechar a página!\n\nID: ${idEscolarGerado}\nSenha: ${codigoValidacaoGerado}`);
+            // Fallback offline visível completo para o Huambo nunca parar
+            alert(`🚨 Modo Offline Activo:\nAnote os seus dados de acesso obrigatoriamente antes de fechar a página!\n\nEstudante: ${nome}\nID Único: ${idEscolarGerado}\nSenha: ${codigoValidacaoGerado}`);
+            
+            if (document.getElementById("form-cadastro")) document.getElementById("form-cadastro").reset();
         });
     
         return false;
     }
-
     
     
-    // =========================================================================
-    // 🔐 CORREÇÃO 2: RECONHECIMENTO DE CREDENCIAIS (ID ÚNICO E CÓDIGO) NO LOGIN
-    // =========================================================================
-    function processarAcesso(event) {
-        if (event) event.preventDefault();
-        
-        const identificador = document.getElementById('login-identificador').value.trim();
-        const senhaInserida = document.getElementById('login-senha').value.trim();
-        const erroDiv = document.getElementById('mensagem-erro');
-    
-        if (identificador === "" || senhaInserida === "") {
-            if(erroDiv) { erroDiv.style.display = "block"; erroDiv.innerHTML = "❌ Preencha todos os campos."; }
-            return;
-        }
-    
-        const formData = new FormData();
-        // Envia o identificador (que aceita o ID Único AUR- ou o Telefone) e a senha
-        formData.append('identificador', identificador);
-        formData.append('senha', senhaInserida);
-    
-        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const URL_LOGIN = isLocal ? "login_estudante.php" : window.location.origin + "/login_estudante.php";
-    
-        fetch(URL_LOGIN, {
-            method: "POST",
-            body: formData
-        })
-        .then(res => res.json())
-        .then(dados => {
-            if (dados.sucesso) {
-                if(erroDiv) erroDiv.style.display = "none";
-                
-                // Ativa o caderno reativo de pautas puxando pelo ID Único devolvido pelo MySQL
-                const idParaCarregar = dados.estudante.id_unico_escolar || identificador;
-                if (typeof carainerNotas === "function" || typeof carregarCadernoNotasEstudante === "function") {
-                    carregarCadernoNotasEstudante(idParaCarregar);
-                }
-    
-                alternarTela('view-dashboard');
-                const logoutMenu = document.getElementById('menu-logout');
-                if(logoutMenu) logoutMenu.style.display = "block";
-            } else {
-                if(erroDiv) { erroDiv.style.display = "block"; erroDiv.innerHTML = dados.mensagem; }
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            if(erroDiv) { erroDiv.style.display = "block"; erroDiv.innerHTML = "⚠️ Erro ao conectar ao servidor central."; }
-        });
-    }
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -457,15 +425,18 @@ function carregarCadernoNotasEstudante(idUnicoEscolar) {
    
     // 🔐 PROCESSAR ACESSO (LOGIN)
     function processarAcesso(event) {
-        if (event) event.preventDefault();
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
         
         const identificadorInput = document.getElementById('login-identificador');
         const senhaInput = document.getElementById('login-senha');
         const erroDiv = document.getElementById('mensagem-erro');
     
         if (!identificadorInput || !senhaInput) {
-            alert("⚠️ Erro crítico: Campos do formulário não foram encontrados no HTML.");
-            return;
+            console.error("❌ Erro: Elementos de login não encontrados no HTML.");
+            return false;
         }
     
         const identificador = identificadorInput.value.trim();
@@ -474,35 +445,39 @@ function carregarCadernoNotasEstudante(idUnicoEscolar) {
         if (identificador === "" || senhaInserida === "") {
             if (erroDiv) {
                 erroDiv.style.display = "block";
-                erroDiv.innerHTML = "❌ Por favor, preencha todos os campos antes de aceder.";
+                erroDiv.innerHTML = "❌ Preencha todos os campos.";
             }
-            return;
+            return false;
         }
     
         const formData = new FormData();
         formData.append('identificador', identificador);
         formData.append('senha', senhaInserida);
     
-        // 🌟 SOLUÇÃO DEFINITIVA: Rota relativa limpa para o login
-        const URL_LOGIN = "login_estudante.php";
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const URL_LOGIN = isLocal ? "login_estudante.php" : window.location.origin + "/login_estudante.php";
     
         fetch(URL_LOGIN, {
             method: "POST",
             body: formData
         })
-        .then(res => {
-            if (!res.ok) throw new Error("Erro de comunicação com o servidor.");
-            return res.json();
-        })
+        .then(res => res.json())
         .then(dados => {
             if (dados.sucesso) {
                 if (erroDiv) erroDiv.style.display = "none";
-                estudanteLogado = dados.estudante;
-                carregarDadosDashboard();
+                
+                // Guarda na sessão para consultas reativas
+                localStorage.setItem("id_aluno_ativo", dados.estudante.id_unico_escolar);
+                
+                // Preenche os dados no Dashboard do Estudante de forma limpa
+                if (document.getElementById("txt-nome-estudante")) document.getElementById("txt-nome-estudante").innerText = dados.estudante.nome;
+                if (document.getElementById("txt-id-estudante")) document.getElementById("txt-id-estudante").innerText = dados.estudante.id_unico_escolar;
+    
+                // Transiciona a tela sem recarregar o navegador ou quebrar a URL (#)
                 alternarTela('view-dashboard');
                 
-                const menuLogout = document.getElementById('menu-logout');
-                if (menuLogout) menuLogout.style.display = "block";
+                const logoutMenu = document.getElementById('menu-logout');
+                if (logoutMenu) logoutMenu.style.display = "block";
             } else {
                 if (erroDiv) {
                     erroDiv.style.display = "block";
@@ -511,16 +486,40 @@ function carregarCadernoNotasEstudante(idUnicoEscolar) {
             }
         })
         .catch(err => {
-            console.error(err);
+            console.error("Erro na requisição de login:", err);
             if (erroDiv) {
                 erroDiv.style.display = "block";
-                erroDiv.innerHTML = "⚠️ Falha ao conectar ao servidor académico.";
+                erroDiv.innerHTML = "⚠️ Falha ao conectar ao servidor central.";
             }
         });
+    
+        return false;
     }
-
-
-
+    
+    // =========================================================================
+    // 🎯 CONTROLADOR DE INTERFACE SPA (GERENCIADOR DE TELAS OFICIAL)
+    // =========================================================================
+    function alternarTela(idTelaAlvo) {
+        // Esconde todas as divisórias que possuem a classe de visualização
+        const telas = document.querySelectorAll('.tela-view') || document.querySelectorAll('[id^="view-"]');
+        
+        telas.forEach(tela => {
+            tela.style.display = 'none';
+            tela.classList.remove('active');
+        });
+    
+        // Localiza e ativa apenas a tela alvo do fluxo
+        const telaAlvo = document.getElementById(idTelaAlvo);
+        if (telaAlvo) {
+            telaAlvo.style.display = 'block';
+            telaAlvo.classList.add('active');
+            console.log("🎯 Navegação executada para: " + idTelaAlvo);
+        } else {
+            console.warn("⚠️ A tela de destino '" + idTelaAlvo + "' não existe no HTML.");
+        }
+    }
+    </script>
+    <script>
 
     function carregarCadernoNotasEstudante(idEstudanteLogado) {
     // Alvo: o <tbody> da tabela de notas do estudante
