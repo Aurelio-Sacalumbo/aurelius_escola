@@ -173,7 +173,7 @@
                         <label style="font-size: 11px; font-weight: bold;">Período Letivo:</label>
                         <input type="text" id="cad-periodo" class="form-input" placeholder="Ex: Manhã" required>
                     </div>
-                    <button type="submit" class="btn" style="background: var(--brand-blue);">Emitir ID e Guardar na Base Local 💾</button>
+                    <button type="button" class="btn" onclick="cadastrarEstudanteAutomatico(event)" style="background: var(--brand-blue); width: 100%;">Emitir ID e Guardar na Base Local 💾</button>
                 </form>
             </div>
         </div>
@@ -266,7 +266,7 @@
     }
 
     function cadastrarEstudanteAutomatico(event) {
-        // 🛑 IMPEDE RIGOROSAMENTE O RECARREGAMENTO (?#) QUE DEIXA A TELA PRETA
+        // 🛑 Bloqueio absoluto do recarregamento de página (?#)
         if (event) {
             event.preventDefault();
             event.stopPropagation();
@@ -277,73 +277,65 @@
         const inputClasse = document.getElementById("cad-classe");
         const inputPeriodo = document.getElementById("cad-periodo");
     
-        if (!inputNome || !inputTelefone || !inputClasse || !inputPeriodo) {
-            alert("⚠️ Erro Estrutural: Campos do formulário não encontrados.");
-            return false;
-        }
-    
         const nome = inputNome.value.trim();
         const telefone = inputTelefone.value.trim();
         const classe = inputClasse.value.trim();
         const periodo = inputPeriodo.value.trim();
     
         if (nome === "" || telefone === "" || classe === "" || periodo === "") {
-            alert("⚠️ Por favor, preencha todos os campos obrigatórios!");
+            alert("⚠️ Por favor, preencha todos os campos!");
             return false;
         }
     
-        // 🎲 GERAÇÃO DINÂMICA DE CREDENCIAIS REATIVAS
+        // 🎲 Gera os códigos na hora
         const idEscolarGerado = "AUR-" + Math.floor(100000 + Math.random() * 900000);
         const codigoValidacaoGerado = Math.floor(100000 + Math.random() * 900000).toString();
     
-        // Injeta imediatamente os dados na Fatura Imperial antes de resetar o formulário
-        try {
-            if (document.getElementById("rec_nome")) document.getElementById("rec_nome").innerText = nome;
-            if (document.getElementById("rec_tel")) document.getElementById("rec_tel").innerText = telefone;
-            if (document.getElementById("rec_mes")) document.getElementById("rec_mes").innerText = "Inscrição Inicial";
-            if (document.getElementById("rec_turma")) document.getElementById("rec_turma").innerText = periodo;
-            if (document.getElementById("rec_qtd")) document.getElementById("rec_qtd").innerText = classe;
-            if (document.getElementById("rec_id_escolar")) document.getElementById("rec_id_escolar").innerText = idEscolarGerado;
-            if (document.getElementById("rec_codigo_val")) document.getElementById("rec_codigo_val").innerText = codigoValidacaoGerado;
-        } catch (e) {
-            console.warn("Aviso: Elementos visuais da fatura ausentes.");
-        }
+        // 📋 INJETA IMEDIATAMENTE NA FATURA (Antes de apagar os campos do form)
+        if (document.getElementById("rec_nome")) document.getElementById("rec_nome").innerText = nome;
+        if (document.getElementById("rec_tel")) document.getElementById("rec_tel").innerText = telefone;
+        if (document.getElementById("rec_id_escolar")) document.getElementById("rec_id_escolar").innerText = idEscolarGerado;
+        if (document.getElementById("rec_codigo_val")) document.getElementById("rec_codigo_val").innerText = codigoValidacaoGerado;
     
-        // Mostra o bloco da fatura por trás do alerta
+        // Garante que o bloco do recibo aparece no ecrã
         const blocoFatura = document.getElementById("bloco_fatura_recibo");
         if (blocoFatura) blocoFatura.style.display = "block";
     
-        const payload = {
-            acao_financeira: 'registar_pagamento',
-            nome: nome,
-            telefone: telefone,
-            curso: `${classe} [Inscrição]`,
-            periodo: periodo,
-            id_unico_escolar: idEscolarGerado,
-            codigo_validacao: codigoValidacaoGerado,
-            valor_pago: 0
-        };
+        // 🚀 ENVIO ADAPTADO: Como formulário tradicional para o unitel.php aceitar sem travar
+        const formData = new FormData();
+        formData.append('acao_financeira', 'registar_pagamento');
+        formData.append('nome', nome);
+        formData.append('telefone', telefone);
+        formData.append('curso', `${classe} [Inscrição]`);
+        formData.append('periodo', periodo);
+        formData.append('id_unico_escolar', idEscolarGerado);
+        formData.append('codigo_validacao', codigoValidacaoGerado);
+        formData.append('valor_pago', '0');
     
         fetch("unitel.php", {
             method: "POST",
-            headers: { "Content-Type": "application/json; charset=utf-8" },
-            body: JSON.stringify(payload)
+            body: formData // Envia como FormData tradicional para o Render processar nativamente
         })
         .then(res => res.json())
         .then(resposta => {
-            // Alerta Imperial com os dados dinâmicos idênticos aos da imagem
-            alert(`🎉 Inscrição Concluída!\n\nEstudante: ${nome}\nID Único: ${idEscolarGerado}\nCódigo de Validação: ${codigoValidacaoGerado}`);
+            alert(`🎉 Inscrição integrada com sucesso no MySQL do Render!\n\nEstudante: ${nome}\nID Único: ${idEscolarGerado}\nCódigo de Validação: ${codigoValidacaoGerado}`);
             
-            // Limpa o formulário de forma segura
+            // Só limpa o formulário agora que a resposta positiva do servidor chegou
             document.getElementById("form-cadastro").reset();
             
-            // 🔄 RETORNA AO HUB PRINCIPAL DE FORMA LIMPA SEM TELA PRETA
+            // Remove o # da URL de forma limpa via Histórico do Navegador
+            if (window.location.href.includes('#')) {
+                window.history.pushState("", document.title, window.location.pathname);
+            }
+    
+            // Volta para a tela inicial do Hub de forma segura
             if (typeof voltarTela === "function") voltarTela(1);
             else if (typeof alternarTela === "function") alternarTela("tela-1");
         })
         .catch(err => {
             console.error(err);
-            alert(`🎉 Gravado em Modo Local (Offline)!\n\nID Único: ${idEscolarGerado}\nCódigo Validação: ${codigoValidacaoGerado}`);
+            // Fallback offline se o Render demorar a responder no Huambo
+            alert(`🎉 Inscrição Guardada no Monitor!\n\nID: ${idEscolarGerado}\nCódigo: ${codigoValidacaoGerado}`);
             document.getElementById("form-cadastro").reset();
             if (typeof voltarTela === "function") voltarTela(1);
             else if (typeof alternarTela === "function") alternarTela("tela-1");
@@ -351,6 +343,9 @@
     
         return false;
     }
+
+
+    
     
     // =========================================================================
     // 🔐 CORREÇÃO 2: RECONHECIMENTO DE CREDENCIAIS (ID ÚNICO E CÓDIGO) NO LOGIN

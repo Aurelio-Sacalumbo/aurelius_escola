@@ -1,5 +1,5 @@
 <?php
-// 🗄️ AUTENTICAÇÃO ACADÉMICA - ACADEMIA AURÉLIUS
+// 🗄️ AUTENTICAÇÃO ACADÉMICA - ACADEMIA AURÉLIUS (CORRIGIDO)
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
@@ -30,31 +30,33 @@ try {
         exit;
     }
 
-    // Consulta alinhada com as colunas reais do phpMyAdmin
-    $query = "SELECT id_utilizador, nome, telefone, email as codigo_senha, periodo FROM utilizadores WHERE (id_unico_escolar = ? OR telefone = ?) LIMIT 1";
+    // 🌟 FIX CIRÚRGICO: Busca expandida trazendo email, senha, curso e id_unico com a trava nivel = 'estudante'
+    $query = "SELECT id_utilizador, nome, telefone, email, senha, id_unico_escolar, curso, periodo FROM utilizadores WHERE (id_unico_escolar = ? OR telefone = ?) AND nivel = 'estudante' LIMIT 1";
     $stmt = $pdo->prepare($query);
     $stmt->execute([$identificador, $identificador]);
-    $estudante = $stmt->fetch();
+    $estudante = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($estudante) {
-        // Validação da senha numérica guardada na coluna 'email'
-        if ($senhaInserida === $estudante['codigo_senha']) {
+        // 🌟 DUPLA VALIDAÇÃO: Aceita o código quer esteja guardado na coluna 'senha' ou na coluna 'email'
+        if ($senhaInserida === $estudante['senha'] || $senhaInserida === $estudante['email'] || md5($senhaInserida) === $estudante['senha']) {
+            
+            $classeFinal = !empty($estudante['curso']) ? $estudante['curso'] : '9ª Classe';
+            
             $resposta['sucesso'] = true;
             $resposta['estudante'] = [
-                'id' => $identificador,
+                'id_utilizador' => $estudante['id_utilizador'],
                 'nome' => $estudante['nome'],
                 'telefone' => $estudante['telefone'],
-                'classe' => '9ª Classe',
+                'id_unico_escolar' => $estudante['id_unico_escolar'],
+                'classe' => $classeFinal,
                 'periodo' => $estudante['periodo'] ?: 'Tarde',
-                'turma' => 'Turma Única A',
-                'disciplinas' => [],
-                'livros' => []
+                'turma' => 'Turma Única A'
             ];
         } else {
-            $resposta['mensagem'] = '❌ Código de validação incorreto.';
+            $resposta['mensagem'] = '❌ Código de validação ou senha incorreta.';
         }
     } else {
-        $resposta['mensagem'] = '❌ Aluno não localizado na base académica.';
+        $resposta['mensagem'] = '❌ Aluno não localizado na base académica do Huambo.';
     }
 
 } catch (Exception $e) {
@@ -63,3 +65,4 @@ try {
 
 echo json_encode($resposta);
 exit;
+?>
