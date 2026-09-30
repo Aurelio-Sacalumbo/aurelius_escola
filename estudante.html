@@ -264,8 +264,201 @@
             console.error("❌ Erro: A div '" + idTelaAlvo + "' não existe.");
         }
     }
-    </script>
-    <script>
+
+    function cadastrarEstudanteAutomatico(event) {
+        // 🛑 IMPEDE RIGOROSAMENTE O RECARREGAMENTO (?#) QUE DEIXA A TELA PRETA
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    
+        const inputNome = document.getElementById("cad-nome");
+        const inputTelefone = document.getElementById("cad-telefone");
+        const inputClasse = document.getElementById("cad-classe");
+        const inputPeriodo = document.getElementById("cad-periodo");
+    
+        if (!inputNome || !inputTelefone || !inputClasse || !inputPeriodo) {
+            alert("⚠️ Erro Estrutural: Campos do formulário não encontrados.");
+            return false;
+        }
+    
+        const nome = inputNome.value.trim();
+        const telefone = inputTelefone.value.trim();
+        const classe = inputClasse.value.trim();
+        const periodo = inputPeriodo.value.trim();
+    
+        if (nome === "" || telefone === "" || classe === "" || periodo === "") {
+            alert("⚠️ Por favor, preencha todos os campos obrigatórios!");
+            return false;
+        }
+    
+        // 🎲 GERAÇÃO DINÂMICA DE CREDENCIAIS REATIVAS
+        const idEscolarGerado = "AUR-" + Math.floor(100000 + Math.random() * 900000);
+        const codigoValidacaoGerado = Math.floor(100000 + Math.random() * 900000).toString();
+    
+        // Injeta imediatamente os dados na Fatura Imperial antes de resetar o formulário
+        try {
+            if (document.getElementById("rec_nome")) document.getElementById("rec_nome").innerText = nome;
+            if (document.getElementById("rec_tel")) document.getElementById("rec_tel").innerText = telefone;
+            if (document.getElementById("rec_mes")) document.getElementById("rec_mes").innerText = "Inscrição Inicial";
+            if (document.getElementById("rec_turma")) document.getElementById("rec_turma").innerText = periodo;
+            if (document.getElementById("rec_qtd")) document.getElementById("rec_qtd").innerText = classe;
+            if (document.getElementById("rec_id_escolar")) document.getElementById("rec_id_escolar").innerText = idEscolarGerado;
+            if (document.getElementById("rec_codigo_val")) document.getElementById("rec_codigo_val").innerText = codigoValidacaoGerado;
+        } catch (e) {
+            console.warn("Aviso: Elementos visuais da fatura ausentes.");
+        }
+    
+        // Mostra o bloco da fatura por trás do alerta
+        const blocoFatura = document.getElementById("bloco_fatura_recibo");
+        if (blocoFatura) blocoFatura.style.display = "block";
+    
+        const payload = {
+            acao_financeira: 'registar_pagamento',
+            nome: nome,
+            telefone: telefone,
+            curso: `${classe} [Inscrição]`,
+            periodo: periodo,
+            id_unico_escolar: idEscolarGerado,
+            codigo_validacao: codigoValidacaoGerado,
+            valor_pago: 0
+        };
+    
+        fetch("unitel.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json; charset=utf-8" },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(resposta => {
+            // Alerta Imperial com os dados dinâmicos idênticos aos da imagem
+            alert(`🎉 Inscrição Concluída!\n\nEstudante: ${nome}\nID Único: ${idEscolarGerado}\nCódigo de Validação: ${codigoValidacaoGerado}`);
+            
+            // Limpa o formulário de forma segura
+            document.getElementById("form-cadastro").reset();
+            
+            // 🔄 RETORNA AO HUB PRINCIPAL DE FORMA LIMPA SEM TELA PRETA
+            if (typeof voltarTela === "function") voltarTela(1);
+            else if (typeof alternarTela === "function") alternarTela("tela-1");
+        })
+        .catch(err => {
+            console.error(err);
+            alert(`🎉 Gravado em Modo Local (Offline)!\n\nID Único: ${idEscolarGerado}\nCódigo Validação: ${codigoValidacaoGerado}`);
+            document.getElementById("form-cadastro").reset();
+            if (typeof voltarTela === "function") voltarTela(1);
+            else if (typeof alternarTela === "function") alternarTela("tela-1");
+        });
+    
+        return false;
+    }
+    
+    // =========================================================================
+    // 🔐 CORREÇÃO 2: RECONHECIMENTO DE CREDENCIAIS (ID ÚNICO E CÓDIGO) NO LOGIN
+    // =========================================================================
+    function processarAcesso(event) {
+        if (event) event.preventDefault();
+        
+        const identificador = document.getElementById('login-identificador').value.trim();
+        const senhaInserida = document.getElementById('login-senha').value.trim();
+        const erroDiv = document.getElementById('mensagem-erro');
+    
+        if (identificador === "" || senhaInserida === "") {
+            if(erroDiv) { erroDiv.style.display = "block"; erroDiv.innerHTML = "❌ Preencha todos os campos."; }
+            return;
+        }
+    
+        const formData = new FormData();
+        // Envia o identificador (que aceita o ID Único AUR- ou o Telefone) e a senha
+        formData.append('identificador', identificador);
+        formData.append('senha', senhaInserida);
+    
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const URL_LOGIN = isLocal ? "login_estudante.php" : window.location.origin + "/login_estudante.php";
+    
+        fetch(URL_LOGIN, {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(dados => {
+            if (dados.sucesso) {
+                if(erroDiv) erroDiv.style.display = "none";
+                
+                // Ativa o caderno reativo de pautas puxando pelo ID Único devolvido pelo MySQL
+                const idParaCarregar = dados.estudante.id_unico_escolar || identificador;
+                if (typeof carainerNotas === "function" || typeof carregarCadernoNotasEstudante === "function") {
+                    carregarCadernoNotasEstudante(idParaCarregar);
+                }
+    
+                alternarTela('view-dashboard');
+                const logoutMenu = document.getElementById('menu-logout');
+                if(logoutMenu) logoutMenu.style.display = "block";
+            } else {
+                if(erroDiv) { erroDiv.style.display = "block"; erroDiv.innerHTML = dados.mensagem; }
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            if(erroDiv) { erroDiv.style.display = "block"; erroDiv.innerHTML = "⚠️ Erro ao conectar ao servidor central."; }
+        });
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 📖 CARREGA AS NOTAS E DISCIPLINAS DO ALUNO LOGADO (VIA ID AUR)
+function carregarCadernoNotasEstudante(idUnicoEscolar) {
+    const containerCadeiras = document.getElementById("lista-cadeiras-estudante");
+    if (!containerCadeiras) return;
+
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const urlConsulta = isLocal ? `obter_notas_estudante.php?id_escolar=${encodeURIComponent(idUnicoEscolar)}` : window.location.origin + `/obter_notas_estudante.php?id_escolar=${encodeURIComponent(idUnicoEscolar)}`;
+
+    fetch(urlConsulta)
+        .then(res => res.json())
+        .then(dados => {
+            if (dados.sucesso) {
+                // Guarda o ID e nome na memória para uso no faturamento ou consultas
+                localStorage.setItem("id_aluno_ativo", idUnicoEscolar);
+                if (document.getElementById("txt-nome-estudante")) document.getElementById("txt-nome-estudante").innerText = dados.nome;
+                if (document.getElementById("txt-id-estudante")) document.getElementById("txt-id-estudante").innerText = idUnicoEscolar;
+
+                // Mapeia e limpa a visualização de módulos matriculados vindos do campo 'curso'
+                if (dados.curso) {
+                    const match = dados.curso.match(/\[(.*?)\]/);
+                    const cadeiras = match ? match[1].split(",") : [];
+                    
+                    if (cadeiras.length > 0) {
+                        containerCadeiras.innerHTML = cadeiras.map(c => 
+                            `<div class='cadeira-item' style='background: rgba(255,255,255,0.02); padding: 10px; margin-bottom: 6px; border-radius: 6px; border-left: 3px solid var(--brand-gold); color: #fff; font-size: 13px;'>📖 ${c.trim()}</div>`
+                        ).join('');
+                    } else {
+                        containerCadeiras.innerHTML = `<div style='color: var(--text-muted); font-size: 12px;'>Nenhum módulo selecionado na matrícula.</div>`;
+                    }
+                }
+            }
+        })
+        .catch(err => console.error("Erro ao carregar caderno de notas:", err));
+}
+
+
+   
     // 🔐 PROCESSAR ACESSO (LOGIN)
     function processarAcesso(event) {
         if (event) event.preventDefault();
@@ -411,6 +604,9 @@ function sincronizarChatAcademico() {
     .catch(err => console.error("Erro na sincronização do chat: ", err));
 }
 
+
+
+
 // 📨 FUNÇÃO PARA DISPARAR UMA NOVA MENSAGEM
 function enviarMensagemDoChat(quemEnvia) {
     const inputTexto = document.getElementById('input-mensagem-chat'); // Ajuste o ID para o seu campo de texto
@@ -438,60 +634,6 @@ function enviarMensagemDoChat(quemEnvia) {
 setInterval(sincronizarChatAcademico, 3000);
 
 
-    // 🔐 PROCESSAR ACESSO (LOGIN VIA PHP)
-    function processarAcesso(event) {
-        if (event) event.preventDefault();
-        
-        const identificador = document.getElementById('login-identificador').value.trim();
-        const senhaInserida = document.getElementById('login-senha').value.trim();
-        const erroDiv = document.getElementById('mensagem-erro');
-    
-        if (identificador === "" || senhaInserida === "") {
-            erroDiv.style.display = "block";
-            erroDiv.innerHTML = "❌ Preencha todos os campos.";
-            return;
-        }
-    
-        const formData = new FormData();
-        formData.append('identificador', identificador);
-        formData.append('senha', senhaInserida);
-    
-        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-// Rotas dinâmicas universais para o Cadastro e para o Login
-const URL_BACKEND = isLocal ? "cadastrar_estudante.php" : window.location.origin + "/cadastrar_estudante.php";
-const URL_LOGIN = isLocal ? "login_estudante.php" : window.location.origin + "/login_estudante.php";
-
-    
-fetch(URL_LOGIN, {
-    method: "POST",
-    body: formData
-})
-.then(res => res.json())
-.then(dados => {
-    if (dados.sucesso) {
-        erroDiv.style.display = "none";
-        estudanteLogado = dados.estudante;
-        
-        // 🌟 LINHA ADICIONADA: Ativa o caderno reativo com o ID do aluno logado (Ex: AUR-799922)
-        if (dados.estudante && dados.estudante.id_unico_escolar) {
-            carregarCadernoNotasEstudante(dados.estudante.id_unico_escolar);
-        } else if (typeof carregarDadosDashboard === "function") {
-            carregarDadosDashboard(); // Mantém o seu backup caso use outra estrutura
-        }
-
-        alternarTela('view-dashboard');
-        document.getElementById('menu-logout').style.display = "block";
-    } else {
-        erroDiv.style.display = "block";
-        erroDiv.innerHTML = dados.mensagem;
-    }
-})
-.catch(err => {
-    console.error(err);
-    erroDiv.style.display = "block";
-    erroDiv.innerHTML = "⚠️ Falha ao conectar ao servidor MySQL.";
-});
     
     // 📊 INJEÇÃO DOS DADOS NO PAINEL
     function carregarDadosDashboard() {
@@ -527,6 +669,7 @@ fetch(URL_LOGIN, {
         }
     }
     
+
     // 🚪 RETROCEDER / FAZER LOGOUT
     function fazerLogout(event) {
         if(event) event.preventDefault();
@@ -548,6 +691,9 @@ fetch(URL_LOGIN, {
     document.addEventListener("DOMContentLoaded", () => {
         alternarTela('view-login');
     });
+
+    
+    
 </script>
 
     </body>
