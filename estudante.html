@@ -388,8 +388,14 @@
 
 // 📖 CARREGA AS NOTAS E DISCIPLINAS DO ALUNO LOGADO (VIA ID AUR)
 function carregarCadernoNotasEstudante(idUnicoEscolar) {
-    const containerCadeiras = document.getElementById("lista-cadeiras-estudante");
-    if (!containerCadeiras) return;
+    const containerTabela = document.getElementById("corpo-tabela-pauta");
+    
+    // 🎯 Captura exata com base nos IDs da sua Tela 3
+    const lblNome = document.getElementById("txt-nome-aluno");
+    const lblId = document.getElementById("txt-id-escolar");
+    const lblTurma = document.getElementById("txt-turma-aluno");
+    const lblClasse = document.getElementById("txt-classe-aluno");
+    const lblPeriodo = document.getElementById("txt-periodo-aluno");
 
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const urlConsulta = isLocal ? `obter_notas_estudante.php?id_escolar=${encodeURIComponent(idUnicoEscolar)}` : window.location.origin + `/obter_notas_estudante.php?id_escolar=${encodeURIComponent(idUnicoEscolar)}`;
@@ -397,28 +403,64 @@ function carregarCadernoNotasEstudante(idUnicoEscolar) {
     fetch(urlConsulta)
         .then(res => res.json())
         .then(dados => {
-            if (dados.sucesso) {
-                // Guarda o ID e nome na memória para uso no faturamento ou consultas
-                localStorage.setItem("id_aluno_ativo", idUnicoEscolar);
-                if (document.getElementById("txt-nome-estudante")) document.getElementById("txt-nome-estudante").innerText = dados.nome;
-                if (document.getElementById("txt-id-estudante")) document.getElementById("txt-id-estudante").innerText = idUnicoEscolar;
+            // Suporta respostas com dados encapsulados em dados.estudante ou diretos
+            const info = dados.estudante ? dados.estudante : dados;
 
-                // Mapeia e limpa a visualização de módulos matriculados vindos do campo 'curso'
-                if (dados.curso) {
-                    const match = dados.curso.match(/\[(.*?)\]/);
-                    const cadeiras = match ? match[1].split(",") : [];
+            if (dados.sucesso || info.nome) {
+                localStorage.setItem("id_aluno_ativo", idUnicoEscolar);
+                
+                // 🌟 INJEÇÃO REAL DE DADOS NOS CONFIGURADORES DA SUA TELA 3
+                if (lblNome) lblNome.innerText = info.nome;
+                if (lblId) lblId.innerText = info.id_unico_escolar || idUnicoEscolar;
+                if (lblTurma) lblTurma.innerText = info.turma || "Turma Única A";
+                if (lblClasse) lblClasse.innerText = info.classe || info.curso || "9ª Classe";
+                if (lblPeriodo) lblPeriodo.innerText = info.periodo || "Geral";
+
+                // 📋 MONTAGEM DAS LINHAS DA TABELA DE NOTAS
+                if (containerTabela) {
+                    const stringCurso = info.curso || info.classe || "";
+                    // Regex para capturar os módulos dentro dos parênteses retos [Língua Portuguesa, ...]
+                    const match = stringCurso.match(/\[(.*?)\]/);
+                    let disciplinasArray = [];
                     
-                    if (cadeiras.length > 0) {
-                        containerCadeiras.innerHTML = cadeiras.map(c => 
-                            `<div class='cadeira-item' style='background: rgba(255,255,255,0.02); padding: 10px; margin-bottom: 6px; border-radius: 6px; border-left: 3px solid var(--brand-gold); color: #fff; font-size: 13px;'>📖 ${c.trim()}</div>`
-                        ).join('');
-                    } else {
-                        containerCadeiras.innerHTML = `<div style='color: var(--text-muted); font-size: 12px;'>Nenhum módulo selecionado na matrícula.</div>`;
+                    if (match && match[1]) {
+                        disciplinasArray = match[1].split(",");
+                    } else if (stringCurso !== "") {
+                        disciplinasArray = stringCurso.split(",");
                     }
+                    
+                    // Remove espaçamentos e filtra elementos vazios
+                    disciplinasArray = disciplinasArray.map(d => d.trim()).filter(d => d !== "");
+
+                    if (disciplinasArray.length > 0) {
+                        containerTabela.innerHTML = disciplinasArray.map(c => `
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 12px 10px; color: #fff; font-weight: 500;">📖 ${c}</td>
+                                <td style="padding: 12px 10px; text-align: center; color: var(--brand-gold, #eab308); font-weight: bold;">-</td>
+                                <td style="padding: 12px 10px; text-align: center; color: var(--brand-gold, #eab308); font-weight: bold;">-</td>
+                                <td style="padding: 12px 10px; text-align: center; color: var(--brand-gold, #eab308); font-weight: bold;">-</td>
+                                <td style="padding: 12px 10px; text-align: center; color: #f87171;">0</td>
+                                <td style="padding: 12px 10px; text-align: right;"><span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold;">Regular</span></td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        containerTabela.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-muted);">Nenhuma cadeira/disciplina ativa vinculada a esta matrícula.</td></tr>`;
+                    }
+                }
+                
+                // Mensagem reativa de boas-vindas no Chat
+                const msgBoasVindas = document.getElementById("msg-boas-vindas");
+                if (msgBoasVindas) {
+                    msgBoasVindas.innerHTML = `👋 Olá, <b>${info.nome}</b>! Bem-vindo ao chat da sua turma.`;
                 }
             }
         })
-        .catch(err => console.error("Erro ao carregar caderno de notas:", err));
+        .catch(err => {
+            console.error("Erro ao processar dados acadêmicos:", err);
+            if (containerTabela) {
+                containerTabela.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: #ef4444;">⚠️ Erro ao renderizar a pauta de notas remota.</td></tr>`;
+            }
+        });
 }
 
 
@@ -466,14 +508,16 @@ function carregarCadernoNotasEstudante(idUnicoEscolar) {
             if (dados.sucesso) {
                 if (erroDiv) erroDiv.style.display = "none";
                 
-                // Guarda na sessão para consultas reativas
-                localStorage.setItem("id_aluno_ativo", dados.estudante.id_unico_escolar);
+                // 🌟 CAPTURA CIRÚRGICA: Pega o ID Único que veio do MySQL da Aiven
+                const idDoEstudanteLogado = dados.estudante.id_unico_escolar || identificador;
                 
-                // Preenche os dados no Dashboard do Estudante de forma limpa
-                if (document.getElementById("txt-nome-estudante")) document.getElementById("txt-nome-estudante").innerText = dados.estudante.nome;
-                if (document.getElementById("txt-id-estudante")) document.getElementById("txt-id-estudante").innerText = dados.estudante.id_unico_escolar;
-    
-                // Transiciona a tela sem recarregar o navegador ou quebrar a URL (#)
+                // Guarda no navegador para persistência do ecossistema
+                localStorage.setItem("id_aluno_ativo", idDoEstudanteLogado);
+                
+                // 🚀 DISPARA IMEDIATAMENTE A CARGA DA TELA 3 PASSANDO O ID REAL
+                carregarCadernoNotasEstudante(idDoEstudanteLogado);
+            
+                // Avança o painel SPA para o ecrã interativo
                 alternarTela('view-dashboard');
                 
                 const logoutMenu = document.getElementById('menu-logout');
@@ -684,7 +728,10 @@ setInterval(sincronizarChatAcademico, 3000);
 
     // Inicialização segura ao carregar a página
     document.addEventListener("DOMContentLoaded", () => {
-        alternarTela('view-login');
+        const alunoGuardado = localStorage.getItem("id_aluno_ativo");
+        if (alunoGuardado && document.getElementById("view-dashboard").classList.contains("active")) {
+            carregarCadernoNotasEstudante(alunoGuardado);
+        }
     });
 
     
