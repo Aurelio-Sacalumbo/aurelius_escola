@@ -1,5 +1,5 @@
 <?php
-// 🗄️ REPOSITÓRIO DE NOTAS DO ESTUDANTE - ACADEMIA AURÉLIUS
+// 🗄️ REPOSITÓRIO DE NOTAS DO ESTUDANTE - ACADEMIA AURÉLIUS (CORRIGIDO)
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
@@ -22,26 +22,39 @@ if (empty($id_estudante)) {
 }
 
 try {
-    // Procura o registo do aluno pelo ID Único AUR-
-    $stmt = $pdo->prepare("SELECT email as n1, senha as n2, nivel as n3, saldo_propina as faltas, periodo as classe_turma FROM utilizadores WHERE id_unico_escolar = ? LIMIT 1");
+    // 🔍 FIX CIRÚRGICO: Puxa as colunas reais do phpMyAdmin e define fallbacks pedagógicos para as notas
+    $stmt = $pdo->prepare("SELECT id_utilizador, nome, telefone, id_unico_escolar, curso, periodo FROM utilizadores WHERE id_unico_escolar = ? AND nivel = 'estudante' LIMIT 1");
     $stmt->execute([$id_estudante]);
     $aluno = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($aluno) {
         $resposta['sucesso'] = true;
-        $resposta['notas'] = [
-            'n1' => $aluno['n1'],
-            'n2' => $aluno['n2'],
-            'n3' => $aluno['n3'],
-            'faltas' => $aluno['faltas'],
-            'classe_turma' => $aluno['classe_turma']
+        
+        // Dados do cabeçalho que o JavaScript precisa para preencher os traços (---)
+        $resposta['estudante'] = [
+            'nome' => $aluno['nome'],
+            'id_unico_escolar' => $aluno['id_unico_escolar'],
+            'classe' => !empty($aluno['curso']) ? $aluno['curso'] : '9ª Classe',
+            'curso' => $aluno['curso'],
+            'periodo' => !empty($aluno['periodo']) ? $aluno['periodo'] : 'Manhã',
+            'turma' => 'Turma Única A'
         ];
+
+        // 📊 Valores pedagógicos padrão (Serão atualizados quando fizermos o professor.html)
+        $resposta['notas'] = [
+            'n1' => 0,
+            'n2' => 0,
+            'n3' => 0,
+            'faltas' => 0
+        ];
+        
     } else {
-        $resposta['mensagem'] = 'Estudante não localizado.';
+        $resposta['mensagem'] = 'Estudante não localizado na base académica do Huambo.';
     }
 } catch (Exception $e) {
-    $resposta['mensagem'] = $e->getMessage();
+    $resposta['mensagem'] = 'Erro no servidor: ' . $e->getMessage();
 }
 
 echo json_encode($resposta);
 exit;
+?>
