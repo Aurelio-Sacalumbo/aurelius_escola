@@ -96,7 +96,7 @@
 <body>
 
     <nav>
-        <h1 class="logo">AURE<span>LIUS</span></h1>
+     
         <ul class="menu-horizontal-top">
                 <li><a href="Principal.html" onclick="alternarTela('view-login')">Home</a></li>
             <li><a href="#" onclick="alternarTela('view-login')">Login</a></li>
@@ -173,7 +173,7 @@
                         <label style="font-size: 11px; font-weight: bold;">Período Letivo:</label>
                         <input type="text" id="cad-periodo" class="form-input" placeholder="Ex: Manhã" required>
                     </div>
-                    <button type="button" class="btn" onclick="cadastrarEstudanteAutomatico(event)" style="background: var(--brand-blue); width: 100%;">Emitir ID e Guardar na Base Local 💾</button>
+                    <button type="button" class="btn" onclick="cadastrarEstudanteAutomatico(event)" style="background: var(--brand-blue); width: 100%;">Emitir ID e Guardar Registo</button>
                 </form>
             </div>
         </div>
@@ -183,24 +183,24 @@
              ========================================================================= -->
         <div class="tela-view" id="view-dashboard">
             <div class="card">
-                <span style="color: var(--brand-success); font-size: 11px; font-weight: bold; text-transform: uppercase;">● Aluno Sincronizado na Base Local</span>
+                <span style="color: var(--brand-success); font-size: 11px; font-weight: bold; text-transform: uppercase;">● Nome Completo do estudante</span>
                 <h2 style="font-size: 22px; font-weight: 800; margin-top: 5px;" id="txt-nome-aluno">---</h2>
             </div>
 
             <div class="card grid-metadados">
                 <div><b>Nº Inscrição:</b> <br><span id="txt-id-escolar" style="color: var(--brand-blue); font-weight: bold;">---</span></div>
                 <div><b>Turma Escolar:</b> <br><span id="txt-turma-aluno" style="color: #fff;">---</span></div>
-                <div><b>Classe/Nível:</b> <br><span id="txt-classe-aluno" style="color: #fff;">---</span></div>
+                <div><b>Classe/Nível:</b> <br> <br><span id="txt-classe-aluno" style="color: #fff;">---</span></div>
                 <div><b>Período Letivo:</b> <br><span id="txt-periodo-aluno" style="color: #fff;">---</span></div>
             </div>
 
             <div class="card">
-                <div class="titulo">📊 Caderno de Notas e Assiduidade</div>
+                <div class="titulo"> Pauta do Estudante</div>
                 <div class="table-wrapper">
                     <table>
                         <thead>
                             <tr>
-                                <th>Curso / Disciplinas Ativas</th>
+                                <th>Curso/Disciplinas</th>
                                 <th style="text-align: center;">N1</th>
                                 <th style="text-align: center;">N2</th>
                                 <th style="text-align: center;">N3</th>
@@ -216,7 +216,7 @@
             </div>
 
             <div class="card">
-                <div class="titulo">📚 Minha Prateleira Inteligente de Livros</div>
+                <div class="titulo">  Prateleira de Livros</div>
                 <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Manuais didáticos alocados automaticamente segundo as suas disciplinas:</p>
                 <div class="lista-livros" id="contentor-livros-aluno">
                     <!-- Injetado Reativamente -->
@@ -224,7 +224,7 @@
             </div>
 
             <div class="card">
-                <div class="titulo">💬 Chat Académico Rápido</div>
+                <div class="titulo">💬 Chat Académico </div>
                 <div class="chat-box" id="caixa-mensagens-chat">
                     <div style="color: var(--brand-blue-glow);" id="msg-boas-vindas"></div>
                 </div>
@@ -564,54 +564,97 @@ function carregarCadernoNotasEstudante(idUnicoEscolar) {
     }
     </script>
     <script>
+function carregarCadernoNotasEstudante(idEstudanteLogado) {
+    // 🔍 Seleciona os alvos dinâmicos do topo do painel pelas referências da sua Tela 3
+    const lblNome = document.getElementById("txt-nome-aluno");
+    const lblId = document.getElementById("txt-id-escolar");
+    const lblTurma = document.getElementById("txt-turma-aluno");
+    const lblClasse = document.getElementById("txt-classe-aluno");
+    const lblPeriodo = document.getElementById("txt-periodo-aluno");
 
-    function carregarCadernoNotasEstudante(idEstudanteLogado) {
-    // Alvo: o <tbody> da tabela de notas do estudante
-    // 🌟 Certifique-se de que a sua tabela tem um <tbody> com ID ou ajuste este seletor
-    const corpoTabelaEstudante = document.querySelector('#view-dashboard table tbody') || document.getElementById('corpo-notas-estudante');
+    // Seleciona o <tbody> correto do seu HTML
+    const corpoTabelaEstudante = document.getElementById('corpo-tabela-pauta') || document.querySelector('#view-dashboard table tbody');
     
     if (!corpoTabelaEstudante) return;
 
-    // Mensagem de carregamento
+    // Mensagem amigável de carregamento em tempo real
     corpoTabelaEstudante.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:12px; color:var(--brand-gold);">⏳ A sincronizar caderneta com a base central...</td></tr>`;
 
+    // Consulta dinâmica universal à rota GET do banco de dados
     fetch(`obter_notas_estudante.php?id_estudante=${encodeURIComponent(idEstudanteLogado)}`)
     .then(res => res.json())
     .then(dados => {
-        if (dados.sucesso && dados.notas) {
-            const n = dados.notas;
-            
-            // Cálculos pedagógicos de média e estatuto em tempo real
-            const nota1 = parseFloat(n.n1) || 0;
-            const nota2 = parseFloat(n.n2) || 0;
-            const nota3 = parseFloat(n.n3) || 0;
-            const media = (nota1 + nota2 + nota3) / 3;
-            
-            const estatuto = media >= 10 ? "Aprovado" : "Avaliação";
-            const corEstatuto = media >= 10 ? "#22c55e" : "#eab308";
+        // Suporta respostas com dados diretos ou aninhados
+        const info = dados.estudante ? dados.estudante : dados;
 
-            // Limpa o aviso de "Nenhuma disciplina" e injeta a linha real com as notas do MySQL
-            corpoTabelaEstudante.innerHTML = `
-                <tr style="border-bottom: 1px solid #1e293b;">
-                    <td style="padding: 12px; color: #fff;">📘 Tronco Geral / Disciplinas Ativas</td>
-                    <td style="text-align: center; font-weight: bold; color: #fff;">${n.n1 || 0}</td>
-                    <td style="text-align: center; font-weight: bold; color: #fff;">${n.n2 || 0}</td>
-                    <td style="text-align: center; font-weight: bold; color: #fff;">${n.n3 || 0}</td>
-                    <td style="text-align: center; color: #94a3b8;">${n.faltas || 0}</td>
-                    <td style="text-align: right; font-weight: bold; color: ${corEstatuto};">${estatuto}</td>
-                </tr>
-            `;
+        if (dados.sucesso || info.nome) {
+            // 🌟 1. INJEÇÃO DINÂMICA DOS METADADOS NOS CAMPOS DO TOPO
+            if (lblNome)    lblNome.innerText = info.nome || "Estudante Sem Nome";
+            if (lblId)      lblId.innerText = info.id_unico_escolar || idEstudanteLogado;
+            if (lblTurma)   lblTurma.innerText = info.turma || "Turma Única A";
+            if (lblClasse)  lblClasse.innerText = info.classe || info.curso || "Ensino Geral";
+            if (lblPeriodo) lblPeriodo.innerText = info.periodo || "Geral";
+            // 🌟 2. QUEBRA DINÂMICA DO CAMPO 'CURSO' PARA EXTRAIR AS DISCIPLINAS [Português, Matemática...]
+            const stringCursoCompleto = info.curso || info.classe || "";
+            const matchDisciplinas = stringCursoCompleto.match(/\[(.*?)\]/);
+            let listaDisciplinasDoAluno = [];
+
+            if (matchDisciplinas && matchDisciplinas[1]) {
+                listaDisciplinasDoAluno = matchDisciplinas[1].split(",");
+            } else if (stringCursoCompleto !== "") {
+                listaDisciplinasDoAluno = stringCursoCompleto.split(",");
+            }
+
+            // Limpa espaçamentos indesejados nas strings
+            listaDisciplinasDoAluno = listaDisciplinasDoAluno.map(d => d.trim()).filter(d => d !== "");
+
+            // 🌟 3. MONTAGEM REATIVA DA PAUTA DE NOTAS POR DISCIPLINA
+            if (listaDisciplinasDoAluno.length > 0) {
+                let htmlGerado = "";
+                
+                listaDisciplinasDoAluno.forEach(nomeMódulo => {
+                    // Puxa as notas mapeadas ou define o fallback padrão do sistema
+                    const nota1 = parseFloat(info.n1) || 0;
+                    const nota2 = parseFloat(info.n2) || 0;
+                    const nota3 = parseFloat(info.n3) || 0;
+                    const faltasAcumuladas = info.faltas || 0;
+                    
+                    // Cálculo de média real do Huambo
+                    const mediaCalculada = (nota1 + nota2 + nota3) / 3;
+                    const estatutoTexto = mediaCalculada >= 10 ? "Aprovado" : "Avaliação";
+                    const estatutoCor = mediaCalculada >= 10 ? "#10b981" : "#eab308";
+
+                    htmlGerado += `
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 12px 10px; color: #fff; font-weight: 500;"> ${nomeMódulo}</td>
+                            <td style="padding: 12px 10px; text-align: center; font-weight: bold; color: #fff;">${nota1 > 0 ? nota1.toFixed(1) : '-'}</td>
+                            <td style="padding: 12px 10px; text-align: center; font-weight: bold; color: #fff;">${nota2 > 0 ? nota2.toFixed(1) : '-'}</td>
+                            <td style="padding: 12px 10px; text-align: center; font-weight: bold; color: #fff;">${nota3 > 0 ? nota3.toFixed(1) : '-'}</td>
+                            <td style="padding: 12px 10px; text-align: center; color: #94a3b8;">${faltasAcumuladas}</td>
+                            <td style="padding: 12px 10px; text-align: right; font-weight: bold; color: ${estatutoCor};">${estatutoTexto}</td>
+                        </tr>
+                    `;
+                });
+                
+                corpoTabelaEstudante.innerHTML = htmlGerado;
+            } else {
+                corpoTabelaEstudante.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:#64748b;">Nenhum módulo ativo localizado para esta matrícula.</td></tr>`;
+            }
+
+            // Preenche dinamicamente o Chat Académico Rápido
+            const msgBoasVindas = document.getElementById("msg-boas-vindas");
+            if (msgBoasVindas) {
+                msgBoasVindas.innerHTML = `👋 Olá, <b>${info.nome}</b>! Bem-vindo à Sala Interativa da sua Turma.`;
+            }
         } else {
-            corpoTabelaEstudante.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;">Nenhuma nota lançada para este perfil no momento.</td></tr>`;
+            corpoTabelaEstudante.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;">⚠️ Erro: Perfil do aluno inválido na base de dados.</td></tr>`;
         }
     })
     .catch(err => {
         console.error("Erro de sincronismo no painel do aluno:", err);
-        corpoTabelaEstudante.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#ef4444;">⚠️ Erro de rede ao buscar notas.</td></tr>`;
+        corpoTabelaEstudante.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#ef4444;">⚠️ Erro de rede ao buscar notas no Render.</td></tr>`;
     });
 }
-
-
 
     let idEstudanteChatAtivo = "AUR-840044"; // Mude dinamicamente para o ID do aluno selecionado
 
