@@ -78,37 +78,34 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
             $disciplinasEstruturadas = [];
             $precoTotalOriginal = 0;
             
-            if (!empty($cursoBruto)) {
-                // Remove colchetes extras gerados na string de matrícula
-                $limpaCurso = str_replace(['[Inscrição]', '[', ']'], '', $cursoBruto);
-                $partes = explode(',', $limpaCurso);
-                
-                // ⏬ AQUI ENTRA A MODIFICAÇÃO CIRÚRGICA ⏬
-                $stmtPreco = $pdo->prepare("SELECT preco_base FROM cursos_disciplinas WHERE nome = ? OR (nome = ? AND nivel_academico LIKE ?) LIMIT 1");
+           // Dentro da ROTA 2: GET do unitel.php
+if (!empty($cursoBruto)) {
+    $limpaCurso = str_replace(['[Inscrição]', '[', ']'], '', $cursoBruto);
+    $partes = explode(',', $limpaCurso);
+    
+    // Prepara a query SQL inteligente
+    $stmtPreco = $pdo->prepare("SELECT preco_base FROM cursos_disciplinas WHERE nome = ? OR (nome = ? AND nivel_academico LIKE ?) LIMIT 1");
 
-                foreach ($partes as $parte) {
-                    $nomeItem = trim($parte);
-                    if (empty($nomeItem)) continue;
+    foreach ($partes as $parte) {
+        $nomeItem = trim($parte);
+        if (empty($nomeItem)) continue;
 
-                    // Isola o nome do curso (ex: "Economia - 1º Ano" ou "12ª Classe") para cruzar com a tabela de preços
-                    $partesCurso = explode('[', $cursoBruto);
-                    $classeFiltro = "%" . trim($partesCurso[0]) . "%";
-                    
-                    $stmtPreco->execute([$nomeItem, $nomeItem, $classeFiltro]);
-                    $precoBanco = $stmtPreco->fetchColumn();
+        // 🌟 CORREÇÃO AQUI: Acede ao índice [0] do array para evitar o erro de conversão
+        $partesCurso = explode('[', $cursoBruto);
+        $classeFiltro = "%" . trim($partesCurso[0]) . "%"; // <-- Adicionado [0] de forma cirúrgica!
+        
+        $stmtPreco->execute([$nomeItem, $nomeItem, $classeFiltro]);
+        $precoBanco = $stmtPreco->fetchColumn();
 
-                    $precoReal = ($precoBanco !== false) ? floatval($precoBanco) : 1500.00;
-                    $precoTotalOriginal += $precoReal;
-                    
-                    // Nota: mantido 'nome' em vez de 'name' para sincronizar com a sua renderizarListaDeCadeirasCliente()
-                    $disciplinasEstruturadas[] = [
-                        'nome' => $nomeItem, 
-                        'preco' => $precoReal
-                    ];
-                }
-                // ⏫ FIM DA MODIFICAÇÃO CIRÚRGICA ⏫
-            }
-
+        $precoReal = ($precoBanco !== false) ? floatval($precoBanco) : 1500.00;
+        $precoTotalOriginal += $precoReal;
+        
+        $disciplinasEstruturadas[] = [
+            'nome' => $nomeItem, 
+            'preco' => $precoReal
+        ];
+    }
+}
             // Lógica de descontos e envio do JSON de resposta...
             $contagemItens = count($disciplinasEstruturadas);
             $descontoCortesia = ($contagemItens >= 4) ? 1800.00 : 0.00;
