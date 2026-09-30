@@ -946,19 +946,17 @@ function submeterMatriculaEscolaReal(event) {
     const municipio = selectMunicipio.value;
     const bairro = inputBairro.value.trim();
 
-    // 🛡️ 2. TRAVA DE DISCIPLINAS OBRIGATÓRIAS (Captura todas as marcadas no contêiner)
-    // Ajuste o seletor querySelectorAll se as suas checkboxes tiverem uma classe específica
+    // 🛡️ 2. TRAVA DE DISCIPLINAS OBRIGATÓRIAS
     const disciplinasMarcadas = document.querySelectorAll('input[type="checkbox"]:checked');
     
     if (disciplinasMarcadas.length === 0) {
-        alert("Não., assim Nao meu amigo/a: É obrigatório selecionar pelo menos UMA disciplina/módulo para efetuar a matrícula 😃😂!");
+        alert("Não, assim não meu amigo/a: É obrigatório selecionar pelo menos UMA disciplina/módulo para efetuar a matrícula 😃😂!");
         return;
     }
 
     // Coleta os nomes das disciplinas selecionadas para enviar ao banco
     let listaDisciplinas = [];
     disciplinasMarcadas.forEach(cb => {
-        // Pega o texto explicativo ou valor associado à checkbox
         const labelText = cb.parentElement ? cb.parentElement.innerText.trim().split('\n')[0] : cb.value;
         listaDisciplinas.push(labelText);
     });
@@ -1013,13 +1011,12 @@ function submeterMatriculaEscolaReal(event) {
             bairro: bairro,
             disciplinas: listaDisciplinas.join(", ")
         });
-    })
+    }) // 🌟 Chave do bloco .then fechada corretamente com os parênteses do fetch!
     .catch((err) => {
         console.error(err);
         alert("❌ Erro de Ligação: Não foi possível validar a inscrição no servidor do Render. Verifique se o arquivo listar_estudantes.php está no GitHub.");
     });
-
-}
+} // 🌟 Encerramento real e definitivo da função!
 function executarSalvamentoMatricula(dadosMatricula) {
     // Envia o payload limpo e unificado diretamente para o PHP
     fetch("guardar_matricula.php", {

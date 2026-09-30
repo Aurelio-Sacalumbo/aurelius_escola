@@ -190,13 +190,53 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     $termo = trim($_GET['termo']);
     
     try {
-        // Correção Cirúrgica: nivel = 'estudante' para a regra de negócio e curso guarda as disciplinas
         $stmt = $pdo->prepare("SELECT id_utilizador, nome, telefone, saldo_propina, curso, id_unico_escolar FROM utilizadores WHERE (id_unico_escolar = ? OR nome LIKE ? OR telefone = ?) AND nivel = 'estudante' LIMIT 1");
         $stmt->execute([$termo, "%$termo%", $termo]);
         $aluno = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($aluno) {
-            $classeReal = !empty($aluno['curso']) ? $aluno['curso'] : "9ª Classe";
+            $cursoBruto = !empty($aluno['curso']) ? $aluno['curso'] : "";
+            
+            // 💰 1. TABELA DE PREÇOS ORIGINAIS (Defina aqui os valores exatos da sua instituição)
+            $listaPrecosOficiais = [
+                'Matemática' => 5000.00,
+                'Português'  => 4500.00,
+                'Física'     => 5000.00,
+                'Química'    => 5000.00,
+                'Inglês'     => 4000.00,
+                'Biologia'   => 4500.00,
+                'História'   => 3500.00,
+                'Geografia'  => 3500.00
+            ];
+            
+            $disciplinasEstruturadas = [];
+            $totalPropinaOriginal = 0;
+            
+            if (!empty($cursoBruto)) {
+                // Limpa textos extras da string gerada na matrícula (ex: "11ª Classe [Matemática, Física]")
+                preg_match('/\[(.*?)\]/', $cursoBruto, $matches);
+                $conteudoChaves = isset($matches[1]) ? $matches[1] : $cursoBruto;
+                $conteudoChaves = str_replace('Inscrição', '', $conteudoChaves);
+                
+                // Separa as disciplinas por vírgula
+                $partes = explode(',', $conteudoChaves);
+                
+                foreach ($partes as $parte) {
+                    $nomeCadeira = trim($parte);
+                    if (empty($nomeCadeira)) continue;
+                    
+                    // 🔍 Busca o preço original definido na tabela. Se não achar, atribui um valor padrão de 4000 AKZ
+                    $precoOriginal = isset($listaPrecosOficiais[$nomeCadeira]) ? $listaPrecosOficiais[$nomeCadeira] : 4000.00;
+                    
+                    $totalPropinaOriginal += $precoOriginal;
+                    
+                    $disciplinasEstruturadas[] = [
+                        'nome' => $nomeCadeira,
+                        'preco' => $precoOriginal
+                    ];
+                }
+            }
+
             $saldoReal = ($aluno['saldo_propina'] > 0) ? floatval($aluno['saldo_propina']) : 0;
 
             echo json_encode([
@@ -204,9 +244,11 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
                 'nome' => $aluno['nome'],
                 'telefone' => $aluno['telefone'],
                 'turma' => 'Turma Única A',
-                'classe' => $classeReal,
+                'classe' => $cursoBruto,
                 'divida' => 0,
-                'saldo_interno' => $saldoReal
+                'saldo_interno' => $saldoReal,
+                'total_cadeiras_akz' => $totalPropinaOriginal, // Valor total somado
+                'disciplinas' => $disciplinasEstruturadas      // Array processado enviado para a sua função JS
             ]);
         } else {
             echo json_encode(['status' => 'nao_encontrado']);
