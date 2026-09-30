@@ -1,34 +1,36 @@
 <?php
-// 🔌 API INVISÍVEL: CONECTA O HTML (TELA 3) À INSTÂNCIA AIVEN
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
+require_once 'conexao.php';
 
-// Dados de Conexão da sua Consola Aiven
-$host = "SEU_HOST_://aivencloud.com"; 
-$port = "SUA_PORTA"; 
-$user = "avnadmin"; 
-$pass = "SUA_SENHA"; 
-$db   = "aurelius_escola";
+// Recebe os dados do fetch JSON
+$inputRaw = file_get_contents("php://input");
+$dados = json_decode($inputRaw, true);
 
-try {
-    $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4", $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ATTR_ERRMODE_EXCEPTION
-    ]);
+if ($dados) {
+    $telefone = trim($dados['telefone']);
+    $nome = trim($dados['nome']);
+    $cursoCompleto = trim($dados['classe']) . " [" . trim($dados['disciplinas']) . "]";
+    $periodo = trim($dados['periodo']);
+    
+    // 🎲 GERAÇÃO DINÂMICA DO ID ÚNICO ESCOLAR (Se não existir)
+    $id_unico_escolar = "AUR-" . rand(100000, 999999);
+    $senha_padrao = rand(100000, 999999); // Gera uma senha numérica de 6 dígitos para o primeiro acesso
+    $senha_hash = md5($senha_padrao); // Se o seu sistema usa MD5 como vimos na tabela utilizadores
 
-    // Recebe a matrícula enviada pelo botão "Concluir Matrícula" do HTML
-    $dados = json_decode(file_get_contents("php://input"), true);
+    try {
+        // Atualiza o aluno que já estava inscrito, injetando o curso, o ID único e a senha de acesso
+        $stmt = $pdo->prepare("UPDATE utilizadores SET id_unico_escolar = ?, curso = ?, periodo = ?, senha = IF(senha='' OR senha IS NULL, ?, senha) WHERE telefone = ? AND nivel = 'estudante'");
+        $sucesso = $stmt->execute([$id_unico_escolar, $cursoCompleto, $periodo, $senha_hash, $telefone]);
 
-    if ($dados) {
-        // Insere na tabela 'utilizadores' de forma segura
-        $stmt = $pdo->prepare("INSERT INTO utilizadores (id, nome, telefone, codigo_validacao, classe, periodo, municipio, bairro, valor_pago) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([
-            $dados['id'], $dados['nome'], $dados['telefone'], $dados['codigoValidacao'],
-            $dados['classe'], $dados['periodo'], $dados['municipio'], $dados['bairro'], $dados['valorPagoReal']
+        // Retorna os códigos gerados para o JavaScript exibir na fatura/recibo imperial
+        echo json_encode([
+            'sucesso' => $sucesso, 
+            'id_unico' => $id_unico_escolar, 
+            'senha_gerada' => $senha_padrao,
+            'mensagem' => 'Matrícula guardada e códigos de acesso gerados com sucesso!'
         ]);
-        
-        echo json_encode(["sucesso" => true, "mensagem" => "Sincronizado na Aiven!"]);
+    } catch (Exception $e) {
+        echo json_encode(['sucesso' => false, 'mensagem' => $e->getMessage()]);
     }
-} catch (Exception $e) {
-    echo json_encode(["sucesso" => false, "erro" => $e->getMessage()]);
+    exit;
 }
 ?>

@@ -970,34 +970,34 @@ function submeterMatriculaEscolaReal(event) {
 
     // 🔍 4. VALIDAÇÃO DO BANCO: Garante que só matricula quem possui inscrição ativa
     fetch(`listar_estudantes.php?acao=verificar_telefone&telefone=${encodeURIComponent(telefone)}`)
-        .then(response => {
-            if (!response.ok) throw new Error();
-            return response.json();
-        })
-        .then(dados => {
-            if (!dados.sucesso || !dados.existe) {
-                alert("❌ Acesso Recusado: O número de telefone (" + telefone + ") não possui uma inscrição ativa no sistema!\n\nPor favor, realize a sua inscrição prévia antes de prosseguir com os módulos da matrícula.");
-                return;
-            }
+    .then(response => {
+        if (!response.ok) throw new Error("Erro na rede do Render");
+        return response.json();
+    })
+    .then(dados => {
+        if (!dados.sucesso || !dados.existe) {
+            alert("❌ Acesso Recusado: O número de telefone (" + telefone + ") não possui uma inscrição ativa no sistema!\n\nPor favor, realize a sua inscrição prévia.");
+            return;
+        }
 
-            // 🚀 TUDO VALIDADO E APROVADO: Envia para o arquivo guardar_matricula.php
-            executarSalvamentoMatricula({
-                nome: nomeAluno,
-                encarregado: nomeEncarregado,
-                telefone: telefone,
-                periodo: periodo,
-                classe: classe,
-                municipio: municipio,
-                bairro: bairro,
-                disciplinas: listaDisciplinas.join(", ")
-            });
-        })
-        .catch(() => {
-            alert("❌ Erro de Ligação: Não foi possível validar a inscrição. Verifique o servidor Apache/MySQL.");
+        // 🚀 TUDO APROVADO: Envia para salvar a matrícula
+        executarSalvamentoMatricula({
+            nome: nomeAluno,
+            encarregado: nomeEncarregado,
+            telefone: telefone,
+            periodo: periodo,
+            classe: classe,
+            municipio: municipio,
+            bairro: bairro,
+            disciplinas: listaDisciplinas.join(", ")
         });
+    })
+    .catch((err) => {
+        console.error(err);
+        alert("❌ Erro de Ligação: Não foi possível validar a inscrição no servidor do Render. Verifique se o arquivo listar_estudantes.php está no GitHub.");
+    });
+
 }
-
-
 function executarSalvamentoMatricula(dadosMatricula) {
     // Envia o payload limpo e unificado diretamente para o PHP
     fetch("guardar_matricula.php", {
