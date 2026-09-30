@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo json_encode(['sucesso' => $executo, 'mensagem' => '🎉 Novo aluno integrado com sucesso no MySQL!']);
             }
         } catch (Exception $e) {
-            echo json_encode(['sucesso' => false, 'mensagem' => 'Erro MySQL: ' . $e->getMessage()]);
+            echo json_encode(['sucesso' => false, 'mensagem' => 'Vai até a Pagina Principal, (Home) e Faz sua Matrícula, selecionando sua classe e disciplinas ou Cursos que pretendes estudar 😎🤠🧏 , Venha fazer parte da Nossa Família.........................................................................................................................................................................................................................................................................'. $e->getMessage()]);
         }
         exit;
     }
@@ -262,14 +262,14 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     </style>
 </head>
 <body>
-<div>
-                    <a href="Principal.html" style="color: #cbd5e1; text-decoration: none; font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s;" onmouseover="this.style.background='rgba(234, 179, 8, 0.15)'; this.style.color='var(--brand-gold)';" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.color='#cbd5e1';">Home</a>
-                </div>
+
     <div class="checkout-container">
         <!-- 🏫 Logótipo Oficial Integrado -->
         <div class="header-logo-escrita">
-            <div class="logo-box" ACADEMIA<span>AURELIUS</span></div>
-            <p style="color: var(--text-muted); font-size: 13px;">Módulo Financeiro: Emissão de Propinas & Mensalidades</p>
+        <div>
+                    <a href="Principal.html" style="color: #cbd5e1; text-decoration: none; font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s;" onmouseover="this.style.background='rgba(234, 179, 8, 0.15)'; this.style.color='var(--brand-gold)';" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.color='#cbd5e1';">Home</a>
+                </div> <br>
+            <p style="color:#fff; font-size: 14px; font-weight:bold;">Módulo Financeiro: Emissão de Propinas & Mensalidades</p>
         </div>
 
         <!-- Painéis Informativos Automatizados (Leitura Direta do Banco) -->
@@ -289,7 +289,7 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
             <!-- GRID DUPLA 1: CADEIRAS E MÊS -->
             <div class="grid-dupla">
                 <div class="form-group">
-                    <label>Disciplinas/Cadeiras Selecionadas:</label>
+                    <label>Disciplinas Selecionadas:</label>
                     <select id="qtd_disciplinas" class="form-input" onchange="recalcularFaturamentoEscolar()">
                         <option value="1">1 Disciplina</option>
                         <option value="2">2 Disciplinas</option>
@@ -344,12 +344,12 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
         <div id="detalhe_disciplinas_cliente" style="margin-bottom: 15px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 10px; display: none;"></div>
 
         <div class="resumo-linha">
-            <span>Preço Total das Cadeiras:</span>
+            <span>Preço Total:</span>
             <span id="f_servico">0,00 AKZ</span>
         </div>
         
         <div class="resumo-linha" id="linha_divida" style="color: var(--brand-danger);">
-            <span>Dívidas Acumuladas no Banco:</span>
+            <span>Dinheiro Acumulado no Stock:</span>
             <span id="f_divida">0,00 AKZ</span>
         </div>
         
@@ -364,31 +364,31 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
         </div>
         
         <div class="resumo-linha" id="linha_troco_caixa" style="color: var(--brand-gold); display: none;">
-            <span>Troco Físico a Devolver:</span>
+            <span>Troco a Devolver:</span>
             <span id="lbl_troco_caixa">0,00 AKZ</span>
         </div>
         
         <div class="resumo-linha" id="linha_credito_futuro" style="color: #a855f7; display: none;">
-            <span>Guardado em Stock (Adiantado):</span>
+            <span>Guardado em Stock:</span>
             <span id="lbl_credito_futuro">0,00 AKZ</span>
         </div>
         
         <div class="resumo-linha" style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px; padding-top: 10px; font-weight: bold;">
-            <span>Total Líquido a Pagar no Caixa:</span>
+            <span>Total de Saldo a Pagar:</span>
             <span id="txt_total_liquido" style="color: var(--brand-success);">0,00 AKZ</span>
         </div>
     </div>
 
     <!-- BOTÃO DE CONFIRMAÇÃO DE CAIXA -->
-    <button type="submit" class="btn-pay">Emitir Fatura & Confirmar Pagamento ➔</button>
+    <button type="submit" class="btn-pay">Emitir Fatura & Confirmar Pagamento</button>
 </div>
 </form>
 </div>
 
 <!-- 📋 BLOCO DA FATURA DE IMPRESSÃO IMPERIAL -->
 <div id="bloco_fatura_recibo" style="display: none; background: #fff; color: #000; padding: 20px; font-family: monospace; max-width: 350px; margin: 20px auto; border: 1px solid #000;">
-<h3 style="text-align: center; margin-bottom: 5px;">🏫 ACADEMIA AURÉLIUS</h3>
-<div style="text-align: center; margin-bottom: 12px; font-size: 11px;">Huambo - São Luís Catimba</div>
+<h3 style="text-align: center; margin-bottom: 5px;"> ACADEMIA AURÉLIUS</h3>
+<div style="text-align: center; margin-bottom: 12px; font-size: 11px;">Escritório: Huambo - São Luís Catimba</div>
 
 <div class="recibo-linha" style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
     <span>Estudante:</span><b id="rec_nome">-</b>
@@ -679,12 +679,12 @@ function renderizarListaDeCadeirasCliente(disciplinas) {
 
     containerDetalhe.style.display = "block";
     
-    var htmlGerado = '<div style="font-size: 11px; font-weight: bold; color: var(--brand-gold); text-transform: uppercase; margin-bottom: 6px;">📚 Módulos e Preços Individuais:</div>';
+    var htmlGerado = '<div style="font-size: 11px; font-weight: bold; color: var(--brand-gold); text-transform: uppercase; margin-bottom: 6px;"> Módulos e Preços Individuais:</div>';
     
     disciplinas.forEach(function(item) {
         var precoFormatado = item.preco.toFixed(2).replace(".", ",");
-        htmlGerado += '<div style="display: flex; justify-content: space-between; font-size: 12.5px; color: #cbd5e1; margin-bottom: 4px;">' +
-                      '<span>📖 ' + item.nome + '</span>' +
+        htmlGerado += '<div style="display: flex; justify-content: space-between; font-size: 12.5px; color: #f59e0b; margin-bottom: 4px;">' +
+                      '<span>📖 ' + item.nome + '</span>' + 
                       '<span style="font-weight: bold; color: #fff;">' + precoFormatado + ' AKZ</span>' +
                       '</div>';
     });
@@ -710,7 +710,7 @@ function gerarFaturaDigital(event) {
     const totalLiquido = parseFloat(txtTotal.replace(" AKZ", "").replace(".", "").replace(",", ".")) || 0;
 
     if (entregue < totalLiquido) {
-        alert("❌ Erro: O valor entregue é inferior ao total líquido obrigatório.");
+        alert("Calma:  Mantenha calma meu Amigo/a,  o seu valor Monetário é inferior ao valor estipulado pelas Disciplinas/Cursos..., por Favor Pague o Valor certo, e..,    aproveitando a situação:      Minha Dica é: Se pretendes fazer um Pagamento adiantado de ( 1, 2, 3, ou mais Meses), para que os próximo meses não tenhas que pagar novamente, podes ir em frente pois o sistema desconta e lhe mostra na tela todo dinheiro adiantado, para que tenhas o controle de suas saídas de cada Pagamento mensal, SAUDAÇÕES .");
         return;
     }
 
@@ -808,7 +808,7 @@ function gerarFaturaDigital(event) {
                 window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
             }
         } else {
-            alert("❌ O Banco rejeitou a transação: " + resposta.mensagem);
+            alert("Não Pode pagar Uma disciplina se não fez a Matrícula : " + resposta.mensagem);
         }
     })
     .catch(err => {
