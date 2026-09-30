@@ -17,17 +17,32 @@ if ($dados) {
     $senha_hash = md5($senha_padrao); // Se o seu sistema usa MD5 como vimos na tabela utilizadores
 
     try {
-        // Atualiza o aluno que já estava inscrito, injetando o curso, o ID único e a senha de acesso
-        $stmt = $pdo->prepare("UPDATE utilizadores SET id_unico_escolar = ?, curso = ?, periodo = ?, senha = IF(senha='' OR senha IS NULL, ?, senha) WHERE telefone = ? AND nivel = 'estudante'");
-        $sucesso = $stmt->execute([$id_unico_escolar, $cursoCompleto, $periodo, $senha_hash, $telefone]);
+        // 1. Primeiro, verificamos se o utilizador com esse telefone realmente existe
+        $checkStmt = $pdo->prepare("SELECT id FROM utilizadores WHERE telefone = ? AND nivel = 'estudante'");
+        $checkStmt->execute([$telefone]);
+        
+        if ($checkStmt->rowCount() === 0) {
+            // Se não existir, podemos optar por dar erro ou fazer um INSERT. Vamos devolver erro:
+            echo json_encode([
+                'sucesso' => false,
+                'mensagem' => 'Erro: Este número de telefone não foi pré-registado no sistema!'
+            ]);
+            exit;
+        }
 
-        // Retorna os códigos gerados para o JavaScript exibir na fatura/recibo imperial
+        // 2. Se existe, atualiza com os códigos imperiais de acesso
+        $stmt = $pdo->prepare("UPDATE utilizadores SET id_unico_escolar = ?, curso = ?, periodo = ?, senha = IF(senha='' OR senha IS NULL, ?, senha) WHERE telefone = ? AND nivel = 'estudante'");
+        $stmt->execute([$id_unico_escolar, $cursoCompleto, $periodo, $senha_hash, $telefone]);
+
+        // 3. Retorna os códigos INCLUINDO o telefone para o preenchimento da fatura no HTML
         echo json_encode([
-            'sucesso' => $sucesso, 
+            'sucesso' => true, 
             'id_unico' => $id_unico_escolar, 
             'senha_gerada' => $senha_padrao,
+            'telefone' => $telefone, // <-- Adicionado para o seu estudante.html ler na fatura
             'mensagem' => 'Matrícula guardada e códigos de acesso gerados com sucesso!'
         ]);
+        
     } catch (Exception $e) {
         echo json_encode(['sucesso' => false, 'mensagem' => $e->getMessage()]);
     }

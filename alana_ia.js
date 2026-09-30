@@ -3,9 +3,9 @@
  * Suporte Avançado, Processamento de Frases Complexas, Endereço e Matrículas
  */
 
-const AlanaIA = {
+const AureliusIA = {
     conhecimento: {
-        identidade: "Olá! Viva! Sou a Alana IA, a assistente oficial da Academia Aurélius. Estou aqui para te ajudar com tudo sobre os nossos cursos, suporte e localização no Huambo!",
+        identidade: "Olá! Viva! Sou o Aurélius IA, seu assistente oficial da Academia Aurélius. Estou aqui para te ajudar com tudo sobre os nossos cursos, suporte e localização no Huambo!",
         
         // 📍 INFORMAÇÕES DE DIRECÇÃO E INSCRIÇÃO EXCLUSIVAS
         instituicao: {

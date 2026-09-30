@@ -264,7 +264,6 @@
             console.error("❌ Erro: A div '" + idTelaAlvo + "' não existe.");
         }
     }
-
     function cadastrarEstudanteAutomatico(event) {
         // 🛑 Bloqueio absoluto do recarregamento de página (?#)
         if (event) {
@@ -291,17 +290,20 @@
         const idEscolarGerado = "AUR-" + Math.floor(100000 + Math.random() * 900000);
         const codigoValidacaoGerado = Math.floor(100000 + Math.random() * 900000).toString();
     
-        // 📋 INJETA IMEDIATAMENTE NA FATURA (Antes de apagar os campos do form)
+        // 📋 INJETA IMEDIATAMENTE NA FATURA
         if (document.getElementById("rec_nome")) document.getElementById("rec_nome").innerText = nome;
         if (document.getElementById("rec_tel")) document.getElementById("rec_tel").innerText = telefone;
         if (document.getElementById("rec_id_escolar")) document.getElementById("rec_id_escolar").innerText = idEscolarGerado;
         if (document.getElementById("rec_codigo_val")) document.getElementById("rec_codigo_val").innerText = codigoValidacaoGerado;
     
-        // Garante que o bloco do recibo aparece no ecrã
+        // ✨ Exibe a fatura/recibo e esconde o formulário para evitar sobreposição
         const blocoFatura = document.getElementById("bloco_fatura_recibo");
-        if (blocoFatura) blocoFatura.style.display = "block";
+        if (blocoFatura) {
+            blocoFatura.style.display = "block";
+            blocoFatura.scrollIntoView({ behavior: 'smooth' }); // Move o ecrã para ver a fatura
+        }
     
-        // 🚀 ENVIO ADAPTADO: Como formulário tradicional para o unitel.php aceitar sem travar
+        // 🚀 ENVIO ADAPTADO: Como formulário tradicional FormData
         const formData = new FormData();
         formData.append('acao_financeira', 'registar_pagamento');
         formData.append('nome', nome);
@@ -314,36 +316,35 @@
     
         fetch("unitel.php", {
             method: "POST",
-            body: formData // Envia como FormData tradicional para o Render processar nativamente
+            body: formData 
         })
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error("Erro na resposta do servidor Render");
+            return res.json();
+        })
         .then(resposta => {
-            alert(`🎉 Inscrição integrada com sucesso no MySQL do Render!\n\nEstudante: ${nome}\nID Único: ${idEscolarGerado}\nCódigo de Validação: ${codigoValidacaoGerado}`);
-            
-            // Só limpa o formulário agora que a resposta positiva do servidor chegou
-            document.getElementById("form-cadastro").reset();
-            
-            // Remove o # da URL de forma limpa via Histórico do Navegador
-            if (window.location.href.includes('#')) {
-                window.history.pushState("", document.title, window.location.pathname);
+            if(resposta.sucesso || resposta.status === "sucesso") {
+                alert(`🎉 Inscrição integrada com sucesso no MySQL!\n\nUse o ID Único ou Telefone para aceder ao Portal.`);
+                
+                // Remove o # da URL de forma limpa
+                if (window.location.href.includes('#')) {
+                    window.history.pushState("", document.title, window.location.pathname);
+                }
+                
+                // Limpa apenas o formulário de cadastro, mantendo a fatura visível
+                document.getElementById("form-cadastro").reset();
+            } else {
+                alert(`⚠️ Atenção: O servidor processou, mas retornou um aviso: ${resposta.mensagem}`);
             }
-    
-            // Volta para a tela inicial do Hub de forma segura
-            if (typeof voltarTela === "function") voltarTela(1);
-            else if (typeof alternarTela === "function") alternarTela("tela-1");
         })
         .catch(err => {
-            console.error(err);
-            // Fallback offline se o Render demorar a responder no Huambo
-            alert(`🎉 Inscrição Guardada no Monitor!\n\nID: ${idEscolarGerado}\nCódigo: ${codigoValidacaoGerado}`);
-            document.getElementById("form-cadastro").reset();
-            if (typeof voltarTela === "function") voltarTela(1);
-            else if (typeof alternarTela === "function") alternarTela("tela-1");
+            console.error("Erro no fetch:", err);
+            // Fallback offline visível
+            alert(`🚨 Modo Offline/Lento Activo:\nAnote os seus dados de acesso obrigatoriamente antes de fechar a página!\n\nID: ${idEscolarGerado}\nSenha: ${codigoValidacaoGerado}`);
         });
     
         return false;
     }
-
 
     
     

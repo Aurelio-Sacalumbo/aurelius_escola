@@ -120,27 +120,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         try {
             // 🔍 1. Verifica se o aluno já existe na tabela utilizadores
-            $check = $pdo->prepare("SELECT id_utilizador FROM utilizadores WHERE telefone = ?");
+            $check = $pdo->prepare("SELECT id_utilizador, id_unico_escolar FROM utilizadores WHERE telefone = ?");
             $check->execute([$telefone]);
-            $alunoExiste = $check->fetch();
+            $alunoExiste = $check->fetch(PDO::FETCH_ASSOC);
+
+            $senha_padrao_hash = md5($validacao); 
+            $nomeCompleto = !empty($nome) ? $nome : "Estudante Inscrito";
 
             if ($alunoExiste) {
-                // 🔄 Se o aluno já existe (como o Moma), faz o UPDATE regular do saldo
-                $stmt = $pdo->prepare("UPDATE utilizadores SET saldo_propina = saldo_propina - ? WHERE telefone = ? AND nivel = 'estudante'");
-                $executo = $stmt->execute([$saldoAbatido, $telefone]);
-                $msg = "Saldo atualizado com sucesso!";
+                // 🔄 Se o aluno já existe, ATUALIZA com os novos códigos e turma gerados para entrar na plataforma
+                $stmt = $pdo->prepare("UPDATE utilizadores SET nome = ?, id_unico_escolar = ?, email = ?, senha = ?, curso = ?, periodo = ?, nivel = 'estudante' WHERE telefone = ?");
+                $executo = $stmt->execute([$nomeCompleto, $id_escolar, $validacao, $senha_padrao_hash, $curso, $periodo, $telefone]);
+                $msg = "Inscrição e códigos atualizados com sucesso para o aluno existente!";
             } else {
-                // 🆕 Se o aluno NÃO existe (Estudante Teste, Áurio, etc.), faz o INSERT real com os códigos gerados
-                // Mapeia o código de validação para a coluna email e a senha padrão criptografada
-                $senha_padrao_hash = md5($validacao); 
-                $nomeCompleto = !empty($nome) ? $nome : "Estudante Inscrito";
-
+                // 🆕 Se o aluno NÃO existe, faz o INSERT real com os códigos gerados
                 $stmt = $pdo->prepare("INSERT INTO utilizadores (nome, telefone, email, senha, nivel, id_unico_escolar, curso, periodo, saldo_propina) VALUES (?, ?, ?, ?, 'estudante', ?, ?, ?, 0)");
                 $executo = $stmt->execute([$nomeCompleto, $telefone, $validacao, $senha_padrao_hash, $id_escolar, $curso, $periodo]);
                 $msg = "Novo aluno gravado com sucesso no banco de dados central!";
             }
 
-            echo json_encode(['sucesso' => $executo, 'mensagem' => $msg]);
+            echo json_encode([
+                'sucesso' => $executo, 
+                'mensagem' => $msg,
+                'id_unico' => $id_escolar,
+                'codigo_validacao' => $validacao,
+                'telefone' => $telefone
+            ]);
         } catch (Exception $e) {
             echo json_encode(['sucesso' => false, 'mensagem' => 'Erro crítico MySQL: ' . $e->getMessage()]);
         }
