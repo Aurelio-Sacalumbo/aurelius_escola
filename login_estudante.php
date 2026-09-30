@@ -31,7 +31,7 @@ try {
     }
 
     // 🌟 FIX CIRÚRGICO: Busca expandida trazendo email, senha, curso e id_unico com a trava nivel = 'estudante'
-    $query = "SELECT id_utilizador, nome, telefone, email, senha, id_unico_escolar, curso, periodo FROM utilizadores WHERE (id_unico_escolar = ? OR telefone = ?) AND nivel = 'estudante' LIMIT 1";
+    $query = "SELECT id_utilizador, nome, telefone, email, senha, id_unico_escolar, curso, periodo FROM utilizadores WHERE (id_unico_escolar = ? OR telefone = ?) LIMIT 1";
     $stmt = $pdo->prepare($query);
     $stmt->execute([$identificador, $identificador]);
     $estudante = $stmt->fetch(PDO::FETCH_ASSOC);
