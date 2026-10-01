@@ -772,8 +772,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 
 
-
-    // =========================================================================
+// =========================================================================
 // 🏛️ 4. SELETOR DE ANOS LETIVOS E CONFIGURADOR DE DISCIPLINAS
 // =========================================================================
 function carregarAnosFaculdade(nomeFaculdade) {
@@ -851,47 +850,41 @@ function calcularPrecoTotal() {
     if (elPreco) elPreco.innerText = `${total.toFixed(2)} Kzs`;
 }
 
-// 🎯 DISPARADOR REAL DOS TÓPICOS DO CURSO PREPARATÓRIO (HUAMBO 2026)
+// 🎯 DISPARADOR REAL DOS TÓPICOS DO CURSO PREPARATÓRIO (HUAMBO)
 function verificarPreparatorios() {
-    // Constrói a visualização dos módulos de alto rendimento diretamente na tela do aluno
     const dadosPreparatorio = `
- <b>CURSOS PREPARATÓRIOS ATIVOS - ACADEMIA AURÉLIUS</b><br>
---------------------------------------------------<br>
- <b>Saúde - 1º Ano:</b><br> 
-   • Biologia e Química  (10.000 AKZ)<br>
-   • Matemática e Física (8.500 AKZ)<br>
-<br>
- <b>Educação - 1º Ano:</b><br> 
-   • Línguas (Português, Inglês e Françês) (15.000 AKZ)<br>
-   • Georafia e História  (8.000 AKZ)<br>
-   • Biologia e Química  (10.000 AKZ)<br>
-   • Matemática e Física (9.500 AKZ)<br>
-<br>
- <b>Informática - 1º Ano:</b><br> 
-   • Algorítmo e Lógica de Programação (5.000 AKZ)<br>
-   • Matemática Discreta (6.500 AKZ)<br>
-<br>
- <b>Medicina - 1º Ano:</b><br>
-   • Anatomia Humana I (8.500 AKZ)<br>
-   • Biologia Celular (7.000 AKZ)<br>
-<br>
- <b>Direito - 1º Ano:</b><br>
-   • Introdução ao Estudo do Direito (8.500 AKZ)<br>
-   • História do Direito (8.000 AKZ)<br>
-   <br>
- <b>Concursos - 1º Ano:</b><br>
-   • Educação (8.500 AKZ)<br>
-   • Saúde (8.000 AKZ)<br>
-   • Políçias (8.500 AKZ)<br>
-   • FAA (8.000 AKZ)<br>
-   • Agricultura (8.500 AKZ)<br>
-   • AGT (8.000 AKZ)<br>
-
---------------------------------------------------<br>
- <i>As inscrições para os exames de admissão estão abertas na Secretaria Virtual!</i>
+        <b style="color:var(--brand-gold, #eab308);">CURSOS PREPARATÓRIOS ATIVOS - ACADEMIA AURÉLIUS</b><br>
+        --------------------------------------------------<br>
+        <b>Saúde - 1º Ano:</b><br> 
+        • Biologia e Química (10.000 AKZ)<br>
+        • Matemática e Física (8.500 AKZ)<br>
+        <br>
+        <b>Educação - 1º Ano:</b><br> 
+        • Línguas (Português, Inglês e Francês) (15.000 AKZ)<br>
+        • Geografia e História (8.000 AKZ)<br>
+        • Biologia e Química (10.000 AKZ)<br>
+        • Matemática e Física (9.500 AKZ)<br>
+        <br>
+        <b>Informática - 1º Ano:</b><br> 
+        • Algoritmo e Lógica de Programação (5.000 AKZ)<br>
+        • Matemática Discreta (6.500 AKZ)<br>
+        <br>
+        <b>Medicina - 1º Ano:</b><br>
+        • Anatomia Humana I (8.500 AKZ)<br>
+        • Biologia Celular (7.000 AKZ)<br>
+        <br>
+        <b>Direito - 1º Ano:</b><br>
+        • Introdução ao Estudo do Direito (8.500 AKZ)<br>
+        • História do Direito (8.000 AKZ)<br>
+        <br>
+        <b>Concursos - 1º Ano:</b><br>
+        • Educação (8.500 AKZ) | Saúde (8.000 AKZ)<br>
+        • Polícias (8.500 AKZ) | FAA (8.000 AKZ)<br>
+        • Agricultura (8.500 AKZ) | AGT (8.000 AKZ)<br>
+        --------------------------------------------------<br>
+        <i>As inscrições para os exames de admissão estão abertas na Secretaria Virtual!</i>
     `;
 
-    // Localiza uma div de avisos ou injeta um modal flutuante elegante na tela
     let modalAviso = document.getElementById("central-avisos-preparatorio");
     if (!modalAviso) {
         modalAviso = document.createElement("div");
@@ -902,22 +895,38 @@ function verificarPreparatorios() {
         modalAviso.style.transform = "translate(-50%, -50%)";
         modalAviso.style.background = "#0b1329";
         modalAviso.style.color = "#fff";
-        modalAviso.style.padding = "20px";
+        modalAviso.style.padding = "25px 20px 20px 20px";
         modalAviso.style.borderRadius = "8px";
         modalAviso.style.border = "2px solid var(--brand-gold, #eab308)";
         modalAviso.style.zIndex = "10000";
         modalAviso.style.fontFamily = "monospace";
         modalAviso.style.fontSize = "13px";
         modalAviso.style.boxShadow = "0 10px 25px rgba(0,0,0,0.5)";
+        modalAviso.style.maxHeight = "85vh";
+        modalAviso.style.overflowY = "auto";
         document.body.appendChild(modalAviso);
     }
 
     modalAviso.style.display = "block";
-    modalAviso.innerHTML = dadosPreparatorio + `<br><br><button onclick="this.parentNode.style.display='none'" style="width:100%; padding:8px; background:var(--brand-gold, #eab308); color:#000; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Fechar Painel ➔</button> <b><br><br>  <button <a href="preparatorio.html" style="width:100%; padding:8px; background:var(--brand-gold, #eab308); color:#000; border:none; border-radius:4px; font-weight:bold; cursor:pointer;"  > Escolher Curso ➔</a>
-
-    </button> `;
+    
+    // Injeta a estrutura contendo o botão "X" absoluto de sair no topo direito
+    modalAviso.innerHTML = `
+        <span onclick="document.getElementById('central-avisos-preparatorio').style.display='none'" 
+              style="position:absolute; top:8px; right:12px; font-size:18px; font-weight:bold; color:#ef4444; cursor:pointer; user-select:none;" 
+              title="Fechar">✕</span>
+        <div>${dadosPreparatorio}</div>
+        <div style="margin-top:15px; display:flex; flex-direction:column; gap:8px;">
+            <button onclick="document.getElementById('central-avisos-preparatorio').style.display='none'" 
+                    style="width:100%; padding:10px; background:#ef4444; color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">
+                Fechar Painel ➔
+            </button>
+            <button onclick="window.location.href='preparatorio.html'" 
+                    style="width:100%; padding:10px; background:var(--brand-gold, #eab308); color:#000; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">
+                Escolher Curso ➔
+            </button>
+        </div>
+    `;
 }
-
 
 
 function submeterMatriculaEscolaReal(event) {
