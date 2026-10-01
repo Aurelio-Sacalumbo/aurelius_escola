@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // =========================================================================
-// 🔍 ROTA 2: PROCESSAMENTO GET DINÂMICO (CONFIRME SE ESTÁ ASSIM NO SEU FICHEIRO)
+// 🔍 ROTA 2: PROCESSAMENTO GET BLINDADO POR DETECÇÃO DE CONTEÚDO
 // =========================================================================
 if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     header('Content-Type: application/json; charset=utf-8');
@@ -69,48 +69,52 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     $termo = trim($_GET['termo']);
     
     try {
-        // Busca o aluno dando prioridade ao registo com matrícula ativa (curso mais longo)
-        $stmt = $pdo->prepare("
-            SELECT * FROM utilizadores 
-            WHERE id_unico_escolar = ? OR nome LIKE ? OR telefone = ? 
-            ORDER BY LENGTH(curso) DESC, id_utilizador DESC 
-            LIMIT 1
-        ");
+        // Busca ampla e irrestrita na tabela central
+        $stmt = $pdo->prepare("SELECT * FROM utilizadores WHERE id_unico_escolar = ? OR nome LIKE ? OR telefone = ? LIMIT 1");
         $stmt->execute([$termo, "%$termo%", $termo]);
-        $aluno = $stmt->fetch(PDO::FETCH_ASSOC);
+        $alunoRaw = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        if ($aluno) {
+        if ($alunoRaw) {
+            // Variables de extração inteligente
+            $nomeFinal = "";
+            $telFinal = "";
+            $idFinal = "";
             $cursoReal = "";
-            
-            // Varredura por todas as colunas para capturar as disciplinas onde quer que tenham sido guardadas
-            foreach ($aluno as $chave => $valor) {
-                $valorTexto = trim((string)$valor);
-                if (empty($valorTexto)) continue;
-                
-                if (strpos($valorTexto, '[') !== false || stripos($valorTexto, 'classe') !== false || stripos($valorTexto, 'Curso') !== false) {
-                    $cursoReal = $valorTexto;
-                    break;
+
+            // Varre o registo para atribuir as variáveis pelo conteúdo real e não pelo nome da coluna
+            foreach ($alunoRaw as $coluna => $valor) {
+                $v = trim((string)$valor);
+                if (empty($v)) continue;
+
+                if (strpos($v, 'AUR-') !== false) {
+                    $idFinal = $v;
+                } elseif (strpos($v, '[') !== false || stripos($v, 'classe') !== false) {
+                    $cursoReal = $v;
+                } elseif (is_numeric($v) && strlen($v) >= 9 && (strpos($v, '9') === 0 || strpos($v, '222') === 0)) {
+                    $telFinal = $v; // Captura número de telefone válido em Angola (começado por 9 ou 222)
+                } elseif (empty($nomeFinal) && !is_numeric($v) && $v !== 'estudante' && strpos($v, '2026-') === false) {
+                    $nomeFinal = $v; // Captura o Nome do estudante
                 }
             }
-            
-            if (empty($cursoReal)) {
-                $cursoReal = !empty($aluno['curso']) ? $aluno['curso'] : "9ª Classe";
-            }
+
+            // Fallbacks de segurança se o aluno for novo e não tiver curso preenchido
+            if (empty($nomeFinal)) $nomeFinal = isset($alunoRaw['nome']) ? $alunoRaw['nome'] : "Estudante";
+            if (empty($telFinal)) $telFinal = isset($alunoRaw['telefone']) ? $alunoRaw['telefone'] : "900000000";
+            if (empty($cursoReal)) $cursoReal = "9ª Classe [Língua Portuguesa, Matemática, História, Geografia, Inglês, Biologia]";
 
             $disciplinasEstruturadas = [];
             $precoTotalOriginal = 0;
             
-            // Processador de chaves [ ] das disciplinas
+            // Parser das chaves [ ] das disciplinas
             if (strpos($cursoReal, '[') !== false) {
                 preg_match('/\[(.*?)\]/', $cursoReal, $matches);
                 $listaDisciplinas = isset($matches[1]) ? $matches[1] : $cursoReal;
-                $listaDisciplinas = str_replace('Inscrição', '', $listaDisciplinas);
                 $partes = explode(',', $listaDisciplinas);
             } else {
                 $partes = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
             }
 
-            // Puxa os preços originais do MySQL
+            // Puxa os preços originais do banco de dados
             $stmtPreco = $pdo->prepare("SELECT preco_base FROM cursos_disciplinas WHERE nome = ? LIMIT 1");
             
             foreach ($partes as $parte) {
@@ -132,12 +136,13 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
             $contagemItens = count($disciplinasEstruturadas);
             $descontoCortesia = ($contagemItens >= 4) ? 1800.00 : 0.00;
             $totalAPagarFinal = max(0, $precoTotalOriginal - $descontoCortesia);
-            $saldoReal = (isset($aluno['saldo_propina'])) ? floatval($aluno['saldo_propina']) : 0;
+            $saldoReal = (isset($alunoRaw['saldo_propina'])) ? floatval($alunoRaw['saldo_propina']) : 0;
 
+            // Retorna o JSON perfeitamente alinhado com o que o JavaScript espera receber
             echo json_encode([
                 'status' => 'encontrado',
-                'nome' => $aluno['nome'],
-                'telefone' => $aluno['telefone'],
+                'nome' => $nomeFinal,
+                'telefone' => $telFinal,
                 'turma' => 'Turma Única A',
                 'classe' => $cursoReal,
                 'saldo_interno' => $saldoReal,
@@ -151,7 +156,7 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
             echo json_encode(['status' => 'nao_encontrado'], JSON_UNESCAPED_UNICODE);
         }
     } catch (Exception $e) {
-        echo json_encode(['status' => 'erro', 'mensagem' => 'Erro interno no Engine: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        echo json_encode(['status' => 'erro', 'mensagem' => 'Erro de mapeamento: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
     }
     exit;
 }
