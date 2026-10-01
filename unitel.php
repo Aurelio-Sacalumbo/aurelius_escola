@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // =========================================================================
-// 🔍 ROTA 2: PROCESSAMENTO GET DINÂMICO (BLINDADO CONTRA COLUNAS DESALINHADAS)
+// 🔍 ROTA 2: PROCESSAMENTO GET DINÂMICO (BLINDADO APÓS MATRÍCULA)
 // =========================================================================
 if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     header('Content-Type: application/json; charset=utf-8');
@@ -69,42 +69,48 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     $termo = trim($_GET['termo']);
     
     try {
-        // Busca ampla por ID Único, Nome ou Telefone
-        $stmt = $pdo->prepare("SELECT * FROM utilizadores WHERE id_unico_escolar = ? OR nome LIKE ? OR telefone = ? LIMIT 1");
+        // Ordena para trazer primeiro o registo que tem a string de disciplinas mais longa contra duplicados
+        $stmt = $pdo->prepare("
+            SELECT * FROM utilizadores 
+            WHERE id_unico_escolar = ? OR nome LIKE ? OR telefone = ? 
+            ORDER BY LENGTH(curso) DESC, id_utilizador DESC 
+            LIMIT 1
+        ");
         $stmt->execute([$termo, "%$termo%", $termo]);
         $aluno = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($aluno) {
-            // 🔍 1. LOCALIZAÇÃO DA STRING DE CURSO/DISCIPLINAS EM QUALQUER COLUNA
-            $cursoBruto = "";
-            foreach ($aluno as $coluna => $valor) {
-                $valorStr = (string)$valor;
-                if (strpos($valorStr, '[') !== false || strpos($valorStr, 'classe') !== false || strpos($valorStr, 'Classe') !== false) {
-                    $cursoBruto = $valorStr;
+            $cursoReal = "";
+            
+            // Varredura por todas as colunas para capturar as disciplinas onde quer que tenham sido guardadas
+            foreach ($aluno as $chave => $valor) {
+                $valorTexto = trim((string)$valor);
+                if (empty($valorTexto)) continue;
+                
+                if (strpos($valorTexto, '[') !== false || stripos($valorTexto, 'classe') !== false || stripos($valorTexto, 'Curso') !== false) {
+                    $cursoReal = $valorTexto;
                     break;
                 }
             }
             
-            if (empty($cursoBruto)) {
-                $cursoBruto = !empty($aluno['curso']) ? $aluno['curso'] : "9ª Classe";
+            if (empty($cursoReal)) {
+                $cursoReal = !empty($aluno['curso']) ? $aluno['curso'] : "9ª Classe";
             }
 
             $disciplinasEstruturadas = [];
             $precoTotalOriginal = 0;
             
-            // 🔍 2. PARSER DE DISCIPLINAS
-            if (strpos($cursoBruto, '[') !== false) {
-                // Caso estruturado (ex: José Gomes Nduva)
-                preg_match('/\[(.*?)\]/', $cursoBruto, $matches);
-                $apenasDisciplinas = isset($matches[1]) ? $matches[1] : $cursoBruto;
-                $apenasDisciplinas = str_replace('Inscrição', '', $apenasDisciplinas);
-                $partes = explode(',', $apenasDisciplinas);
+            // Processador de chaves [ ] das disciplinas
+            if (strpos($cursoReal, '[') !== false) {
+                preg_match('/\[(.*?)\]/', $cursoReal, $matches);
+                $listaDisciplinas = isset($matches[1]) ? $matches[1] : $cursoReal;
+                $listaDisciplinas = str_replace('Inscrição', '', $listaDisciplinas);
+                $partes = explode(',', $listaDisciplinas);
             } else {
-                // Caso simplificado (ex: Áurio / AmbrósioF) - Grade padrão da 9ª Classe
                 $partes = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
             }
 
-            // Consulta os preços originais na tabela cursos_disciplinas
+            // Puxa os preços originais do MySQL
             $stmtPreco = $pdo->prepare("SELECT preco_base FROM cursos_disciplinas WHERE nome = ? LIMIT 1");
             
             foreach ($partes as $parte) {
@@ -117,26 +123,23 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
                 $precoReal = ($precoBanco !== false) ? floatval($precoBanco) : 1500.00;
                 $precoTotalOriginal += $precoReal;
                 
-                // 🌟 REMOVIDO utf8_encode(): O JSON_UNESCAPED_UNICODE trata os acentos agora!
                 $disciplinasEstruturadas[] = [
-                    'nome' => $nomeItem, 
+                    'nome' => $nomeItem,
                     'preco' => $precoReal
                 ];
             }
 
-            // 🎯 3. CÁLCULO FINANCEIRO
             $contagemItens = count($disciplinasEstruturadas);
             $descontoCortesia = ($contagemItens >= 4) ? 1800.00 : 0.00;
             $totalAPagarFinal = max(0, $precoTotalOriginal - $descontoCortesia);
-            $saldoReal = (isset($aluno['saldo_propina']) && $aluno['saldo_propina'] > 0) ? floatval($aluno['saldo_propina']) : 0;
+            $saldoReal = (isset($aluno['saldo_propina'])) ? floatval($aluno['saldo_propina']) : 0;
 
-            // 🌟 RETORNO SEGURO EM JSON: Adicionado JSON_UNESCAPED_UNICODE para aceitar o "ª" e acentos sem travar
             echo json_encode([
                 'status' => 'encontrado',
                 'nome' => $aluno['nome'],
                 'telefone' => $aluno['telefone'],
                 'turma' => 'Turma Única A',
-                'classe' => $cursoBruto,
+                'classe' => $cursoReal,
                 'saldo_interno' => $saldoReal,
                 'preco_total' => $precoTotalOriginal,
                 'desconto' => $descontoCortesia,
@@ -148,13 +151,11 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
             echo json_encode(['status' => 'nao_encontrado'], JSON_UNESCAPED_UNICODE);
         }
     } catch (Exception $e) {
-        echo json_encode(['status' => 'erro', 'mensagem' => 'Erro no Engine: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        echo json_encode(['status' => 'erro', 'mensagem' => 'Erro interno no Engine: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
     }
     exit;
 }
 ?>
-
-
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
