@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // =========================================================================
-// 📥 ROTA 1: PROCESSAMENTO POST CORRIGIDO E ALINHADO COM O DBEAVER
+// 📥 ROTA 1: PROCESSAMENTO POST BALANCEADO (GRAVAÇÃO REAL NA NUVEM)
 // =========================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json; charset=utf-8');
@@ -37,37 +37,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($telefone)) {
         try {
             $nomeCompleto = !empty($nome) ? $nome : "Estudante Inscrito";
-            $cursoInicial = !empty($curso) ? $curso : "9ª classe [Inscrição]";
+            $cursoInicial = !empty($curso) ? $curso : "11ª Classe [Inscrição]";
             $periodoInicial = !empty($periodo) ? $periodo : "Manhã";
 
-            // 🌟 VERIFICAÇÃO DE SEGURANÇA
+            // Verifica duplicados
             $check = $pdo->prepare("SELECT id_utilizador FROM utilizadores WHERE telefone = ?");
             $check->execute([$telefone]);
             $alunoExiste = $check->fetch();
 
             if ($alunoExiste) {
-                echo json_encode(['sucesso' => true, 'mensagem' => 'Aluno já se encontra registado no sistema.'], JSON_UNESCAPED_UNICODE);
-            } else {
-                // 🌟 INSERT MAPEADO: Nomeia as colunas explicitamente para casar com a estrutura da Aiven
-                $queryInsert = "INSERT INTO utilizadores (id_unico_escolar, nome, email, senha, telefone, curso, periodo, nivel, saldo_propina) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?, 'estudante', 0)";
-                
-                $stmt = $pdo->prepare($queryInsert);
-                // Executa passando as variáveis nas posições exatas das colunas do seu DBeaver
-                $executo = $stmt->execute([
-                    $id_escolar, 
-                    $nomeCompleto, 
-                    $validacao, // email recebe o código
-                    $validacao, // senha recebe o código em texto limpo
-                    $telefone, 
-                    $cursoInicial, 
-                    $periodoInicial
-                ]);
-                
-                echo json_encode(['sucesso' => $executo, 'mensagem' => '🎉 Novo aluno integrado com sucesso no MySQL!'], JSON_UNESCAPED_UNICODE);
+                echo json_encode(['sucesso' => true, 'mensagem' => 'Aluno já se encontra registado.'], JSON_UNESCAPED_UNICODE);
+                exit;
             }
+
+            // 🌟 CORREÇÃO REAL: 8 Colunas explicitadas para preencher exatamente a estrutura da Aiven
+            $queryInsert = "INSERT INTO utilizadores (id_unico_escolar, nome, email, senha, telefone, curso, periodo, nivel) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, 'estudante')";
+            
+            $stmt = $pdo->prepare($queryInsert);
+            $executo = $stmt->execute([
+                $id_escolar, 
+                $nomeCompleto, 
+                $validacao, // Coluna email (Código)
+                $validacao, // Coluna senha (Código)
+                $telefone, 
+                $cursoInicial, 
+                $periodoInicial
+            ]);
+            
+            echo json_encode(['sucesso' => $executo, 'mensagem' => '🎉 Novo aluno integrado com sucesso no MySQL!'], JSON_UNESCAPED_UNICODE);
         } catch (Exception $e) {
-            echo json_encode(['sucesso' => false, 'mensagem' => 'Erro crítico no cadastro: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
+            // Se der erro no banco, devolve o erro real para não mascarar no front-end
+            echo json_encode(['sucesso' => false, 'mensagem' => 'Erro interno MySQL: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
         }
         exit;
     }
