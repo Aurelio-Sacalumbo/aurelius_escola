@@ -1,23 +1,22 @@
 <?php
 // 🗄️ CONEXÃO DINÂMICA SEGURA E ALINHADA - ACADEMIA AURÉLIUS
 
-// Se existir a variável DB_HOST configurada no Render, assume NUVEM. Caso contrário, LOCALHOST.
 $isLocal = (getenv('DB_HOST') === false);
 
 if ($isLocal) {
-    // 🏠 CONFIGURAÇÕES PARA O XAMPP LOCAL (Confirmado pelo seu phpMyAdmin)
+    // 🏠 CONFIGURAÇÕES PARA O XAMPP LOCAL
     $host = "127.0.0.1";
     $port = "3306";
     $user = "root";
     $password = "";
-    $dbname = "aurelius_escola"; // 🌟 Corrigido de 'escola' para 'aurelius_escola'
+    $dbname = "aurelius_escola";
 } else {
-    // ☁️ CONFIGURAÇÕES PARA A NUVEM DO RENDER (Carrega as chaves do painel)
+    // ☁️ CONFIGURAÇÕES PARA A NUVEM DO RENDER (Aiven Cloud)
     $host = getenv('DB_HOST');
     $port = getenv('DB_PORT') ?: "22002";
     $user = getenv('DB_USER');
     $password = getenv('DB_PASSWORD');
-    $dbname = getenv('DB_NAME') ?: "defaultdb"; // Banco padrão na nuvem da Aiven
+    $dbname = getenv('DB_NAME') ?: "defaultdb";
 }
 
 try {
@@ -27,13 +26,18 @@ try {
         PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
     ];
 
-    // Regras rígidas de SSL obrigatórias para a Aiven Cloud na Nuvem
     if (!$isLocal) {
         $options[PDO::MYSQL_ATTR_SSL_CA] = true;
         $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
     }
 
     $pdo = new PDO("mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4", $user, $password, $options);
+
+    // 🚀 GATILHO AUTOMÁTICO DE EXPANSÃO (Executa apenas na Nuvem do Render)
+    if (!$isLocal) {
+        $pdo->exec("ALTER TABLE utilizadores MODIFY COLUMN curso TEXT NULL");
+    }
+
 } catch (PDOException $e) {
     error_log("Erro de Ligação: " . $e->getMessage());
     header('Content-Type: application/json; charset=utf-8');
