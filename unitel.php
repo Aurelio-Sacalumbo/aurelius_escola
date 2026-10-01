@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // =========================================================================
-// 📥 ROTA 1: PROCESSAMENTO POST (REGISTAR PAGAMENTO)
+// 📥 ROTA 1: PROCESSAMENTO POST CORRIGIDO E ALINHADO COM O DBEAVER
 // =========================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json; charset=utf-8');
@@ -37,28 +37,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($telefone)) {
         try {
             $nomeCompleto = !empty($nome) ? $nome : "Estudante Inscrito";
+            $cursoInicial = !empty($curso) ? $curso : "9ª classe [Inscrição]";
+            $periodoInicial = !empty($periodo) ? $periodo : "Manhã";
 
-            // 🌟 DUPLA VERIFICAÇÃO: Só barra se for o MESMO NOME e o MESMO TELEFONE!
-            $check = $pdo->prepare("SELECT id_utilizador FROM utilizadores WHERE telefone = ? AND nome = ?");
-            $check->execute([$telefone, $nomeCompleto]);
+            // 🌟 VERIFICAÇÃO DE SEGURANÇA
+            $check = $pdo->prepare("SELECT id_utilizador FROM utilizadores WHERE telefone = ?");
+            $check->execute([$telefone]);
             $alunoExiste = $check->fetch();
 
             if ($alunoExiste) {
                 echo json_encode(['sucesso' => true, 'mensagem' => 'Aluno já se encontra registado no sistema.'], JSON_UNESCAPED_UNICODE);
             } else {
-                // Insere com a senha em texto limpo de 6 dígitos
-                $stmt = $pdo->prepare("INSERT INTO utilizadores (nome, telefone, email, senha, nivel, id_unico_escolar, curso, periodo, saldo_propina) VALUES (?, ?, ?, ?, 'estudante', ?, ?, ?, 0)");
-                $executo = $stmt->execute([$nomeCompleto, $telefone, $validacao, $validacao, $id_escolar, $curso, $periodo]);
+                // 🌟 INSERT MAPEADO: Nomeia as colunas explicitamente para casar com a estrutura da Aiven
+                $queryInsert = "INSERT INTO utilizadores (id_unico_escolar, nome, email, senha, telefone, curso, periodo, nivel, saldo_propina) 
+                                VALUES (?, ?, ?, ?, ?, ?, ?, 'estudante', 0)";
+                
+                $stmt = $pdo->prepare($queryInsert);
+                // Executa passando as variáveis nas posições exatas das colunas do seu DBeaver
+                $executo = $stmt->execute([
+                    $id_escolar, 
+                    $nomeCompleto, 
+                    $validacao, // email recebe o código
+                    $validacao, // senha recebe o código em texto limpo
+                    $telefone, 
+                    $cursoInicial, 
+                    $periodoInicial
+                ]);
                 
                 echo json_encode(['sucesso' => $executo, 'mensagem' => '🎉 Novo aluno integrado com sucesso no MySQL!'], JSON_UNESCAPED_UNICODE);
             }
         } catch (Exception $e) {
-            echo json_encode(['sucesso' => false, 'mensagem' => 'Erro crítico: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['sucesso' => false, 'mensagem' => 'Erro crítico no cadastro: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
         }
         exit;
     }
 }
-
 // =========================================================================
 // 🔍 ROTA 2: PROCESSAMENTO GET BLINDADO POR DETECÇÃO DE CONTEÚDO
 // =========================================================================
