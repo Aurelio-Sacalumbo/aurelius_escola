@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // =========================================================================
-// 🔍 ROTA 2: PROCESSAMENTO GET DINÂMICO (BLINDADO APÓS MATRÍCULA)
+// 🔍 ROTA 2: PROCESSAMENTO GET DINÂMICO (CONFIRME SE ESTÁ ASSIM NO SEU FICHEIRO)
 // =========================================================================
 if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     header('Content-Type: application/json; charset=utf-8');
@@ -69,7 +69,7 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     $termo = trim($_GET['termo']);
     
     try {
-        // Ordena para trazer primeiro o registo que tem a string de disciplinas mais longa contra duplicados
+        // Busca o aluno dando prioridade ao registo com matrícula ativa (curso mais longo)
         $stmt = $pdo->prepare("
             SELECT * FROM utilizadores 
             WHERE id_unico_escolar = ? OR nome LIKE ? OR telefone = ? 
