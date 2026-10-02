@@ -565,6 +565,64 @@
 
 
 
+// 📚 ALOCAÇÃO AUTOMÁTICA DE MANUAIS NA PRATELEIRA DO ESTUDANTE
+function renderizarLivrosAluno(cursoAlunoStr) {
+    const contentor = document.getElementById('contentor-livros-aluno');
+    if (!contentor) return;
+
+    let disciplinasAluno = [];
+    // Isola as cadeiras de dentro dos colchetes da matrícula do estudante
+    if (cursoAlunoStr && cursoAlunoStr.includes('[')) {
+        const match = cursoAlunoStr.match(/\[(.*?)\]/);
+        if (match && match[1]) {
+            disciplinasAluno = match[1].split(',').map(d => d.trim().toLowerCase());
+        }
+    }
+
+    // Se estiver em modo inscrição base, assume a grade padrão de verificação
+    if (disciplinasAluno.length === 0) {
+        disciplinasAluno = ['língua portuguesa', 'matemática', 'história', 'geografia', 'inglês', 'biologia', 'química'];
+    }
+
+    contentor.innerHTML = `<p style="font-size: 11px; color: #64748b;">🔄 A ler prateleira digital da academia...</p>`;
+
+    // Conecta ao buscador de livros do Render
+    fetch('buscar_livros.php')
+    .then(res => res.json())
+    .then(dados => {
+        if (dados.sucesso && dados.livros.length > 0) {
+            // Filtra os livros da nuvem que pertencem às disciplinas do aluno
+            const livrosFiltrados = dados.livros.filter(livro => {
+                const tituloLimpo = livro.titulo_livro.toLowerCase();
+                return disciplinasAluno.some(disc => tituloLimpo.includes(disc) || disc.includes(tituloLimpo));
+            });
+
+            if (livrosFiltrados.length === 0) {
+                contentor.innerHTML = `<p style="font-size: 12px; color: #64748b; padding: 10px; text-align:center; width:100%;">📚 Nenhum manual digital alocado para as suas disciplinas de momento.</p>`;
+                return;
+            }
+
+            // Injeta reativamente os blocos de livros na prateleira com botão de download real
+            contentor.innerHTML = livrosFiltrados.map(livro => `
+                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; border-left: 3px solid var(--brand-blue-glow, #00d2ff);">
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #fff; text-transform: uppercase;">📖 ${livro.titulo_livro}</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Autor: ${livro.autor}</div>
+                    </div>
+                    <a href="${livro.caminho_pdf}" target="_blank" class="btn" style="margin-top: auto; padding: 4px 10px; font-size: 11px; text-align: center; text-decoration: none; display: inline-block; background: rgba(0, 210, 255, 0.1); color: var(--brand-blue-glow, #00d2ff); border: 1px solid rgba(0, 210, 255, 0.2); font-weight: bold; border-radius: 4px;">
+                        Baixar PDF ⬇️
+                    </a>
+                </div>
+            `).join('');
+        } else {
+            contentor.innerHTML = `<p style="font-size: 12px; color: #64748b; padding: 10px; text-align:center; width:100%;">📚 A prateleira de livros da biblioteca encontra-se vazia.</p>`;
+        }
+    })
+    .catch(err => {
+        console.error("Erro ao carregar livros na prateleira do aluno:", err);
+        contentor.innerHTML = `<p style="font-size: 12px; color: #ef4444; padding: 10px; text-align:center; width:100%;">❌ Erro ao conectar ao repositório de livros.</p>`;
+    });
+}
 
 
 
