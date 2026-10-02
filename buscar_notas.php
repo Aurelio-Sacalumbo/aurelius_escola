@@ -1,22 +1,21 @@
 <?php
-// 🔍 BUSCA DE NOTAS INTELIGENTE E INTEGRADA — ACADEMIA AURÉLIUS
+// 🔍 BUSCA DE NOTAS INTELIGENTE — ACADEMIA AURÉLIUS
 header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json; charset=utf-8');
 
 require_once 'conexao.php';
 
-// Captura o parâmetro de forma tolerante (aceita id_utilizador ou id_unico_escolar)
-$identificadorRaw = isset($_GET['id_utilizador']) ? trim($_GET['id_utilizador']) : (isset($_GET['id_unico_escolar']) ? trim($_GET['id_unico_escolar']) : '');
+// Captura o parâmetro de forma tolerante (ID de texto ou ID numérico)
+$identificadorRaw = isset($_GET['id_utilizador']) ? trim($_GET['id_utilizador']) : '';
 
 try {
     $notasAgrupadas = [];
     $id_estudante_num = null;
 
     if (!empty($identificadorRaw)) {
-        // 🌟 SEGREDO DA BLINDAGEM: Se o JavaScript enviou o ID em texto (ex: AUR-946440),
-        // faz uma busca rápida na tabela utilizadores para descobrir o ID numérico real (25)!
+        // Se o front-end enviou o ID em texto (ex: AUR-542534), descobre o ID numérico real na tabela utilizadores
         if (!is_numeric($identificadorRaw)) {
-            $stmtUser = $pdo->prepare("SELECT id_utilizador FROM aurelius_escola.utilizadores WHERE id_unico_escolar = ? LIMIT 1");
+            $stmtUser = $pdo->prepare("SELECT id_utilizador FROM utilizadores WHERE id_unico_escolar = ? LIMIT 1");
             $stmtUser->execute([$identificadorRaw]);
             $id_estudante_num = $stmtUser->fetchColumn();
         } else {
@@ -24,8 +23,8 @@ try {
         }
 
         if ($id_estudante_num) {
-            // Puxa as notas oficiais cruzando com as colunas reais do seu phpMyAdmin
-            $stmt = $pdo->prepare("SELECT disciplina, nota_n1 AS n1, nota_n2 AS n2, nota_n3 AS n3, faltas FROM aurelius_escola.pautas WHERE id_estudante = ?");
+            // Puxa as notas oficiais cruzando com as colunas reais da tabela pautas
+            $stmt = $pdo->prepare("SELECT disciplina, nota_n1 AS n1, nota_n2 AS n2, nota_n3 AS n3, faltas FROM pautas WHERE id_estudante = ?");
             $stmt->execute([$id_estudante_num]);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
