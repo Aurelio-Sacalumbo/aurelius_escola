@@ -393,38 +393,39 @@
     }
     
     function carregarMensagensComum() {
-        const idEscolar = document.getElementById('txt-id-escolar').innerText.trim();
-        
-        // Passa o ID do estudante para filtrar as mensagens dele na nuvem
-        fetch(`chat_academico.php?id_estudante=${encodeURIComponent(idEscolar)}`)
+        fetch('chat_academico.php')
         .then(res => res.json())
         .then(dados => {
             if (dados && dados.sucesso) {
                 const caixa = document.getElementById('caixa-mensagens-chat');
                 if (!caixa) return;
                 
-                const nomeAluno = document.getElementById('txt-nome-aluno').innerText;
+                const elNome = document.getElementById('txt-nome-aluno');
+                const nomeAluno = elNome ? elNome.innerText.trim() : "Estudante";
+                
                 let htmlChat = `<div style="color: #3b82f6; margin-bottom:10px;">👋 Olá, <b>${nomeAluno}</b>! Bem-vindo à Sala Interativa da sua Turma.</div>`;
                 
                 dados.mensagens.forEach(msg => {
-                    const isProf = msg.tipo_post === 'professor';
+                    const isProf = (msg.perfil === 'professor');
                     const corNome = isProf ? '#f59e0b' : '#3b82f6';
                     const tagPerfil = isProf ? ' [👨‍🏫 Professor]' : '';
+                    const horaSMS = msg.hora ? msg.hora : '00:00';
                     
+                    // 🌟 LÊ DIRETAMENTE .conteudo (Elimina o Undefined de vez!)
                     htmlChat += `
                         <div style="margin-bottom: 8px; font-size: 13px; text-align: left;">
                             <span style="color: ${corNome}; font-weight: bold;">${msg.remetente}${tagPerfil}:</span>
                             <span style="color: #fff; margin-left: 4px;">${msg.conteudo}</span>
-                            <span style="font-size: 9.5px; color: #64748b; margin-left: 6px;">(${msg.hora})</span>
+                            <span style="font-size: 9.5px; color: #64748b; margin-left: 6px;">(${horaSMS})</span>
                         </div>
                     `;
                 });
                 caixa.innerHTML = htmlChat;
                 caixa.scrollTop = caixa.scrollHeight;
             }
-        });
+        })
+        .catch(err => console.error("Erro na leitura do chat:", err));
     }
-
 
 
 
@@ -469,6 +470,91 @@
     
         return false;
     }
+
+
+
+    function carregarPautaEstudante() {
+    const elIdEscolar = document.getElementById('txt-id-escolar');
+    const elClasse = document.getElementById('txt-classe-aluno');
+    const corpoTabela = document.getElementById('corpo-tabela-pauta');
+
+    if (!elIdEscolar || !elClasse || !corpoTabela) return;
+
+    const idEscolar = elIdEscolar.innerText.trim();
+    const cursoStr = elClasse.innerText.trim();
+
+    if (idEscolar === "---" || cursoStr === "---") {
+        setTimeout(carregarPautaEstudante, 500); // Aguarda nova tentativa se o login estiver a processar
+        return;
+    }
+
+    let disciplinasArr = [];
+    if (cursoStr.includes('[')) {
+        const match = cursoStr.match(/\[(.*?)\]/);
+        if (match && match[1]) {
+            disciplinasArr = match[1].split(',').map(d => d.trim()).filter(Boolean);
+        }
+    }
+
+    if (disciplinasArr.length === 0) {
+        disciplinasArr = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
+    }
+
+    // 📡 Puxa as notas salvas do MySQL usando o ID Escolar ou ID Utilizador guardado
+    fetch(`buscar_notas.php?id_unico_escolar=${encodeURIComponent(idEscolar)}`)
+    .then(res => res.json())
+    .then(dados => {
+        let htmlPauta = "";
+        const mapaDeNotas = dados.sucesso ? dados.notas : {};
+
+        disciplinasArr.forEach(nomeCadeira => {
+            const n1 = mapaDeNotas[nomeCadeira]?.n1 !== null && mapaDeNotas[nomeCadeira]?.n1 !== undefined ? parseFloat(mapaDeNotas[nomeCadeira].n1) : "-";
+            const n2 = mapaDeNotas[nomeCadeira]?.n2 !== null && mapaDeNotas[nomeCadeira]?.n2 !== undefined ? parseFloat(mapaDeNotas[nomeCadeira].n2) : "-";
+            const n3 = mapaDeNotas[nomeCadeira]?.n3 !== null && mapaDeNotas[nomeCadeira]?.n3 !== undefined ? parseFloat(mapaDeNotas[nomeCadeira].n3) : "-";
+            const faltas = mapaDeNotas[nomeCadeira]?.faltas !== undefined ? mapaDeNotas[nomeCadeira].faltas : "0";
+
+            // Cálculo reativo de Estatuto
+            let estatuto = "Avaliação";
+            let corEstatuto = "#94a3b8";
+
+            if (n1 !== "-" && n2 !== "-" && n3 !== "-") {
+                const media = (n1 + n2 + n3) / 3;
+                if (media >= 9.5) {
+                    estatuto = "Aprovado";
+                    corEstatuto = "var(--brand-success, #22c55e)";
+                } else {
+                    estatuto = "Reprovado";
+                    corEstatuto = "#ef4444";
+                }
+            }
+
+            htmlPauta += `
+                <tr>
+                    <td style="padding: 10px; color: #fff; font-weight: 500;">📖 ${nomeCadeira}</td>
+                    <td style="text-align: center; font-weight: bold; color: #fff;">${n1}</td>
+                    <td style="text-align: center; font-weight: bold; color: #fff;">${n2}</td>
+                    <td style="text-align: center; font-weight: bold; color: #fff;">${n3}</td>
+                    <td style="text-align: center; color: #ef4444;">${faltas}</td>
+                    <td style="text-align: right; color: ${corEstatuto}; font-weight: bold;">${estatuto}</td>
+                </tr>
+            `;
+        });
+
+        corpoTabela.innerHTML = htmlPauta;
+    })
+    .catch(err => console.error("Erro na leitura de notas do aluno:", err));
+}
+
+
+
+
+
+
+
+
+
+
+
 
 // 📖 CARREGA AS NOTAS E DISCIPLINAS DO ALUNO LOGADO (VIA ID AUR)
 function carregarCadernoNotasEstudante(idUnicoEscolar) {
