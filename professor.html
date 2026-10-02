@@ -312,7 +312,71 @@
         </div> <!-- Fim do container-gestao -->
        <script>
 
+let intervaloChatProf = null;
 
+// Chame esta função assim que o professor abrir a sua área de trabalho!
+function iniciarChatProfessor() {
+    carregarMensagensProfessor();
+    if (intervaloChatProf) clearInterval(intervaloChatProf);
+    intervaloChatProf = setInterval(carregarMensagensProfessor, 3000);
+}
+
+function carregarMensagensProfessor() {
+    fetch('chat.php?acao=carregar')
+    .then(res => res.json())
+    .then(dados => {
+        if (dados.sucesso) {
+            const caixa = document.getElementById('caixa-mensagens-chat-prof');
+            if (!caixa) return;
+            
+            let htmlChat = `<div style="color: #f59e0b; margin-bottom:10px;">👨‍🏫 Central de Moderação do Professor — Canal Geral</div>`;
+            
+            dados.mensagens.forEach(msg => {
+                const corNome = msg.perfil === 'professor' ? '#f59e0b' : '#3b82f6';
+                const tagPerfil = msg.perfil === 'professor' ? ' [Você]' : ' [👤 Aluno]';
+                
+                htmlChat += `
+                    <div style="margin-bottom: 8px; font-size: 13px;">
+                        <span style="color: ${corNome}; font-weight: bold;">${msg.remetente}${tagPerfil}:</span>
+                        <span style="color: #fff;">${msg.mensagem}</span>
+                    </div>
+                `;
+            });
+            caixa.innerHTML = htmlChat;
+            caixa.scrollTop = caixa.scrollHeight;
+        }
+    });
+}
+
+function enviarMensagemProfessor(event) {
+    if (event) event.preventDefault();
+
+    const input = document.getElementById('campo-texto-chat-prof');
+    const nomeProf = "Prof. Aurélio Jamba"; // Pode puxar dinamicamente do login do professor
+
+    if (!input || input.value.trim() === "") return false;
+
+    const payload = {
+        id_unico_escolar: "PROF-01",
+        remetente: nomeProf,
+        mensagem: input.value.trim(),
+        perfil: 'professor' // 🌟 Identifica como Professor no Banco da Aiven
+    };
+
+    fetch('chat.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(dados => {
+        if (dados.sucesso) {
+            input.value = '';
+            carregarMensagensProfessor();
+        }
+    });
+    return false;
+}
 
 
 

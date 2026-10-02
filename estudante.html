@@ -464,7 +464,77 @@ function carregarCadernoNotasEstudante(idUnicoEscolar) {
 }
 
 
-   
+let intervaloChatEstudante = null;
+
+// Chame esta função logo após o estudante fazer o login com sucesso!
+function iniciarChatEstudante() {
+    carregarMensagensComum();
+    if (intervaloChatEstudante) clearInterval(intervaloChatEstudante);
+    intervaloChatEstudante = setInterval(carregarMensagensComum, 3000); // Atualiza a cada 3 segundos
+}
+
+function carregarMensagensComum() {
+    fetch('chat.php?acao=carregar')
+    .then(res => res.json())
+    .then(dados => {
+        if (dados.sucesso) {
+            const caixa = document.getElementById('caixa-mensagens-chat');
+            if (!caixa) return;
+            
+            const nomeAluno = document.getElementById('txt-nome-aluno').innerText;
+            let htmlChat = `<div style="color: var(--brand-blue-glow); margin-bottom:10px;">👋 Olá, <b>${nomeAluno}</b>! Bem-vindo à Sala Interativa da sua Turma.</div>`;
+            
+            dados.mensagens.forEach(msg => {
+                // Se for professor, destaca a ouro. Se for estudante, destaca a azul.
+                const corNome = msg.perfil === 'professor' ? '#f59e0b' : '#3b82f6';
+                const tagPerfil = msg.perfil === 'professor' ? ' [👨‍🏫 Professor]' : '';
+                
+                htmlChat += `
+                    <div style="margin-bottom: 8px; font-size: 13px;">
+                        <span style="color: ${corNome}; font-weight: bold;">${msg.remetente}${tagPerfil}:</span>
+                        <span style="color: #fff;">${msg.mensagem}</span>
+                    </div>
+                `;
+            });
+            caixa.innerHTML = htmlChat;
+            caixa.scrollTop = caixa.scrollHeight;
+        }
+    });
+}
+
+function enviarMensagemEstudante(event) {
+    if (event) event.preventDefault();
+
+    const input = document.getElementById('campo-texto-chat');
+    const idEscolar = document.getElementById('txt-id-escolar').innerText;
+    const nomeAluno = document.getElementById('txt-nome-aluno').innerText;
+
+    if (!input || input.value.trim() === "") return false;
+
+    const payload = {
+        id_unico_escolar: idEscolar,
+        remetente: nomeAluno,
+        mensagem: input.value.trim(),
+        perfil: 'estudante' // 🌟 Identifica como Aluno
+    };
+
+    fetch('chat.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(dados => {
+        if (dados.sucesso) {
+            input.value = '';
+            carregarMensagensComum();
+        }
+    });
+    return false;
+}
+
+
+
     // 🔐 PROCESSAR ACESSO (LOGIN)
     function processarAcesso(event) {
         if (event) {
