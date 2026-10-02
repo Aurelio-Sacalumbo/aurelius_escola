@@ -474,7 +474,8 @@
 
 
    // 📊 RENDERIZADOR DE NOTAS REAL DO ESTUDANTE (SINCRONIZADO COM A NUVEM)
-function carregarPautaEstudante() {
+
+   function carregarPautaEstudante() {
     const elIdEscolar = document.getElementById('txt-id-escolar');
     const elClasse = document.getElementById('txt-classe-aluno');
     const corpoTabela = document.getElementById('corpo-tabela-pauta');
@@ -484,9 +485,9 @@ function carregarPautaEstudante() {
     const idEscolar = elIdEscolar.innerText.trim();
     const cursoStr = elClasse.innerText.trim();
 
-    // Se os dados do login ainda não bateram na tela, aguarda um instante
+    // Se o painel ainda estiver a carregar os dados de login, aguarda um pouco
     if (idEscolar === "---" || cursoStr === "---") {
-        setTimeout(carregarPautaEstudante, 500);
+        setTimeout(carregarPautaEstudante, 300);
         return;
     }
 
@@ -494,44 +495,53 @@ function carregarPautaEstudante() {
     if (cursoStr.includes('[')) {
         const match = cursoStr.match(/\[(.*?)\]/);
         if (match && match[1]) {
+            // Divide as disciplinas que foram guardadas na matrícula
             disciplinasArr = match[1].split(',').map(d => d.trim()).filter(Boolean);
         }
     }
 
+    // Caso o aluno seja uma inscrição base sem cadeiras salvas na matriz
     if (disciplinasArr.length === 0) {
-        disciplinasArr = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
+        if (cursoStr.includes("13ª")) {
+            disciplinasArr = ['Matemática Aplicada', 'Física Avançada', 'Química Industrial', 'Inglês Técnico', 'Biologia Aplicada'];
+        } else if (cursoStr.includes("12ª")) {
+            disciplinasArr = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
+        } else {
+            disciplinasArr = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
+        }
     }
 
-    // 💾 RECUPERA O ID DO UTILIZADOR GUARDADO NO LOGIN PARA CRUZAR NO PHP
-    // Se não achar o ID numérico, tentamos buscar pelo ID único de texto
-    const idUtilizador = localStorage.getItem("id_utilizador") || localStorage.getItem("id_unico_estudante");
-
-    // 📡 Faz a chamada ao buscar_notas.php passando o ID correto do estudante logado
-    fetch(`buscar_notas.php?id_utilizador=${encodeURIComponent(idUtilizador)}`)
+    // 📡 Faz a chamada para o buscar_notas.php passando o identificador real do ecrã
+    fetch(`buscar_notas.php?id_utilizador=${encodeURIComponent(idEscolar)}`)
     .then(res => res.json())
     .then(dados => {
+        if (!dados.sucesso) {
+            console.warn("Aviso do banco de dados:", dados.mensagem);
+            return;
+        }
+
         let htmlPauta = "";
-        const mapaDeNotas = dados.sucesso ? dados.notas : {};
+        const mapaDeNotas = dados.notas || {};
 
         disciplinasArr.forEach(nomeCadeira => {
-            // Captura segura convertendo para número ou mantendo traço se nulo
-            const n1 = mapaDeNotas[nomeCadeira]?.n1 !== null && mapaDeNotas[nomeCadeira]?.n1 !== undefined && mapaDeNotas[nomeCadeira]?.n1 !== "" ? parseFloat(mapaDeNotas[nomeCadeira].n1) : "-";
-            const n2 = mapaDeNotas[nomeCadeira]?.n2 !== null && mapaDeNotas[nomeCadeira]?.n2 !== undefined && mapaDeNotas[nomeCadeira]?.n2 !== "" ? parseFloat(mapaDeNotas[nomeCadeira].n2) : "-";
-            const n3 = mapaDeNotas[nomeCadeira]?.n3 !== null && mapaDeNotas[nomeCadeira]?.n3 !== undefined && mapaDeNotas[nomeCadeira]?.n3 !== "" ? parseFloat(mapaDeNotas[nomeCadeira].n3) : "-";
+            // Conversão segura aceitando os campos retornados do phpMyAdmin
+            const n1 = mapaDeNotas[nomeCadeira]?.n1 !== undefined && mapaDeNotas[nomeCadeira]?.n1 !== null && mapaDeNotas[nomeCadeira]?.n1 !== "" ? parseFloat(mapaDeNotas[nomeCadeira].n1) : "-";
+            const n2 = mapaDeNotas[nomeCadeira]?.n2 !== undefined && mapaDeNotas[nomeCadeira]?.n2 !== null && mapaDeNotas[nomeCadeira]?.n2 !== "" ? parseFloat(mapaDeNotas[nomeCadeira].n2) : "-";
+            const n3 = mapaDeNotas[nomeCadeira]?.n3 !== undefined && mapaDeNotas[nomeCadeira]?.n3 !== null && mapaDeNotas[nomeCadeira]?.n3 !== "" ? parseFloat(mapaDeNotas[nomeCadeira].n3) : "-";
             const faltas = mapaDeNotas[nomeCadeira]?.faltas !== undefined && mapaDeNotas[nomeCadeira]?.faltas !== null ? mapaDeNotas[nomeCadeira].faltas : "0";
 
-            // Motor de Cálculo do Estatuto Académico
+            // Motor Reativo de Média e Estatuto
             let estatuto = "Avaliação";
-            let corEstatuto = "#94a3b8"; // Cinzento padrão
+            let corEstatuto = "#94a3b8";
 
             if (n1 !== "-" && n2 !== "-" && n3 !== "-") {
                 const media = (n1 + n2 + n3) / 3;
                 if (media >= 9.5) {
                     estatuto = `Aprovado (${media.toFixed(1)})`;
-                    corEstatuto = "var(--brand-success, #22c55e)"; // Verde
+                    corEstatuto = "var(--brand-success, #22c55e)";
                 } else {
                     estatuto = `Reprovado (${media.toFixed(1)})`;
-                    corEstatuto = "#ef4444"; // Vermelho
+                    corEstatuto = "#ef4444";
                 }
             }
 
@@ -541,7 +551,7 @@ function carregarPautaEstudante() {
                     <td style="text-align: center; font-weight: bold; color: #fff;">${n1 !== "-" ? n1.toFixed(1) : "-"}</td>
                     <td style="text-align: center; font-weight: bold; color: #fff;">${n2 !== "-" ? n2.toFixed(1) : "-"}</td>
                     <td style="text-align: center; font-weight: bold; color: #fff;">${n3 !== "-" ? n3.toFixed(1) : "-"}</td>
-                    <td style="text-align: center; color: #f87171; font-weight: bold;">${faltas}</td>
+                    <td style="text-align: center; color: #ef4444; font-weight: bold;">${faltas}</td>
                     <td style="text-align: right; color: ${corEstatuto}; font-weight: bold;">${estatuto}</td>
                 </tr>
             `;
@@ -549,12 +559,8 @@ function carregarPautaEstudante() {
 
         corpoTabela.innerHTML = htmlPauta;
     })
-    .catch(err => {
-        console.error("Erro ao sincronizar notas no portal do aluno:", err);
-    });
+    .catch(err => console.error("Erro ao sincronizar notas no ecrã do estudante:", err));
 }
-
-
 
 
 
