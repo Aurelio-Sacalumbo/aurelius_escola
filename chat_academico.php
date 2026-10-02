@@ -11,22 +11,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once 'conexao.php';
 
-// 🔍 AÇÃO 1: CARREGAR MENSAGENS (GET)
+// =========================================================================
+// 🔍 AÇÃO 1: CARREGAR MENSAGENS (GET UNIFICADO E INTEGRADO)
+// =========================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $id_estudante = isset($_GET['id_estudante']) ? trim($_GET['id_estudante']) : '';
+    $id_estudante = isset($_GET['id_estudante']) ? trim($_GET['id_estudante']) : 'TODOS';
 
     try {
-        // Puxa as mensagens unificadas do canal geral da Turma Única A
-        $stmt = $pdo->query("SELECT id_post, id_autor, tipo_post, titulo AS remetente, conteudo, DATE_FORMAT(data_publicacao, '%H:%i') AS hora FROM mural_blog ORDER BY id_post ASC LIMIT 100");
-        $mensagens = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // 🌟 CORREÇÃO CIRÚRGICA: Se for TODOS ou estiver vazio, traz a conversa unificada da turma inteira
+        if (empty($id_estudante) || $id_estudante === 'TODOS') {
+            $stmt = $pdo->query("
+                SELECT id_post, id_autor, tipo_post, titulo AS remetente, conteudo, DATE_FORMAT(data_publicacao, '%H:%i') AS hora 
+                FROM mural_blog 
+                ORDER BY id_post ASC 
+                LIMIT 100
+            ");
+        } else {
+            // Se o professor escolheu um estudante específico, filtra apenas o histórico desse estudante e do professor
+            $stmt = $pdo->prepare("
+                SELECT id_post, id_autor, tipo_post, titulo AS remetente, conteudo, DATE_FORMAT(data_publicacao, '%H:%i') AS hora 
+                FROM mural_blog 
+                WHERE id_autor = ? OR id_unico_escolar = ? OR tipo_post = 'professor'
+                ORDER BY id_post ASC 
+                LIMIT 100
+            ");
+            $stmt->execute([$id_estudante, $id_estudante]);
+        }
         
+        $mensagens = $stmt->fetchAll(PDO::FETCH_ASSOC);
         echo json_encode(['sucesso' => true, 'mensagens' => $mensagens], JSON_UNESCAPED_UNICODE);
     } catch (Exception $e) {
-        echo json_encode(['sucesso' => false, 'mensagem' => 'Erro ao ler: ' . $e->getMessage()]);
+        echo json_encode(['sucesso' => false, 'mensagem' => 'Erro na leitura do mural: ' . $e->getMessage()]);
     }
     exit;
 }
-
 // 📥 AÇÃO 2: ENVIAR MENSAGEM (POST RESOLVE CHAVE ESTRANGEIRA)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $inputRaw = file_get_contents("php://input");
