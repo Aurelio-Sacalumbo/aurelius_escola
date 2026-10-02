@@ -1066,16 +1066,25 @@ function sincronizarChatAcademico() {
     }
 
     // 🎯 DISPARADOR REATIVO AUTOMÁTICO DO PORTAL DO ESTUDANTE
-document.addEventListener("DOMContentLoaded", function() {
-    // Inicia a renderização contínua do chat interativo
-    if (typeof iniciarChatEstudante === "function") {
-        iniciarChatEstudante();
-    }
-    
-    // Dispara a busca reativa de notas e cálculo de médias na nuvem
-    setTimeout(carregarPautaEstudante, 300); 
-});
-
+    document.addEventListener("DOMContentLoaded", function() {
+        // 💬 1. Inicia o chat interativo
+        if (typeof iniciarChatEstudante === "function") {
+            iniciarChatEstudante();
+        }
+        
+        // 📊 2. Dispara a busca de notas e cálculo de médias na nuvem
+        setTimeout(carregarPautaEstudante, 300); 
+        
+        // 📚 3. Dispara o carregamento dos manuais digitais da prateleira
+        // Puxa o curso salvo localmente ou espera o elemento do ecrã
+        setTimeout(() => {
+            const elClasse = document.getElementById('txt-classe-aluno');
+            const classeAluno = elClasse ? elClasse.innerText.trim() : "";
+            if (typeof renderizarLivrosAluno === "function") {
+                renderizarLivrosAluno(classeAluno);
+            }
+        }, 500);
+    });
     
     
 </script>
