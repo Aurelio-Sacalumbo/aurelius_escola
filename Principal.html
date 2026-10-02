@@ -397,34 +397,49 @@
 
 
 
-
 <!-- Ficheiro do motor da IA -->
 <script src="alana_ia.js"></script>
 
 <!-- Interface Visual Flutuante do Chat da Alana IA -->
-<div id="chat-alana-container" style="position: fixed; bottom: 85px; right: 20px; width: 320px; background: #0f1423; border: 1px solid #1e293b; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); font-family: sans-serif; display: none; z-index: 10000; overflow: hidden;">
-    <div style="background: #111c35; padding: 12px; color: #eab308; font-weight: bold; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center;">
-        <span> Aurélius IA</span>
-        <button onclick="toggleChatAlana()" style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer;">X</button>
+<div id="chat-alana-container" style="position: fixed; bottom: 85px; right: 20px; width: 330px; background: rgba(15, 20, 35, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; box-shadow: 0 12px 32px rgba(0,0,0,0.6); font-family: sans-serif; display: none; z-index: 10000; overflow: hidden; transition: all 0.3s ease;">
+    
+    <!-- BARRA DE TOPO PREMIUM -->
+    <div style="background: linear-gradient(135deg, #111c35, #070b14); padding: 14px; color: #eab308; font-weight: bold; border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 16px;">🧠</span>
+            <span style="letter-spacing: 0.5px;">Aurélius IA</span>
+        </div>
+        <button onclick="toggleChatAlana()" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 11px; font-weight: bold; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#ef4444'; this.style.color='#000';">✕</button>
     </div>
-    <div id="alana-logs" style="height: 200px; padding: 10px; overflow-y: auto; font-size: 13px; color: #f8fafc; line-height: 1.4;">
-        <div style="color: #eab308; margin-bottom: 5px;"><b>Aurélius:</b> Olá! tudo bem..?, Ben-vindo/a, pergunte o que quiseres sobre o site, dsisciplinas, Pagamento, ou sobre os cursos, terei muito gosto em te ajudar</div>
+    
+    <!-- LOGS DE CONVERSA DINÂMICA -->
+    <div id="alana-logs" style="height: 240px; padding: 12px; overflow-y: auto; font-size: 13px; color: #f8fafc; line-height: 1.5; background: rgba(5, 8, 17, 0.4);">
+        <div style="background: rgba(234, 179, 8, 0.06); border: 1px solid rgba(234, 179, 8, 0.1); padding: 10px; border-radius: 8px; color: #cbd5e1; border-left: 3px solid #eab308; text-align: left;">
+            <b style="color: #eab308;">Aurélius IA:</b> 👋 Saudações Académicas! Bem-vindo/a à nossa central de mentoria. Podes perguntar-me o que quiseres sobre disciplinas, cursos, propinas, como te matriculares ou a nossa direção no Huambo. Como posso ajudar-te a estalar os estudos hoje?
+        </div>
     </div>
-    <div style="padding: 10px; border-top: 1px solid #1e293b; display: flex; gap: 5px;">
-        <input type="text" id="alana-input" placeholder="Escreve aqui a tua dúvida..." style="flex: 1; padding: 8px; background: #060b19; border: 1px solid #1e293b; color: #fff; border-radius: 4px; font-size: 12px;">
-        <button onclick="enviarParaAlana()" style="background: #eab308; color: #000; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px;">Enviar</button>
+    
+    <!-- ÁREA DE INPUT E SUBMISSÃO -->
+    <div style="padding: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05); display: flex; gap: 8px; background: rgba(11, 17, 32, 0.6);">
+        <input type="text" id="alana-input" placeholder="Escreve aqui a tua dúvida..." style="flex: 1; padding: 10px; background: #060b19; border: 1px solid rgba(255, 255, 255, 0.08); color: #fff; border-radius: 8px; font-size: 12.5px; outline: none; transition: 0.2s;" onfocus="this.style.borderColor='#eab308';">
+        <button onclick="enviarParaAlana()" style="background: #eab308; color: #000; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12.5px; transition: 0.2s;" onmouseover="this.style.transform='scale(1.03)';" onmouseout="this.style.transform='scale(1)';">Enviar</button>
     </div>
 </div>
 
-<!-- Botão Circular para Abrir/Fechar a IA -->
-<button onclick="toggleChatAlana()" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: #eab308; border: none; border-radius: 50%; font-size: 22px; cursor: pointer; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+<!-- Botão Circular Vibrante para Abrir/Fechar a IA -->
+<button onclick="toggleChatAlana()" style="position: fixed; bottom: 20px; right: 20px; width: 54px; height: 50px; background: linear-gradient(135deg, #eab308, #ca8a04); border: none; border-radius: 50%; font-size: 24px; cursor: pointer; z-index: 10000; box-shadow: 0 6px 20px rgba(234, 179, 8, 0.3); display: flex; align-items: center; justify-content: center; transition: 0.3s ease;" onmouseover="this.style.transform='rotate(15deg) scale(1.08)';" onmouseout="this.style.transform='rotate(0deg) scale(1)';">
     🧠
 </button>
 
 <script>
     function toggleChatAlana() {
         const container = document.getElementById('chat-alana-container');
-        container.style.display = container.style.display === 'none' || container.style.display === '' ? 'block' : 'none';
+        const estaOculto = (container.style.display === 'none' || container.style.display === '');
+        container.style.display = estaOculto ? 'block' : 'none';
+        
+        if (estaOculto) {
+            setTimeout(() => { document.getElementById('alana-input').focus(); }, 100);
+        }
     }
 
     function enviarParaAlana() {
@@ -434,25 +449,57 @@
 
         if (mensagem === "") return;
 
-        // Exibe a mensagem do estudante no log
-        logs.innerHTML += `<div style="margin-top:8px; color:#38bdf8;"><b>Tu:</b> ${mensagem}</div>`;
-        
-        // Alana processa a resposta inteligentemente usando o motor alana_ia.js
-        const respostaIA = AlanaIA.processarMensagem(mensagem);
-        
-        // Exibe a resposta filtrada e limpa no log
-        logs.innerHTML += `<div style="margin-top:8px; color:#eab308;"><b>Aurélius:</b> ${respostaIA}</div>`;
+        // Injeta o balão visual do estudante (Alinhado à esquerda de forma limpa)
+        logs.innerHTML += `
+            <div style="margin-top: 10px; text-align: left; background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.1); padding: 8px 10px; border-radius: 8px; border-left: 3px solid #38bdf8;">
+                <b style="color: #38bdf8;">Tu:</b> <span style="color: #fff;">${mensagem}</span>
+            </div>
+        `;
         
         input.value = "";
-        logs.scrollTop = logs.scrollHeight; // Auto-scroll para acompanhar a conversa
+        logs.scrollTop = logs.scrollHeight; // Desce o ecrã na hora
+
+        // ⏳ INDICADOR DE PENSAMENTO: Simula o explicador sábio a estruturar a mentoria
+        const idPensando = 'ia-pensando-' + Date.now();
+        logs.innerHTML += `
+            <div id="${idPensando}" style="margin-top: 10px; color: #64748b; font-size: 12px; italic; text-align: left; padding-left: 5px;">
+                ⚡ O Aurélius está a analisar a tua dúvida...
+            </div>
+        `;
+        logs.scrollTop = logs.scrollHeight;
+
+        setTimeout(() => {
+            // Remove o indicador de carregamento de forma limpa
+            const elPensando = document.getElementById(idPensando);
+            if (elPensando) elPensando.remove();
+
+            // 🌟 CORREÇÃO DO MATCH: Chama AureliusIA nativo do ficheiro alana_ia.js
+            let respostaIA = "A carregar motor...";
+            if (typeof AureliusIA !== "undefined") {
+                respostaIA = AureliusIA.processarMensagem(mensagem);
+            } else {
+                respostaIA = "⚠️ Erro de Ligação: O motor pedagógico 'alana_ia.js' não foi localizado ou tem erros de sintaxe.";
+            }
+            
+            // Injeta o balão de resposta estilizado da IA com markdown simples convertido
+            logs.innerHTML += `
+                <div style="margin-top: 10px; text-align: left; background: rgba(234, 179, 8, 0.04); border: 1px solid rgba(234, 179, 8, 0.08); padding: 10px; border-radius: 8px; border-left: 3px solid #eab308; line-height: 1.5;">
+                    <b style="color: #eab308;">Aurélius IA:</b> <span style="color: #f1f5f9;">${respostaIA.replace(/\n/g, '<br>')}</span>
+                </div>
+            `;
+            
+            logs.scrollTop = logs.scrollHeight; // Auto-scroll definitivo
+        }, 650); // 650 milissegundos de delay humano natural
     }
 
-    // Permite submeter pressionando a tecla Enter
+    // Atalho confortável do Enter
     document.getElementById('alana-input').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') enviarParaAlana();
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            enviarParaAlana();
+        }
     });
 </script>
-
 
 
 
