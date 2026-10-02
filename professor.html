@@ -1060,9 +1060,10 @@ function carregarPautaGlobalProf() {
 }
 
 // 📝 2. CLICOU EM "EDITAR NOTAS": Desdobra todas as disciplinas daquele aluno com os inputs de preenchimento
+// 📝 2. CLICOU EM "EDITAR NOTAS": Desdobra todas as disciplinas daquele aluno de forma blindada
 function abrirCadernetaIndividualDoAluno(idUtilizador, nomeAluno, cursoCodificado) {
-    // 🔒 FIXAÇÃO DA MEMÓRIA GLOBAL DO SCRIPT
-    alunoFocoIdUtilizador = idUtilizador; 
+    // Fixação segura na memória global
+    alunoFocoIdUtilizador = idUtilizador;
     document.getElementById("nome-aluno-foco-pauta").innerText = nomeAluno;
     
     const painelIndividual = document.getElementById("painel-pauta-individual-aluno");
@@ -1074,6 +1075,7 @@ function abrirCadernetaIndividualDoAluno(idUtilizador, nomeAluno, cursoCodificad
     let cursoStr = decodeURIComponent(cursoCodificado);
     let disciplinasArr = [];
 
+    // 🌟 CORREÇÃO CIRÚRGICA: Trata o Regex capturando a string exata no índice 1 do match!
     if (cursoStr.includes('[') && cursoStr.indexOf('Inscrição') === -1) {
         const match = cursoStr.match(/\[(.*?)\]/);
         if (match && match[1]) {
@@ -1081,11 +1083,14 @@ function abrirCadernetaIndividualDoAluno(idUtilizador, nomeAluno, cursoCodificad
         }
     }
 
+    // Se o aluno for uma inscrição ou não tiver disciplinas explicitadas, injeta a grade correspondente
     if (disciplinasArr.length === 0) {
         if (cursoStr.includes("13ª")) {
             disciplinasArr = ['Matemática Aplicada', 'Física Avançada', 'Química Industrial', 'Inglês Técnico', 'Biologia Aplicada'];
         } else if (cursoStr.includes("12ª")) {
             disciplinasArr = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
+        } else if (cursoStr.includes("11ª")) {
+            disciplinasArr = ['Língua Portuguesa', 'Matemática', 'Química', 'Física', 'Inglês', 'Biologia'];
         } else {
             disciplinasArr = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
         }
@@ -1093,6 +1098,7 @@ function abrirCadernetaIndividualDoAluno(idUtilizador, nomeAluno, cursoCodificad
 
     alunoFocoDisciplinasArr = disciplinasArr;
 
+    // Conecta ao buscar_notas.php para carregar os valores atuais guardados no MySQL online
     fetch(`buscar_notas.php?id_utilizador=${idUtilizador}`)
     .then(res => res.json())
     .then(dadosNotas => {
@@ -1101,7 +1107,7 @@ function abrirCadernetaIndividualDoAluno(idUtilizador, nomeAluno, cursoCodificad
 
         alunoFocoDisciplinasArr.forEach((nomeCadeira, idx) => {
             const n1 = mapaDeNotas[nomeCadeira]?.n1 !== undefined && mapaDeNotas[nomeCadeira].n1 !== null ? mapaDeNotas[nomeCadeira].n1 : "";
-            const n2 = mapaDeNotas[nomeCadeira]?.n2 !== undefined && mapaDeNotas[nomeDeCadeira].n2 !== null ? mapaDeNotas[nomeCadeira].n2 : "";
+            const n2 = mapaDeNotas[nomeCadeira]?.n2 !== undefined && mapaDeNotas[nomeCadeira].n2 !== null ? mapaDeNotas[nomeCadeira].n2 : "";
             const n3 = mapaDeNotas[nomeCadeira]?.n3 !== undefined && mapaDeNotas[nomeCadeira].n3 !== null ? mapaDeNotas[nomeCadeira].n3 : "";
             const faltas = mapaDeNotas[nomeCadeira]?.faltas !== undefined && mapaDeNotas[nomeCadeira].faltas !== null ? mapaDeNotas[nomeCadeira].faltas : "0";
 
@@ -1124,7 +1130,10 @@ function abrirCadernetaIndividualDoAluno(idUtilizador, nomeAluno, cursoCodificad
             tabelaNotas.appendChild(tr);
         });
     })
-    .catch(err => console.error("Erro ao puxar notas:", err));
+    .catch(err => {
+        console.error("Erro ao puxar notas:", err);
+        tabelaNotas.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:15px; color:#ef4444;">⚠️ Falha ao ler avaliações da nuvem.</td></tr>`;
+    });
 }
 
 
@@ -1178,7 +1187,13 @@ function salvarPautaCompletaDoAluno() {
         if (dados.sucesso) {
             alert("🎉 Perfeito! A pauta de todas as disciplinas foi guardada e sincronizada com sucesso no Render!");
             
-            // Re-alimenta o ecrã do aluno focado mantendo-o visível e atualizado!
+            // 🌟 MANUTENÇÃO DE TELA ATIVA: Garante que o painel lateral continua aberto ('block')
+            const painelIndividual = document.getElementById("painel-pauta-individual-aluno");
+            if (painelIndividual) {
+                painelIndividual.style.display = "block";
+            }
+            
+            // Recarrega apenas os valores das notas para o aluno continuar focado sem fechar a aba
             const nomeAlunoAtual = document.getElementById("nome-aluno-foco-pauta").innerText;
             const selectClasse = document.getElementById("filtro-classe").value;
             abrirCadernetaIndividualDoAluno(alunoFocoIdUtilizador, nomeAlunoAtual, encodeURIComponent(selectClasse));
@@ -1197,7 +1212,6 @@ function salvarPautaCompletaDoAluno() {
         }
     });
 }
-
 
 
 
