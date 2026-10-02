@@ -312,71 +312,46 @@
         </div> <!-- Fim do container-gestao -->
        <script>
 
-let intervaloChatProf = null;
+function carregarListaAlunosParaChat() {
+    // Procura o elemento select no painel do professor
+    const selectAlunos = document.getElementById("select-alunos-chat") || document.querySelector("select");
+    if (!selectAlunos) return;
 
-// Chame esta função assim que o professor abrir a sua área de trabalho!
-function iniciarChatProfessor() {
-    carregarMensagensProfessor();
-    if (intervaloChatProf) clearInterval(intervaloChatProf);
-    intervaloChatProf = setInterval(carregarMensagensProfessor, 3000);
-}
-
-function carregarMensagensProfessor() {
-    fetch('chat.php?acao=carregar')
-    .then(res => res.json())
-    .then(dados => {
-        if (dados.sucesso) {
-            const caixa = document.getElementById('caixa-mensagens-chat-prof');
-            if (!caixa) return;
-            
-            let htmlChat = `<div style="color: #f59e0b; margin-bottom:10px;">👨‍🏫 Central de Moderação do Professor — Canal Geral</div>`;
-            
-            dados.mensagens.forEach(msg => {
-                const corNome = msg.perfil === 'professor' ? '#f59e0b' : '#3b82f6';
-                const tagPerfil = msg.perfil === 'professor' ? ' [Você]' : ' [👤 Aluno]';
-                
-                htmlChat += `
-                    <div style="margin-bottom: 8px; font-size: 13px;">
-                        <span style="color: ${corNome}; font-weight: bold;">${msg.remetente}${tagPerfil}:</span>
-                        <span style="color: #fff;">${msg.mensagem}</span>
-                    </div>
-                `;
-            });
-            caixa.innerHTML = htmlChat;
-            caixa.scrollTop = caixa.scrollHeight;
-        }
-    });
-}
-
-function enviarMensagemProfessor(event) {
-    if (event) event.preventDefault();
-
-    const input = document.getElementById('campo-texto-chat-prof');
-    const nomeProf = "Prof. Aurélio Jamba"; // Pode puxar dinamicamente do login do professor
-
-    if (!input || input.value.trim() === "") return false;
-
-    const payload = {
-        id_unico_escolar: "PROF-01",
-        remetente: nomeProf,
-        mensagem: input.value.trim(),
-        perfil: 'professor' // 🌟 Identifica como Professor no Banco da Aiven
-    };
-
-    fetch('chat.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+    // Faz o varrimento reativo nos utilizadores com inscrição ou matrícula ativa
+    fetch('listar_estudantes.php?acao=listar')
+    .then(res => {
+        if (!res.ok) throw new Error("Erro ao ligar ao servidor Render");
+        return res.json();
     })
-    .then(res => res.json())
     .then(dados => {
-        if (dados.sucesso) {
-            input.value = '';
-            carregarMensagensProfessor();
+        if (dados.sucesso && dados.alunos) {
+            // Mantém a opção padrão intacta
+            let htmlOpcoes = `<option value="">-- Escolha um Aluno para Conversar --</option>`;
+            htmlOpcoes += `<option value="TODOS">[Geral] Enviar para Toda a Turma</option>`;
+
+            dados.alunos.forEach(aluno => {
+                // Filtra para garantir que não exibe nomes vazios ou IDs nulos
+                if (aluno.nome && aluno.id_unico_escolar) {
+                    htmlOpcoes += `<option value="${aluno.id_unico_escolar}">👤 ${aluno.nome} (${aluno.id_unico_escolar})</option>`;
+                }
+            });
+
+            selectAlunos.innerHTML = htmlOpcoes;
         }
-    });
-    return false;
+    })
+    .catch(err => console.warn("A aguardar carregamento estável dos alunos no Huambo...", err));
 }
+
+// 🎯 GATILHO: Execute esta função assim que o ecrã do professor carregar!
+document.addEventListener("DOMContentLoaded", function() {
+    carregarListaAlunosParaChat();
+    // Inicializa também o pooling de mensagens do canal do professor
+    if (typeof iniciarChatProfessor === "function") iniciarChatProfessor();
+});
+
+
+
+
 
 
 
@@ -648,23 +623,46 @@ function enviarMensagemProfessor(event) {
 
 
 
-    let alunoChatSelecionado = ""; // Guarda o ID (AUR-...) do aluno ativo
+    let alunoChatSelecionado = "TODOS"; 
 
-// 🔄 1. ALIMENTA O DROPDOWN COM OS ALUNOS MATRICULADOS
-// Chame esta função passando a lista de alunos logo após ler os dados do banco MySQL
-function atualizarSeletorAlunosChat(listaAlunos) {
-    const seletor = document.getElementById('chat-seletor-aluno');
-    if (!seletor) return;
+    function sincronizarChatProfessor() {
+        // Alinhado com o chat_academico.php que lê o id_estudante por parâmetro
+        const termoBusca = alunoChatSelecionado ? alunoChatSelecionado : "TODOS";
     
-    if (!listaAlunos || listaAlunos.length === 0) {
-        seletor.innerHTML = '<option value="">Nenhum aluno localizado no sistema</option>';
-        return;
+        fetch(`chat_academico.php?id_estudante=${encodeURIComponent(termoBusca)}`)
+        .then(res => res.json())
+        .then(dados => {
+            const caixaChat = document.getElementById('caixa-mensagens-chat-prof');
+            if (!caixaChat) return;
+    
+            if (dados.sucesso && dados.mensagens.length > 0) {
+                caixaChat.innerHTML = dados.mensagens.map(m => {
+                    // Verifica se a mensagem veio do professor ou de um estudante
+                    const isProf = (m.perfil === 'professor' || m.remetente.includes('Prof'));
+                    const corEtiqueta = isProf ? '#f59e0b' : '#3b82f6';
+                    const label = isProf ? `[Tu / Professor]` : `[👤 ${m.remetente}]`;
+                    
+                    return `
+                        <div style="margin-bottom: 6px; font-size: 13px; line-height: 1.4; text-align: left;">
+                            <span style="color: ${corEtiqueta}; font-weight: bold;">${label}:</span> 
+                            <span style="color: #fff;">${m.conteudo}</span>
+                            <span style="font-size: 10px; color: #64748b; margin-left: 8px;">(${m.hora})</span>
+                        </div>
+                    `;
+                }).join('');
+                caixaChat.scrollTop = caixaChat.scrollHeight;
+            } else {
+                caixaChat.innerHTML = `<div style="color: #64748b; font-size: 13px; text-align: center; padding-top: 20px;">Nenhuma mensagem registada no mural da turma.</div>`;
+            }
+        })
+        .catch(err => console.error("Erro ao sincronizar chat do professor:", err));
     }
     
-    seletor.innerHTML = '<option value="">-- Escolha um Aluno para Conversar --</option>' + 
-        listaAlunos.map(a => `<option value="${a.id_unico_escolar || a.id}">${a.nome} (${a.id_unico_escolar || a.id})</option>`).join('');
-}
-
+    // 👤 Função que escuta a mudança no seletor de alunos <select onchange="mudarAlunoChat(this.value)">
+    function mudarAlunoChat(valorSelecionado) {
+        alunoChatSelecionado = valorSelecionado ? valorSelecionado : "TODOS";
+        sincronizarChatProfessor();
+    }
 // 🔄 2. DETETA MUDANÇA DE ALUNO NO SELETOR
 function mudarAlunoChat(idAluno) {
     alunoChatSelecionado = idAluno;
@@ -1180,21 +1178,6 @@ function eliminarDicaPedagogica(index) {
         caixaChat.scrollTop = caixaChat.scrollHeight;
     }
 
-    function enviarMensagemProfessor(event) {
-        event.preventDefault();
-        const input = document.getElementById('campo-texto-chat-prof');
-        if (input.value.trim() !== "") {
-            let msgs = JSON.parse(localStorage.getItem('bd_chat_global')) || [];
-            msgs.push({
-                origem: 'prof',
-                autor: 'Professor',
-                texto: input.value.replace(/</g, "&lt;").replace(/>/g, "&gt;")
-            });
-            localStorage.setItem('bd_chat_global', JSON.stringify(msgs));
-            input.value = "";
-            carregarChatSincronizado();
-        }
-    }
 
     function calcularMetricasFaturamento() {
         // 🔍 LEITURA DIRETA E REAL DO LOCALSTORAGE DO NAVEGADOR

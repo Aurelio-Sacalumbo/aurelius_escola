@@ -150,34 +150,35 @@
             </div>
         </div>
 
-        <!-- 🆕 TELA 2: INSCRIÇÃO DE ALUNOS (GERADOR DINÂMICO E AUTOMÁTICO) -->
-        <div class="tela-view" id="view-cadastro">
-            <div class="card" style="border-top: 4px solid var(--brand-blue);">
-                <div class="titulo"> Faça sua Inscrição aqui✍🏾</div>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">Registe-se e  garanta sua vaga, no melhor centro de Explicação Domiciliar e Presencial da Província.</p>
-                
-                <form id="form-cadastro" onsubmit="cadastrarEstudanteAutomatico(event)">
-                    <div style="margin-bottom: 12px;">
-                        <label style="font-size: 11px; font-weight: bold;">Nome do Estudante:</label>
-                        <input type="text" id="cad-nome" class="form-input" required>
-                    </div>
-                    <div style="margin-bottom: 12px;">
-                        <label style="font-size: 11px; font-weight: bold;">Telemóvel:</label>
-                        <input type="text" id="cad-telefone" class="form-input"  required>
-                    </div>
-                    <div style="margin-bottom: 12px;">
-                        <label style="font-size: 11px; font-weight: bold;">Nível/Curso:</label>
-                        <input type="text" id="cad-classe" class="form-input" placeholder="Ex: 3ª Classe" required>
-                    </div>
-                    <div style="margin-bottom: 12px;">
-                        <label style="font-size: 11px; font-weight: bold;">Período Letivo:</label>
-                        <input type="text" id="cad-periodo" class="form-input" placeholder="Ex: Manhã" required>
-                    </div>
-                    <button type="button" class="btn" onclick="cadastrarEstudanteAutomatico(event)" style="background: var(--brand-blue); width: 100%;">Emitir ID e Guardar Registo</button>
-                </form>
-            </div>
+ <!-- 🆕 TELA 2: INSCRIÇÃO DE ALUNOS (GERADOR DINÂMICO E AUTOMÁTICO) -->
+ <div class="tela-view" id="view-cadastro">
+        <div class="card" style="border-top: 4px solid var(--brand-blue);">
+            <div class="titulo"> Faça sua Inscrição aqui✍🏾</div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">Registe-se e garanta sua vaga, no melhor centro de Explicação Domiciliar e Presencial da Província.</p>
+            
+            <!-- 🌟 O onsubmit centraliza o envio único aqui -->
+            <form id="form-cadastro" onsubmit="return cadastrarEstudanteAutomatico(event)">
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: bold;">Nome do Estudante:</label>
+                    <input type="text" id="cad-nome" class="form-input" required>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: bold;">Telemóvel:</label>
+                    <input type="text" id="cad-telefone" class="form-input" required>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: bold;">Nível/Curso:</label>
+                    <input type="text" id="cad-classe" class="form-input" placeholder="Ex: 3ª Classe" required>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: bold;">Período Letivo:</label>
+                    <input type="text" id="cad-periodo" class="form-input" placeholder="Ex: Manhã" required>
+                </div>
+                <!-- 🌟 CORREÇÃO: Alterado para type="submit" e removido o onclick conflituoso -->
+                <button type="submit" class="btn" style="background: var(--brand-blue); width: 100%;">Emitir ID e Guardar Registo</button>
+            </form>
         </div>
-
+    </div>
         <!-- =========================================================================
              🎓 TELA 3: SALA DE AULA INTERATIVA (PAINEL DO ESTUDANTE)
              ========================================================================= -->
@@ -244,6 +245,8 @@
 
 
     <script>
+
+        
     // Inicialização da base local para simulações
     if (!localStorage.getItem('bd_estudantes')) {
         localStorage.setItem('bd_estudantes', JSON.stringify([]));
@@ -381,10 +384,91 @@
 
 
 
+    let intervaloChatEstudante = null;
+
+    function iniciarChatEstudante() {
+        carregarMensagensComum();
+        if (intervaloChatEstudante) clearInterval(intervaloChatEstudante);
+        intervaloChatEstudante = setInterval(carregarMensagensComum, 3000);
+    }
+    
+    function carregarMensagensComum() {
+        const idEscolar = document.getElementById('txt-id-escolar').innerText.trim();
+        
+        // Passa o ID do estudante para filtrar as mensagens dele na nuvem
+        fetch(`chat_academico.php?id_estudante=${encodeURIComponent(idEscolar)}`)
+        .then(res => res.json())
+        .then(dados => {
+            if (dados && dados.sucesso) {
+                const caixa = document.getElementById('caixa-mensagens-chat');
+                if (!caixa) return;
+                
+                const nomeAluno = document.getElementById('txt-nome-aluno').innerText;
+                let htmlChat = `<div style="color: #3b82f6; margin-bottom:10px;">👋 Olá, <b>${nomeAluno}</b>! Bem-vindo à Sala Interativa da sua Turma.</div>`;
+                
+                dados.mensagens.forEach(msg => {
+                    const isProf = msg.tipo_post === 'professor';
+                    const corNome = isProf ? '#f59e0b' : '#3b82f6';
+                    const tagPerfil = isProf ? ' [👨‍🏫 Professor]' : '';
+                    
+                    htmlChat += `
+                        <div style="margin-bottom: 8px; font-size: 13px; text-align: left;">
+                            <span style="color: ${corNome}; font-weight: bold;">${msg.remetente}${tagPerfil}:</span>
+                            <span style="color: #fff; margin-left: 4px;">${msg.conteudo}</span>
+                            <span style="font-size: 9.5px; color: #64748b; margin-left: 6px;">(${msg.hora})</span>
+                        </div>
+                    `;
+                });
+                caixa.innerHTML = htmlChat;
+                caixa.scrollTop = caixa.scrollHeight;
+            }
+        });
+    }
 
 
 
 
+    
+    function enviarMensagemEstudante(event) {
+        if (event) event.preventDefault();
+    
+        const input = document.getElementById('campo-texto-chat');
+        if (!input || input.value.trim() === "") return false;
+    
+        const elId = document.getElementById('txt-id-escolar');
+        const elNome = document.getElementById('txt-nome-aluno');
+        
+        const idEscolar = (elId && elId.innerText.trim() !== "---") ? elId.innerText.trim() : "AUR-ANONIMO";
+        const nomeAluno = (elNome && elNome.innerText.trim() !== "---") ? elNome.innerText.trim() : "Madalena Santos";
+    
+        // Payload estruturado correspondente ao back-end
+        const payload = {
+            id_unico_escolar: idEscolar,
+            remetente: nomeAluno,
+            mensagem: input.value.trim(),
+            perfil: 'estudante'
+        };
+    
+        fetch('chat_academico.php', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json; charset=utf-8' 
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(dados => {
+            if (dados.sucesso) {
+                input.value = ''; // Desbloqueia e limpa o campo imediatamente
+                carregarMensagensComum(); // Atualiza reativamente
+            } else {
+                alert("⚠️ Resposta do Servidor: " + dados.mensagem);
+            }
+        })
+        .catch(err => console.error("Falha na rede ao processar chat:", err));
+    
+        return false;
+    }
 
 // 📖 CARREGA AS NOTAS E DISCIPLINAS DO ALUNO LOGADO (VIA ID AUR)
 function carregarCadernoNotasEstudante(idUnicoEscolar) {
@@ -464,152 +548,160 @@ function carregarCadernoNotasEstudante(idUnicoEscolar) {
 }
 
 
-let intervaloChatEstudante = null;
 
-// Chame esta função logo após o estudante fazer o login com sucesso!
-function iniciarChatEstudante() {
-    carregarMensagensComum();
-    if (intervaloChatEstudante) clearInterval(intervaloChatEstudante);
-    intervaloChatEstudante = setInterval(carregarMensagensComum, 3000); // Atualiza a cada 3 segundos
-}
+function processarAcesso(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
 
-function carregarMensagensComum() {
-    fetch('chat.php?acao=carregar')
-    .then(res => res.json())
-    .then(dados => {
-        if (dados.sucesso) {
-            const caixa = document.getElementById('caixa-mensagens-chat');
-            if (!caixa) return;
-            
-            const nomeAluno = document.getElementById('txt-nome-aluno').innerText;
-            let htmlChat = `<div style="color: var(--brand-blue-glow); margin-bottom:10px;">👋 Olá, <b>${nomeAluno}</b>! Bem-vindo à Sala Interativa da sua Turma.</div>`;
-            
-            dados.mensagens.forEach(msg => {
-                // Se for professor, destaca a ouro. Se for estudante, destaca a azul.
-                const corNome = msg.perfil === 'professor' ? '#f59e0b' : '#3b82f6';
-                const tagPerfil = msg.perfil === 'professor' ? ' [👨‍🏫 Professor]' : '';
-                
-                htmlChat += `
-                    <div style="margin-bottom: 8px; font-size: 13px;">
-                        <span style="color: ${corNome}; font-weight: bold;">${msg.remetente}${tagPerfil}:</span>
-                        <span style="color: #fff;">${msg.mensagem}</span>
-                    </div>
-                `;
-            });
-            caixa.innerHTML = htmlChat;
-            caixa.scrollTop = caixa.scrollHeight;
-        }
-    });
-}
+    const inputIdentificador = document.getElementById('login-identificador');
+    const inputSenha = document.getElementById('login-senha');
+    const erroDiv = document.getElementById('mensagem-erro');
 
-function enviarMensagemEstudante(event) {
-    if (event) event.preventDefault();
-
-    const input = document.getElementById('campo-texto-chat');
-    const idEscolar = document.getElementById('txt-id-escolar').innerText;
-    const nomeAluno = document.getElementById('txt-nome-aluno').innerText;
-
-    if (!input || input.value.trim() === "") return false;
-
-    const payload = {
-        id_unico_escolar: idEscolar,
-        remetente: nomeAluno,
-        mensagem: input.value.trim(),
-        perfil: 'estudante' // 🌟 Identifica como Aluno
-    };
-
-    fetch('chat.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-    .then(res => res.json())
-    .then(dados => {
-        if (dados.sucesso) {
-            input.value = '';
-            carregarMensagensComum();
-        }
-    });
-    return false;
-}
-
-
-
-    // 🔐 PROCESSAR ACESSO (LOGIN)
-    function processarAcesso(event) {
-        if (event) {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-        
-        const identificadorInput = document.getElementById('login-identificador');
-        const senhaInput = document.getElementById('login-senha');
-        const erroDiv = document.getElementById('mensagem-erro');
-    
-        if (!identificadorInput || !senhaInput) {
-            console.error("❌ Erro: Elementos de login não encontrados no HTML.");
-            return false;
-        }
-    
-        const identificador = identificadorInput.value.trim();
-        const senhaInserida = senhaInput.value.trim();
-    
-        if (identificador === "" || senhaInserida === "") {
-            if (erroDiv) {
-                erroDiv.style.display = "block";
-                erroDiv.innerHTML = "❌ Preencha todos os campos.";
-            }
-            return false;
-        }
-    
-        const formData = new FormData();
-        formData.append('identificador', identificador);
-        formData.append('senha', senhaInserida);
-    
-        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const URL_LOGIN = isLocal ? "login_estudante.php" : window.location.origin + "/login_estudante.php";
-    
-        fetch(URL_LOGIN, {
-            method: "POST",
-            body: formData
-        })
-        .then(res => res.json())
-        .then(dados => {
-            if (dados.sucesso) {
-                if (erroDiv) erroDiv.style.display = "none";
-                
-                // 🌟 CAPTURA CIRÚRGICA: Pega o ID Único que veio do MySQL da Aiven
-                const idDoEstudanteLogado = dados.estudante.id_unico_escolar || identificador;
-                
-                // Guarda no navegador para persistência do ecossistema
-                localStorage.setItem("id_aluno_ativo", idDoEstudanteLogado);
-                
-                // 🚀 DISPARA IMEDIATAMENTE A CARGA DA TELA 3 PASSANDO O ID REAL
-                carregarCadernoNotasEstudante(idDoEstudanteLogado);
-            
-                // Avança o painel SPA para o ecrã interativo
-                alternarTela('view-dashboard');
-                
-                const logoutMenu = document.getElementById('menu-logout');
-                if (logoutMenu) logoutMenu.style.display = "block";
-            } else {
-                if (erroDiv) {
-                    erroDiv.style.display = "block";
-                    erroDiv.innerHTML = dados.mensagem;
-                }
-            }
-        })
-        .catch(err => {
-            console.error("Erro na requisição de login:", err);
-            if (erroDiv) {
-                erroDiv.style.display = "block";
-                erroDiv.innerHTML = "⚠️ Falha ao conectar ao servidor central.";
-            }
-        });
-    
+    if (!inputIdentificador || !inputSenha) {
+        alert("⚠️ Erro Crítico: Elementos do formulário de login não foram localizados.");
         return false;
     }
-    
+
+    const identificador = inputIdentificador.value.trim();
+    const senhaInserida = inputSenha.value.trim();
+
+    if (identificador === "" || senhaInserida === "") {
+        if (erroDiv) {
+            erroDiv.style.display = "block";
+            erroDiv.innerText = "⚠️ Por favor, preencha todos os campos obrigatórios!";
+        }
+        return false;
+    }
+
+    // 🚀 Desativa o botão para evitar múltiplos cliques em conexões lentas no Huambo
+    const btnAceder = event.target.querySelector('button[type="submit"]');
+    if (btnAceder) {
+        btnAceder.disabled = true;
+        btnAceder.innerText = "A autenticar no Banco Central...";
+    }
+
+    // Envia o payload limpo em formato JSON para o back-end do Render
+    fetch("login_estudante.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        body: JSON.stringify({
+            identificador: identificador,
+            senha: senhaInserida
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Erro na rede ou servidor instável");
+        return res.json();
+    })
+    .then(dados => {
+        if (dados.sucesso) {
+            if (erroDiv) erroDiv.style.display = "none";
+
+            // 💾 Persistência de Sessão Segura para evitar o efeito fantasma
+            localStorage.setItem("id_unico_estudante", dados.estudante.id_unico_escolar);
+            localStorage.setItem("nome_estudante", dados.estudante.nome);
+
+            // 🏛️ INJEÇÃO REATIVA DE DADOS NO PAINEL PRINCIPAL (view-dashboard)
+            if (document.getElementById('txt-nome-aluno')) {
+                document.getElementById('txt-nome-aluno').innerText = dados.estudante.nome;
+            }
+            if (document.getElementById('txt-id-escolar')) {
+                document.getElementById('txt-id-escolar').innerText = dados.estudante.id_unico_escolar;
+            }
+            if (document.getElementById('txt-turma-aluno')) {
+                document.getElementById('txt-turma-aluno').innerText = dados.estudante.turma || "Turma Única A";
+            }
+            if (document.getElementById('txt-classe-aluno')) {
+                document.getElementById('txt-classe-aluno').innerText = dados.estudante.classe;
+            }
+            if (document.getElementById('txt-periodo-aluno')) {
+                document.getElementById('txt-periodo-aluno').innerText = dados.estudante.periodo;
+            }
+
+            // 📅 1. Renderiza a Pauta reativa com base no curso/disciplinas do aluno
+            const corpoTabela = document.getElementById('corpo-tabela-pauta');
+            if (corpoTabela) {
+                // Isola as disciplinas de dentro dos colchetes se existirem
+                let disciplinas = [];
+                if (dados.estudante.classe.includes('[')) {
+                    const match = dados.estudante.classe.match(/\[(.*?)\]/);
+                    if (match && match[1]) disciplinas = match[1].split(',');
+                } else {
+                    disciplinas = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
+                }
+
+                let htmlPauta = "";
+                disciplinas.forEach(disc => {
+                    const nomeDisc = disc.replace('Inscrição', '').trim();
+                    if (nomeDisc === "") return;
+                    htmlPauta += `
+                        <tr>
+                            <td><b>${nomeDisc}</b></td>
+                            <td style="text-align: center; color: #94a3b8;">-</td>
+                            <td style="text-align: center; color: #94a3b8;">-</td>
+                            <td style="text-align: center; color: #94a3b8;">-</td>
+                            <td style="text-align: center; color: #94a3b8;">0</td>
+                            <td style="text-align: right; color: var(--brand-success, #22c55e); font-weight: bold;">Avaliação</td>
+                        </tr>
+                    `;
+                });
+                corpoTabela.innerHTML = htmlPauta;
+            }
+
+            // 💬 2. Inicializa o Chat Académico Sincronizado
+            if (typeof iniciarChatEstudante === "function") {
+                iniciarChatEstudante();
+            } else if (typeof inicializarChatAcademico === "function") {
+                inicializarChatAcademico();
+            }
+
+            // 📚 3. Aciona reativamente a Prateleira de Livros (se a função existir)
+            if (typeof renderizarLivrosAluno === "function") {
+                renderizarLivrosAluno(dados.estudante.classe);
+            }
+
+            // 🎉 Redireciona o ecrã para o Dashboard com efeito visual limpo
+            if (typeof alternarTela === "function") {
+                alternarTela("view-dashboard");
+            } else {
+                const painel = document.getElementById("view-dashboard");
+                if (painel) painel.classList.add("active");
+                const loginView = document.getElementById("view-login");
+                if (loginView) loginView.classList.remove("active");
+            }
+
+            // Limpa o formulário de login por segurança
+            document.getElementById("form-login").reset();
+
+        } else {
+            // Exibe a mensagem de erro exata vinda do banco MySQL da Aiven
+            if (erroDiv) {
+                erroDiv.style.display = "block";
+                erroDiv.innerText = dados.mensagem;
+            }
+        }
+    })
+    .catch(err => {
+        console.error("Falha no login dinâmico:", err);
+        if (erroDiv) {
+            erroDiv.style.display = "block";
+            erroDiv.innerText = "🚨 Falha de ligação: Não foi possível alcançar a base académica central.";
+        }
+    })
+    .finally(() => {
+        // Reativa o botão após o processamento
+        if (btnAceder) {
+            btnAceder.disabled = false;
+            btnAceder.innerText = "Aceder à Plataforma ➔";
+        }
+    });
+
+    return false;
+}
     // =========================================================================
     // 🎯 CONTROLADOR DE INTERFACE SPA (GERENCIADOR DE TELAS OFICIAL)
     // =========================================================================
@@ -759,31 +851,6 @@ function sincronizarChatAcademico() {
 
 
 
-// 📨 FUNÇÃO PARA DISPARAR UMA NOVA MENSAGEM
-function enviarMensagemDoChat(quemEnvia) {
-    const inputTexto = document.getElementById('input-mensagem-chat'); // Ajuste o ID para o seu campo de texto
-    if (!inputTexto || inputTexto.value.trim() === "") return;
-
-    const formData = new FormData();
-    formData.append('remetente', quemEnvia); // 'coord_prof' ou 'estudante'
-    formData.append('id_estudante', idEstudanteChatAtivo);
-    formData.append('conteudo', inputTexto.value.trim());
-
-    fetch("chat_academico.php", {
-        method: "POST",
-        body: formData
-    })
-    .then(res => res.json())
-    .then(dados => {
-        if (dados.sucesso) {
-            inputTexto.value = ""; // Limpa a caixa de texto
-            sincronizarChatAcademico(); // Atualiza na hora
-        }
-    });
-}
-
-// ⏱️ ATIVA O MOTOR DE SINCRONIZAÇÃO EM TEMPO REAL (Executa a cada 3 segundos)
-setInterval(sincronizarChatAcademico, 3000);
 
 
     
