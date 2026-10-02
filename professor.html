@@ -148,43 +148,99 @@
 
         
         <!-- =========================================================================
-             📊 TELA 2: PAINEL DE CONTROLO INTEGRADO (CADERNETA, LIVROS E CHAT)
-             ========================================================================= -->
-        <div class="tela-view" id="view-dashboard-prof">
-            
-            <!-- FILTRO DE TURMA -->
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px;">
-                    <div class="titulo" style="margin-bottom: 0;">Escolha a Turma para Trabalho</div>
-                    <li style="list-style: none;">
-                        <a href="Principal.html" style="color: var(--brand-gold); text-decoration: none; font-size: 13px; font-weight: bold; background: rgba(234, 179, 8, 0.1); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(234, 179, 8, 0.2);">Home</a>
-                    </li>
-                </div>
-                <select id="filtro-classe" class="form-select" onchange="carregarPautaGlobalProf()">
-                    <option value="">-- Selecione uma Classe Ativa --</option>
-                </select>
+     📊 TELA 2: PAINEL DE CONTROLO INTEGRADO (CADERNETA, LIVROS E CHAT)
+     ========================================================================= -->
+<div class="tela-view" id="view-dashboard-prof">
+    
+        <!-- 1. FILTRO DE TURMA -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px;">
+                <div class="titulo" style="margin-bottom: 0;">Escolha a Turma para Trabalho</div>
+                <li style="list-style: none;">
+                    <a href="Principal.html" style="color: var(--brand-gold); text-decoration: none; font-size: 13px; font-weight: bold; background: rgba(234, 179, 8, 0.1); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(234, 179, 8, 0.2);">Home</a>
+                </li>
             </div>
-
-            <!-- GESTOR DE MANUAIS: UPLOAD DE PDFs PARA A NUVEM -->
-<div class="card" style="border-top: 4px solid var(--brand-blue-glow);">
-        <div class="titulo">📚 Alocar Manual na Prateleira Inteligente</div>
-        <form id="form-upload-livro" onsubmit="enviarLivroNuvem(event)">
-            <div style="margin-bottom: 12px;">
-                <label style="font-size: 11px; font-weight: bold;">Título do Livro / Disciplina:</label>
-                <input type="text" id="livro-titulo" class="form-input" placeholder="Ex: Manual de Química - 7ª Classe" required>
-            </div>
-            <div style="margin-bottom: 12px;">
-                <label style="font-size: 11px; font-weight: bold;">Autor / Editorial:</label>
-                <input type="text" id="livro-autor" class="form-input" placeholder="Ex: Editorial Aurélius" required>
-            </div>
-            <div style="margin-bottom: 12px;">
-                <label style="font-size: 11px; font-weight: bold;">Selecionar Ficheiro PDF do Manual: *</label>
-                <input type="file" id="livro-ficheiro" accept="application/pdf" class="form-input" required>
-            </div>
-            <button type="submit" class="btn" style="background: var(--brand-blue-glow); color: #000;">Publicar Livro Digital 🚀</button>
-                    </form>
+            <select id="filtro-classe" class="form-select" onchange="carregarPautaGlobalProf()">
+                <option value="">-- Selecione uma Classe Ativa --</option>
+            </select>
+        </div>
+    
+        <!-- 2. 📊 CARD REATIVO DA PAUTA DE AVALIAÇÃO INTERATIVA -->
+       <!-- 📊 CARD REATIVO DA PAUTA DE AVALIAÇÃO INTERATIVA -->
+  <!-- 📊 SISTEMA REATIVO DE PAUTAS POR ALUNO (ACADEMIA AURÉLIUS) -->
+<div class="card" id="card-pauta-global" style="display: none; border-top: 4px solid var(--brand-gold);">
+        <div class="titulo">📊 Caderneta de Avaliação Escolar</div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 15px;">Selecione o estudante na lista da esquerda para desdobrar a sua pauta de notas individual à direita.</p>
         
+        <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+            
+            <!-- 👥 COLUNA ESQUERDA: LISTA EXCLUSIVA DE ALUNOS DA CLASSE -->
+            <div style="flex: 1; min-width: 280px; background: rgba(255,255,255,0.01); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="font-size: 13px; font-weight: bold; color: var(--brand-gold); margin-bottom: 12px; border-bottom: 1px solid rgba(234,179,8,0.2); padding-bottom: 6px;">👥 Alunos Matriculados</div>
+                <div class="table-wrapper" style="max-height: 450px; overflow-y: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Estudante</th>
+                                <th style="text-align: right;">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-lista-estudantes">
+                            <!-- Injetado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+    
+            <!-- 📝 COLUNA DIREITA: ESPAÇOS DE COLOCAR AS NOTAS DO ALUNO SELECIONADO -->
+            <div id="painel-pauta-individual-aluno" style="flex: 1.5; min-width: 350px; display: none; background: #070b14; padding: 20px; border-radius: 8px; border: 2px solid var(--brand-success);">
+                <div style="font-size: 11px; font-weight: bold; color: var(--brand-success); text-transform: uppercase; letter-spacing: 1px;">Caderneta Ativa do Aluno:</div>
+                <h3 id="nome-aluno-foco-pauta" style="font-size: 18px; font-weight: 800; color: #fff; margin-top: 4px; margin-bottom: 15px;">---</h3>
+                
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Disciplina</th>
+                                <th style="text-align: center; width: 65px;">N1</th>
+                                <th style="text-align: center; width: 65px;">N2</th>
+                                <th style="text-align: center; width: 65px;">N3</th>
+                                <th style="text-align: center; width: 65px;">Faltas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-tabela-notas-individual">
+                            <!-- Injetado com os inputs para preencher -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <button class="btn" onclick="salvarPautaCompletaDoAluno()" style="background: var(--brand-success); width: 100%; margin-top: 15px; font-weight: bold;">
+                    Guardar e Sincronizar Pauta Completa ✓
+                </button>
+            </div>
+    
+        </div>
     </div>
+    
+        <!-- 3. GESTOR DE MANUAIS: UPLOAD DE PDFs PARA A NUVEM -->
+        <div class="card" style="border-top: 4px solid var(--brand-blue-glow);">
+            <div class="titulo">📚 Alocar Manual na Prateleira Inteligente</div>
+            <form id="form-upload-livro" onsubmit="enviarLivroNuvem(event)">
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: bold;">Título do Livro / Disciplina:</label>
+                    <input type="text" id="livro-titulo" class="form-input" placeholder="Ex: Manual de Química - 7ª Classe" required>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: bold;">Autor / Editorial:</label>
+                    <input type="text" id="livro-autor" class="form-input" placeholder="Ex: Editorial Aurélius" required>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: bold;">Selecionar Ficheiro PDF do Manual: *</label>
+                    <input type="file" id="livro-ficheiro" accept="application/pdf" class="form-input" required>
+                </div>
+                <button type="submit" class="btn" style="background: var(--brand-blue-glow); color: #000;">Publicar Livro Digital 🚀</button>
+            </form>
+        </div>
 
 
     <div class="card" style="border-top: 4px solid var(--brand-success);">
@@ -572,34 +628,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
     <script>
-        function enviarLivroNuvem(event) {
-    event.preventDefault();
-    const fileInput = document.getElementById('livro-ficheiro').files[0];
-    const titulo = document.getElementById('livro-titulo').value.trim();
-    const autor = document.getElementById('livro-autor').value.trim();
-
-    if (!fileInput) return;
-
-    const reader = new FileReader();
-    reader.onload = function () {
-        const base64String = reader.result;
-
-        fetch('guardar_livro.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ titulo: titulo, autor: autor, pdf_base64: base64String })
-        })
-        .then(res => res.json())
-        .then(res => {
-            alert(res.mensagem);
-            if(res.sucesso) document.getElementById('form-upload-livro').reset();
-        });
-    };
-    reader.readAsDataURL(fileInput);
-}
-
-
-
+      
 
 
     // 🛡️ CREDENCIAIS DE ACESSO DOCENTE EXCLUSIVAS
@@ -621,114 +650,118 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
+// =========================================================================
+// 💬 CENTRAL DE COMUNICAÇÃO UNIFICADA E BLINDADA - PAINEL DO PROFESSOR
+// =========================================================================
+let alunoChatSelecionado = "TODOS"; 
 
-
-    let alunoChatSelecionado = "TODOS"; 
-
-    function sincronizarChatProfessor() {
-        // Alinhado com o chat_academico.php que lê o id_estudante por parâmetro
-        const termoBusca = alunoChatSelecionado ? alunoChatSelecionado : "TODOS";
-    
-        fetch(`chat_academico.php?id_estudante=${encodeURIComponent(termoBusca)}`)
-        .then(res => res.json())
-        .then(dados => {
-            const caixaChat = document.getElementById('caixa-mensagens-chat-prof');
-            if (!caixaChat) return;
-    
-            if (dados.sucesso && dados.mensagens.length > 0) {
-                caixaChat.innerHTML = dados.mensagens.map(m => {
-                    // Verifica se a mensagem veio do professor ou de um estudante
-                    const isProf = (m.perfil === 'professor' || m.remetente.includes('Prof'));
-                    const corEtiqueta = isProf ? '#f59e0b' : '#3b82f6';
-                    const label = isProf ? `[Tu / Professor]` : `[👤 ${m.remetente}]`;
-                    
-                    return `
-                        <div style="margin-bottom: 6px; font-size: 13px; line-height: 1.4; text-align: left;">
-                            <span style="color: ${corEtiqueta}; font-weight: bold;">${label}:</span> 
-                            <span style="color: #fff;">${m.conteudo}</span>
-                            <span style="font-size: 10px; color: #64748b; margin-left: 8px;">(${m.hora})</span>
-                        </div>
-                    `;
-                }).join('');
-                caixaChat.scrollTop = caixaChat.scrollHeight;
-            } else {
-                caixaChat.innerHTML = `<div style="color: #64748b; font-size: 13px; text-align: center; padding-top: 20px;">Nenhuma mensagem registada no mural da turma.</div>`;
-            }
-        })
-        .catch(err => console.error("Erro ao sincronizar chat do professor:", err));
-    }
-    
-    // 👤 Função que escuta a mudança no seletor de alunos <select onchange="mudarAlunoChat(this.value)">
-    function mudarAlunoChat(valorSelecionado) {
-        alunoChatSelecionado = valorSelecionado ? valorSelecionado : "TODOS";
-        sincronizarChatProfessor();
-    }
-// 🔄 2. DETETA MUDANÇA DE ALUNO NO SELETOR
+// 🔄 1. DETETA MUDANÇA DE ALUNO NO SELETOR
 function mudarAlunoChat(idAluno) {
-    alunoChatSelecionado = idAluno;
+    alunoChatSelecionado = idAluno ? idAluno : "TODOS";
     sincronizarChatProfessor();
 }
 
-// 🔄 3. LOOP DE SINCRONIZAÇÃO (GET)
-function sincronizarChatProfessor() {
-    if (!alunoChatSelecionado) return;
+let ultimoHtmlChatProf = "";
 
-    fetch(`chat_academico.php?id_estudante=${alunoChatSelecionado}`)
-    .then(res => res.json())
+function sincronizarChatProfessor() {
+    fetch('chat_academico.php')
+    .then(res => {
+        if (!res.ok) throw new Error("Erro de rede");
+        return res.json();
+    })
     .then(dados => {
         const caixaChat = document.getElementById('caixa-mensagens-chat-prof');
         if (!caixaChat) return;
 
         if (dados.sucesso && dados.mensagens.length > 0) {
-            caixaChat.innerHTML = dados.mensagens.map(m => {
-                const isProf = m.remetente === 'coord_prof';
-                const corEtiqueta = isProf ? 'var(--brand-gold, #eab308)' : 'var(--brand-blue-glow, #3b82f6)';
-                const label = isProf ? "[Tu / Professor]" : "[Aluno]";
+            // Gera o novo HTML na memória primeiro
+            const novoHtml = dados.mensagens.map(m => {
+                const isProf = (m.perfil === 'professor' || m.remetente === 'Prof. Aurélio Jamba');
+                const corEtiqueta = isProf ? '#f59e0b' : '#3b82f6';
+                const label = isProf ? "[Tu / Professor]" : `[👤 Aluno: ${m.remetente}]`;
+                const horaSMS = m.hora ? m.hora : '00:00';
                 
-                return `<div style="margin-bottom: 4px; font-size: 13px; line-height: 1.4;">
-                            <span style="color: ${corEtiqueta}; font-weight: bold;">${label}:</span> ${m.conteudo}
-                            <span style="font-size: 10px; color: #64748b; margin-left: 8px;">(${m.hora})</span>
-                        </div>`;
+                return `
+                    <div style="margin-bottom: 6px; font-size: 13px; text-align: left; line-height: 1.4;">
+                        <span style="color: ${corEtiqueta}; font-weight: bold;">${label}:</span> 
+                        <span style="color: #fff; margin-left: 4px;">${m.conteudo}</span>
+                        <span style="font-size: 10px; color: #64748b; margin-left: 8px;">(${horaSMS})</span>
+                    </div>
+                `;
             }).join('');
-            caixaChat.scrollTop = caixaChat.scrollHeight; // Scroll automático
+
+            // 🌟 SÓ ATUALIZA A TELA SE CHEGOU MENSAGEM NOVA (Elimina o piscar!)
+            if (novoHtml !== ultimoHtmlChatProf) {
+                ultimoHtmlChatProf = novoHtml;
+                caixaChat.innerHTML = novoHtml;
+                caixaChat.scrollTop = caixaChat.scrollHeight; // Rola para o fim
+            }
         } else if (dados.sucesso && dados.mensagens.length === 0) {
-            caixaChat.innerHTML = `<div style="color: #64748b; font-size: 13px; text-align: center; padding-top: 20px;">Nenhuma mensagem registada com este aluno.</div>`;
+            if (caixaChat.innerHTML !== `<div style="color: #64748b; font-size: 13px; text-align: center; padding-top: 20px;">Nenhuma mensagem registada no mural da turma.</div>`) {
+                caixaChat.innerHTML = `<div style="color: #64748b; font-size: 13px; text-align: center; padding-top: 20px;">Nenhuma mensagem registada no mural da turma.</div>`;
+                ultimoHtmlChatProf = "";
+            }
         }
     })
     .catch(err => console.error("Erro ao sincronizar chat:", err));
 }
 
-// 🔄 4. DISPARAR ENVIO DA MENSAGEM (POST)
+// 🔄 3. DISPARAR ENVIO DA MENSAGEM (POST HÍBRIDO)
 function enviarMensagemProfessor(event) {
-    if (event) event.preventDefault();
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
 
     const inputTexto = document.getElementById('campo-texto-chat-prof');
     if (!inputTexto || inputTexto.value.trim() === "") return;
 
-    if (!alunoChatSelecionado) {
-        alert("⚠️ Por favor, escolha um aluno na lista antes de enviar uma resposta!");
-        return;
-    }
-
     const formData = new FormData();
     formData.append('remetente', 'coord_prof');
-    formData.append('id_estudante', alunoChatSelecionado);
+    formData.append('id_estudante', alunoChatSelecionado ? alunoChatSelecionado : 'TODOS');
     formData.append('conteudo', inputTexto.value.trim());
+
+    // Bloqueia o botão para evitar cliques múltiplos em conexões instáveis
+    const btnEnviar = event.target ? event.target.querySelector('button[type="submit"]') : null;
+    if (btnEnviar) btnEnviar.disabled = true;
 
     fetch("chat_academico.php", {
         method: "POST",
         body: formData
     })
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok) throw new Error("Erro no servidor Render");
+        return res.json();
+    })
     .then(dados => {
         if (dados.sucesso) {
             inputTexto.value = ""; // Limpa a caixa de texto local
-            sincronizarChatProfessor(); // Atualiza na hora
+            
+            // 🌟 O SEGREDO DA BLINDAGEM: Limpa a variável de histórico antigo 
+            // para forçar a renderização real de todas as mensagens na próxima atualização!
+            if (typeof ultimoHtmlChatProf !== 'undefined') {
+                ultimoHtmlChatProf = ""; 
+            }
+            
+            // Aguarda 100 milissegundos para dar tempo ao MySQL da Aiven de processar a escrita antes da leitura
+            setTimeout(sincronizarChatProfessor, 100);
         } else {
-            alert("❌ Erro interno: " + dados.mensagem);
+            alert("❌ Erro ao enviar mensagem: " + dados.mensagem);
         }
     })
-    .catch(err => console.error("Erro ao processar envio do chat:", err));
+    .catch(err => console.error("Erro ao processar envio do chat:", err))
+    .finally(() => {
+        // Reativa o botão em segurança
+        if (btnEnviar) btnEnviar.disabled = false;
+    });
+}
+
+// 🕒 4. INICIALIZADOR AUTOMÁTICO DO LOOP DO CHAT DO PROFESSOR (3 SEGUNDOS)
+let intervaloProfessorChat = null;
+function iniciarChatProfessor() {
+    sincronizarChatProfessor();
+    if (intervaloProfessorChat) clearInterval(intervaloProfessorChat);
+    intervaloProfessorChat = setInterval(sincronizarChatProfessor, 3000);
 }
 
 
@@ -781,127 +814,136 @@ function carregarIndicadoresETurmas() {
     .catch(err => console.error("Erro ao carregar indicadores:", err));
 }
 
-// 🔄 2. DETETA A SELEÇÃO DA TURMA E MONTA A PAUTA DE NOTAS NO ECRÃ
-function carregarPautaGlobalProf() {
-    const classeSelecionada = document.getElementById("filtro-classe").value;
-    const cardPauta = document.getElementById("card-pauta-global");
-    const tabelaAlunos = document.getElementById("tabela-pauta-alunos");
+//
 
-    if (!classeSelecionada) {
-        cardPauta.style.display = "none";
-        return;
-    }
+// 📥 ENVIA NOTA INDIVIDUAL LANÇADA PARA O BANCO CENTRAL NA NUVEM
+function salvarNotaEstudante(idUtilizador, nomeDisciplina) {
+    const n1 = document.getElementById(`n1_${idUtilizador}_${btoa(nomeDisciplina)}`).value;
+    const n2 = document.getElementById(`n2_${idUtilizador}_${btoa(nomeDisciplina)}`).value;
+    const n3 = document.getElementById(`n3_${idUtilizador}_${btoa(nomeDisciplina)}`).value;
+    const faltas = document.getElementById(`f_${idUtilizador}_${btoa(nomeDisciplina)}`).value;
 
-    // Exibe o card da pauta com feedback visual de carregamento
-    cardPauta.style.display = "block";
-    tabelaAlunos.innerHTML = `
-        <tr>
-            <td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">
-                🔄 A mapear e carregar pauta dos estudantes...
-            </td>
-        </tr>
-    `;
+    const payload = {
+        id_utilizador: idUtilizador,
+        disciplina: nomeDisciplina,
+        n1: n1 !== "" ? parseFloat(n1) : null,
+        n2: n2 !== "" ? parseFloat(n2) : null,
+        n3: n3 !== "" ? parseFloat(n3) : null,
+        faltas: parseInt(faltas) || 0
+    };
 
-    // Conecta diretamente ao seu ficheiro especialista do servidor
-    fetch(`obter_pauta_prof.php?classe=${encodeURIComponent(classeSelecionada)}`)
-        .then(response => response.json())
-        .then(dados => {
-            tabelaAlunos.innerHTML = ""; // Limpa o estado de carregamento
-
-            if (!dados.sucesso || !dados.alunos || dados.alunos.length === 0) {
-                tabelaAlunos.innerHTML = `
-                    <tr>
-                        <td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">
-                            ⚠️ Nenhum estudante matriculado nesta classe/período.
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-
-            // Popula os registos reais obtidos do phpMyAdmin
-            dados.alunos.forEach(aluno => {
-                const tr = document.createElement("tr");
-                tr.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
-                
-                tr.innerHTML = `
-                    <td style="padding: 10px; color: var(--text-muted); font-size: 13px; font-weight: bold;">
-                        ${aluno.id_unico_escolar || 'Inscrito'}
-                    </td>
-                    <td style="padding: 10px; color: #fff; font-weight: 500; font-size: 13px;">
-                        ${aluno.nome}
-                    </td>
-                    <td style="padding: 10px; text-align: center; color: var(--text-muted); font-size: 13px;">
-                        ${aluno.periodo || 'Não Definido'}
-                    </td>
-                    <td style="padding: 10px; text-align: center;">
-                        <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">
-                            Ativo
-                        </span>
-                    </td>
-                `;
-                tabelaAlunos.appendChild(tr);
-            });
-        })
-        .catch(error => {
-            console.error("Erro na requisição da pauta:", error);
-            tabelaAlunos.innerHTML = `
-                <tr>
-                    <td colspan="4" style="text-align: center; padding: 20px; color: #ef4444; font-size: 13px;">
-                        ❌ Erro ao ligar ao servidor académico.
-                    </td>
-                </tr>
-            `;
-        });
+    fetch('lancar_nota.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(dados => {
+        if (dados.sucesso) {
+            // Pequeno feedback de sucesso no terminal ou alert discreto
+            console.log(`Nota guardada com sucesso para ${nomeDisciplina}`);
+            alert(`🎉 Avaliações de ${nomeDisciplina} guardadas com sucesso na nuvem!`);
+        } else {
+            alert("❌ Erro ao guardar notas: " + dados.mensagem);
+        }
+    })
+    .catch(err => console.error("Erro de ligação na gravação de notas:", err));
 }
 
 
-// =========================================================================
-// 🚀 MOTOR DE SINCRONIZAÇÃO AUTOMÁTICA E DINÂMICA VIA MYSQL
-// =========================================================================
 
-// 🔄 1. CARREGA OS INDICADORES DE FATURAMENTO E ALIMENTA O SELECT DE TURMAS
-// 🔄 FUNÇÃO QUE VAI BUSCAR AS TURMAS DO BANCO E MONTA AS OPÇÕES DO SELECT
-function sincronizarPainelProfessorAutomatico() {
-    const seletor = document.getElementById('filtro-classe');
-    if (!seletor) {
-        console.error("Erro: Elemento #filtro-classe não foi encontrado no HTML.");
-        return;
-    }
 
+
+
+
+
+
+
+function sincronizarPainelEIndicadoresProf() {
     fetch("obter_pauta_prof.php?acao=indicadores")
     .then(res => res.json())
     .then(dados => {
         if (dados.sucesso) {
-            // Atualiza os contadores no topo
+            // Atualiza os contadores reativos no HTML
             if(document.getElementById('estatistica-inscritos')) document.getElementById('estatistica-inscritos').innerText = dados.inscritos;
             if(document.getElementById('estatistica-matriculados')) document.getElementById('estatistica-matriculados').innerText = dados.matriculados;
             if(document.getElementById('estatistica-regular')) document.getElementById('estatistica-regular').innerText = dados.regular;
             if(document.getElementById('estatistica-pos-laboral')) document.getElementById('estatistica-pos-laboral').innerText = dados.pos_laboral;
+            
             if(document.getElementById('estatistica-faturamento')) {
-                document.getElementById('estatistica-faturamento').innerText = Number(dados.faturamento).toLocaleString('pt-AO', {minimumFractionDigits: 2}) + " Kzs";
+                document.getElementById('estatistica-faturamento').innerText = 
+                    Number(dados.faturamento).toLocaleString('pt-AO', {minimumFractionDigits: 2}) + " Kzs";
             }
 
-            // Alimenta as opções com os dados vindos da coluna 'periodo'
-            const listaTurmas = (dados.turmas && dados.turmas.length > 0) ? dados.turmas : ["manhã", "tarde", "Tarde", "Noite (18h - 21h)"];
-            
-            seletor.innerHTML = '<option value="">-- Selecione uma Classe Ativa --</option>' +
-                listaTurmas.map(t => `<option value="${t}">${t}</option>`).join('');
+            // Alimenta dinamicamente o Seletor de Classes para Trabalho
+            const seletor = document.getElementById('filtro-classe');
+            if (seletor && dados.turmas && dados.turmas.length > 0) {
+                let htmlOpcoes = '<option value="">-- Selecione uma Classe Ativa --</option>';
+                dados.turmas.forEach(t => {
+                    htmlOpcoes += `<option value="${t}">${t}</option>`;
+                });
+                seletor.innerHTML = htmlOpcoes;
+            }
+        }
+    })
+    .catch(err => console.error("Erro ao sincronizar indicadores financeiros:", err));
+}
+
+// 📤 2. ENVIAR NOVO LIVRO/MANUAL PARA O REPOSITÓRIO DO RENDER (CORRIGIDO)
+function enviarLivroNuvem(event) {
+    if (event) event.preventDefault();
+
+    const tituloInput = document.getElementById('livro-titulo');
+    const autorInput = document.getElementById('livro-autor');
+    const ficheiroInput = document.getElementById('livro-ficheiro');
+
+    if (!ficheiroInput || !ficheiroInput.files || ficheiroInput.files.length === 0) return;
+
+    const btnSubmit = event.target.querySelector('button[type="submit"]');
+    if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerText = "A fazer upload do Manual PDF... ⏳";
+    }
+
+    const formData = new FormData();
+    formData.append('titulo', tituloInput.value.trim());
+    formData.append('autor', autorInput.value.trim());
+    formData.append('ficheiro', ficheiroInput.files[0]); // ✨ CORRIGIDO: Captura o arquivo individual e não a lista inteira
+
+    fetch('guardar_livro.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(dados => {
+        if (dados.sucesso) {
+            alert(dados.mensagem);
+            document.getElementById('form-upload-livro').reset(); // Limpa o formulário de forma limpa
+        } else {
+            alert("⚠️ Rejeitado pelo servidor: " + dados.mensagem);
         }
     })
     .catch(err => {
-        console.error("Falha ao ler o PHP, aplicando dados de contingência:", err);
-        // Garante que o select NUNCA fica vago no ecrã
-        seletor.innerHTML = `
-            <option value="">-- Selecione uma Classe Ativa --</option>
-            <option value="manhã">manhã</option>
-            <option value="tarde">tarde</option>
-            <option value="Tarde">Tarde</option>
-            <option value="Noite (18h - 21h)">Noite (18h - 21h)</option>
-            <option value="Manhã | Longonjo (Goia)">Manhã | Longonjo (Goia)</option>
-        `;
+        console.error("Erro no upload do livro:", err);
+        alert("❌ Erro fatal: Não foi possível alcançar o servidor de manuais.");
+    })
+    .finally(() => {
+        if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = "Publicar Livro Digital 🚀";
+        }
     });
 }
+
+
+
+
+
+
+
+
+
+
 // 🔐 ESTA É A SUA FUNÇÃO DE LOGIN QUE ATIVA O PAINEL
 function processarAcessoProfessor(event) {
     event.preventDefault();
@@ -962,57 +1004,190 @@ function popularFiltroClasses() {
         .catch(error => console.error("Erro ao popular seletor de classes:", error));
 }
 
-// 📋 CARREGA OS ALUNOS NA TABELA DA PAUTA ASSIM QUE CLICAM NA CLASSE DO SELETOR
+
+
+
+
+let alunoFocoIdUtilizador = null;
+let alunoFocoDisciplinasArr = [];
+
+// 👥 1. CLICOU NA CLASSE: Preenche apenas a lista de Nomes dos Alunos
 function carregarPautaGlobalProf() {
     const classeSelecionada = document.getElementById("filtro-classe").value;
     const cardPauta = document.getElementById("card-pauta-global");
-    const tabelaAlunos = document.getElementById("tabela-pauta-alunos");
+    const corpoLista = document.getElementById("corpo-lista-estudantes");
+    const painelIndividual = document.getElementById("painel-pauta-individual-aluno");
 
     if (!classeSelecionada) {
-        cardPauta.style.display = "none";
+        if (cardPauta) cardPauta.style.display = "none";
         return;
     }
 
-    cardPauta.style.display = "block";
-    tabelaAlunos.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">🔄 A carregar estudantes da turma...</td></tr>`;
+    if (cardPauta) cardPauta.style.display = "block";
+    if (painelIndividual) painelIndividual.style.display = "none";
+    corpoLista.innerHTML = `<tr><td colspan="2" style="text-align:center; padding:15px; color:#64748b;">🔄 A ler estudantes...</td></tr>`;
 
     fetch(`obter_pauta_prof.php?classe=${encodeURIComponent(classeSelecionada)}`)
-        .then(response => response.json())
-        .then(dados => {
-            tabelaAlunos.innerHTML = "";
+    .then(res => res.json())
+    .then(dados => {
+        if (!dados.sucesso || !dados.alunos || dados.alunos.length === 0) {
+            corpoLista.innerHTML = `<tr><td colspan="2" style="text-align:center; padding:15px; color:#ef4444;">⚠️ Nenhum aluno nesta classe.</td></tr>`;
+            return;
+        }
 
-            if (!dados.sucesso || !dados.alunos || dados.alunos.length === 0) {
-                tabelaAlunos.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">⚠️ Nenhum estudante matriculado nesta classe.</td></tr>`;
-                return;
-            }
-
-            dados.alunos.forEach((aluno, index) => {
-                const tr = document.createElement("tr");
-                tr.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
-                
-                tr.innerHTML = `
-                    <td style="padding: 10px; color: var(--text-muted); font-size: 13px; font-weight: bold;">
-                        ${aluno.id_unico_escolar || 'Inscrito'}
-                    </td>
-                    <td style="padding: 10px; color: #fff; font-weight: 500; font-size: 13px;">
-                        ${aluno.nome}
-                    </td>
-                    <td style="padding: 10px; text-align: center; color: var(--text-muted); font-size: 13px;">
-                        ${aluno.periodo || 'Geral'}
-                    </td>
-                    <td style="padding: 10px; text-align: center;">
-                        <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">
-                            Ativo
-                        </span>
-                    </td>
-                `;
-                tabelaAlunos.appendChild(tr);
-            });
-        })
-        .catch(error => {
-            console.error("Erro ao processar estudantes na pauta:", error);
-            tabelaAlunos.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: #ef4444; font-size: 13px;">❌ Erro na comunicação com o servidor.</td></tr>`;
+        corpoLista.innerHTML = "";
+        dados.alunos.forEach(aluno => {
+            const tr = document.createElement("tr");
+            tr.style.borderBottom = "1px solid rgba(255,255,255,0.03)";
+            
+            // Passa o ID real, o Nome e o Curso codificado para a função individual
+            tr.innerHTML = `
+                <td style="padding: 12px; color: #fff; font-weight: 500;">
+                    ${aluno.nome}<br>
+                    <span style="font-size: 10.5px; color: var(--brand-blue); font-weight: bold;">${aluno.id_unico_escolar || 'Inscrito'}</span>
+                </td>
+                <td style="padding: 12px; text-align: right;">
+                    <button class="btn" style="margin:0; padding: 6px 12px; font-size:11px; width:auto; background: var(--brand-blue);" 
+                        onclick="abrirCadernetaIndividualDoAluno(${aluno.id_utilizador}, '${aluno.nome.replace(/'/g, "\\'")}', '${encodeURIComponent(aluno.curso || "")}')">
+                        Editar Notas 📁
+                    </button>
+                </td>
+            `;
+            corpoLista.appendChild(tr);
         });
+    })
+    .catch(err => console.error("Erro ao listar alunos:", err));
+}
+
+// 📝 2. CLICOU EM "EDITAR NOTAS": Desdobra todas as disciplinas daquele aluno com os inputs de preenchimento
+function abrirCadernetaIndividualDoAluno(idUtilizador, nomeAluno, cursoCodificado) {
+    // 🔒 FIXAÇÃO DA MEMÓRIA GLOBAL DO SCRIPT
+    alunoFocoIdUtilizador = idUtilizador; 
+    document.getElementById("nome-aluno-foco-pauta").innerText = nomeAluno;
+    
+    const painelIndividual = document.getElementById("painel-pauta-individual-aluno");
+    const tabelaNotas = document.getElementById("corpo-tabela-notas-individual");
+    
+    if (painelIndividual) painelIndividual.style.display = "block";
+    tabelaNotas.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:15px; color:#64748b;">🔄 A extrair histórico de avaliações...</td></tr>`;
+
+    let cursoStr = decodeURIComponent(cursoCodificado);
+    let disciplinasArr = [];
+
+    if (cursoStr.includes('[') && cursoStr.indexOf('Inscrição') === -1) {
+        const match = cursoStr.match(/\[(.*?)\]/);
+        if (match && match[1]) {
+            disciplinasArr = match[1].split(',').map(d => d.trim()).filter(Boolean);
+        }
+    }
+
+    if (disciplinasArr.length === 0) {
+        if (cursoStr.includes("13ª")) {
+            disciplinasArr = ['Matemática Aplicada', 'Física Avançada', 'Química Industrial', 'Inglês Técnico', 'Biologia Aplicada'];
+        } else if (cursoStr.includes("12ª")) {
+            disciplinasArr = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
+        } else {
+            disciplinasArr = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
+        }
+    }
+
+    alunoFocoDisciplinasArr = disciplinasArr;
+
+    fetch(`buscar_notas.php?id_utilizador=${idUtilizador}`)
+    .then(res => res.json())
+    .then(dadosNotas => {
+        tabelaNotas.innerHTML = "";
+        const mapaDeNotas = dadosNotas.sucesso ? dadosNotas.notas : {};
+
+        alunoFocoDisciplinasArr.forEach((nomeCadeira, idx) => {
+            const n1 = mapaDeNotas[nomeCadeira]?.n1 !== undefined && mapaDeNotas[nomeCadeira].n1 !== null ? mapaDeNotas[nomeCadeira].n1 : "";
+            const n2 = mapaDeNotas[nomeCadeira]?.n2 !== undefined && mapaDeNotas[nomeDeCadeira].n2 !== null ? mapaDeNotas[nomeCadeira].n2 : "";
+            const n3 = mapaDeNotas[nomeCadeira]?.n3 !== undefined && mapaDeNotas[nomeCadeira].n3 !== null ? mapaDeNotas[nomeCadeira].n3 : "";
+            const faltas = mapaDeNotas[nomeCadeira]?.faltas !== undefined && mapaDeNotas[nomeCadeira].faltas !== null ? mapaDeNotas[nomeCadeira].faltas : "0";
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td style="padding: 8px 4px; color: #cbd5e1; font-size:13px; font-weight: 600;">📖 ${nomeCadeira}</td>
+                <td style="padding: 4px; text-align: center;">
+                    <input type="number" step="0.1" min="0" max="20" class="form-input" style="margin:0; text-align:center; padding:6px 2px;" id="input-n1-${idx}" value="${n1}">
+                </td>
+                <td style="padding: 4px; text-align: center;">
+                    <input type="number" step="0.1" min="0" max="20" class="form-input" style="margin:0; text-align:center; padding:6px 2px;" id="input-n2-${idx}" value="${n2}">
+                </td>
+                <td style="padding: 4px; text-align: center;">
+                    <input type="number" step="0.1" min="0" max="20" class="form-input" style="margin:0; text-align:center; padding:6px 2px;" id="input-n3-${idx}" value="${n3}">
+                </td>
+                <td style="padding: 4px; text-align: center;">
+                    <input type="number" min="0" class="form-input" style="margin:0; text-align:center; padding:6px 2px;" id="input-faltas-${idx}" value="${faltas}">
+                </td>
+            `;
+            tabelaNotas.appendChild(tr);
+        });
+    })
+    .catch(err => console.error("Erro ao puxar notas:", err));
+}
+
+// 💾 3. GUARDA TODAS AS NOTAS DE TODAS AS DISCIPLINAS DO ALUNO COM UM ÚNICO CLIQUE (DESBLOQUEADO DEFINTIVO)
+function salvarPautaCompletaDoAluno() {
+    // Validação correta utilizando a variável id unificada
+    if (alunoFocoIdUtilizador === null || alunoFocoDisciplinasArr.length === 0) {
+        alert("⚠️ Erro Interno: O identificador do aluno não foi carregado corretamente na memória.");
+        return;
+    }
+
+    const btnSalvarGeral = document.querySelector("#painel-pauta-individual-aluno .btn") || document.querySelector("button[onclick='salvarPautaCompletaDoAluno()']");
+    if (btnSalvarGeral) {
+        btnSalvarGeral.disabled = true;
+        btnSalvarGeral.innerText = "⏳ A sincronizar com o Banco Central da Aiven...";
+    }
+
+    const pacoteNotas = [];
+
+    alunoFocoDisciplinasArr.forEach((nomeCadeira, idx) => {
+        const inputN1 = document.getElementById(`input-n1-${idx}`);
+        const inputN2 = document.getElementById(`input-n2-${idx}`);
+        const inputN3 = document.getElementById(`input-n3-${idx}`);
+        const inputF  = document.getElementById(`input-faltas-${idx}`);
+
+        pacoteNotas.push({
+            disciplina: nomeCadeira,
+            n1: inputN1 && inputN1.value.trim() !== "" ? parseFloat(inputN1.value) : null,
+            n2: inputN2 && inputN2.value.trim() !== "" ? parseFloat(inputN2.value) : null,
+            n3: inputN3 && inputN3.value.trim() !== "" ? parseFloat(inputN3.value) : null,
+            faltas: inputF && inputF.value.trim() !== "" ? parseInt(inputF.value) : 0
+        });
+    });
+
+    fetch('lancar_nota.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({
+            id_utilizador: alunoFocoIdUtilizador,
+            lista_notas: pacoteNotas
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Erro na rede do Render");
+        return res.json();
+    })
+    .then(dados => {
+        if (dados.sucesso) {
+            alert("🎉 Perfeito! A pauta de todas as disciplinas foi guardada e sincronizada com sucesso no Render!");
+            carregarPautaGlobalProf(); 
+        } else {
+            alert("❌ Erro do Servidor: " + dados.mensagem);
+        }
+    })
+    .catch(err => {
+        console.error("Erro no envio do lote:", err);
+        alert("❌ Erro de Execução: Falha ao alcançar o servidor académico central.");
+    })
+    .finally(() => {
+        if (btnSalvarGeral) {
+            btnSalvarGeral.disabled = false;
+            btnSalvarGeral.innerText = "Guardar e Sincronizar Pauta Completa ✓";
+        }
+    });
 }
 
 
@@ -1021,19 +1196,79 @@ function carregarPautaGlobalProf() {
 
 
 
-    // 🛠️ Alimenta o Select dinamicamente com as turmas ativas no ecossistema
-    function popularFiltroClasses() {
-        sincronizarMemoria();
-        const select = document.getElementById('filtro-classe');
-        const classesUnicas = [...new Set(bdEstudantes.map(aluno => aluno.classe))];
-        select.innerHTML = '<option value="">-- Selecione uma Classe Ativa --</option>';
-        classesUnicas.forEach(classe => {
-            if(classe && classe !== "Aguardando Matrícula") {
-                const opt = document.createElement('option');
-                opt.value = classe; opt.innerText = classe; select.appendChild(opt);
-            }
-        });
+
+
+
+
+
+
+
+
+
+
+function salvarPautaCompletaDoAluno() {
+    if (!alunoFocoIdUtilizador || alunoFocoDisciplinasArr.length === 0) return;
+
+    const btnSalvarGeral = document.querySelector("#painel-pauta-individual-aluno .btn") || document.querySelector("button[onclick='salvarPautaCompletaDoAluno()']");
+    if (btnSalvarGeral) {
+        btnSalvarGeral.disabled = true;
+        btnSalvarGeral.innerText = "⏳ A sincronizar com o Banco Central da Aiven...";
     }
+
+    const pacoteNotas = [];
+
+    // Junta as notas de todas as caixas de texto do ecrã
+    alunoFocoDisciplinasArr.forEach((nomeCadeira, idx) => {
+        const inputN1 = document.getElementById(`input-n1-${idx}`);
+        const inputN2 = document.getElementById(`input-n2-${idx}`);
+        const inputN3 = document.getElementById(`input-n3-${idx}`); // ✨ CORRIGIDO: Removido o input-input duplicado
+        const inputF  = document.getElementById(`input-faltas-${idx}`);
+
+        pacoteNotas.push({
+            disciplina: nomeCadeira,
+            n1: inputN1 && inputN1.value.trim() !== "" ? parseFloat(inputN1.value) : null,
+            n2: inputN2 && inputN2.value.trim() !== "" ? parseFloat(inputN2.value) : null,
+            n3: inputN3 && inputN3.value.trim() !== "" ? parseFloat(inputN3.value) : null,
+            faltas: inputF && inputF.value.trim() !== "" ? parseInt(inputF.value) : 0
+        });
+    });
+
+    // Envia o lote inteiro de uma só vez para o arquivo existente
+    fetch('lancar_nota.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({
+            id_utilizador: alunoFocoIdUtilizador,
+            lista_notas: pacoteNotas
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Erro na rede do Render");
+        return res.json();
+    })
+    .then(dados => {
+        if (dados.sucesso) {
+            alert("🎉 Perfeito! A pauta de todas as disciplinas foi guardada e sincronizada com sucesso no Render!");
+            carregarPautaGlobalProf(); // Atualiza reativamente a tabela lateral
+        } else {
+            alert("❌ Erro do Servidor: " + dados.mensagem);
+        }
+    })
+    .catch(err => {
+        console.error("Erro no envio:", err);
+        alert("❌ Erro de Execução: Falha ao alcançar o servidor académico central.");
+    })
+    .finally(() => {
+        if (btnSalvarGeral) {
+            btnSalvarGeral.disabled = false;
+            btnSalvarGeral.innerText = "Guardar e Sincronizar Pauta Completa ✓";
+        }
+    });
+}
+
+
+
+
 
     // 📊 Renderiza as notas e cadernetas dos alunos da turma correspondente
     
