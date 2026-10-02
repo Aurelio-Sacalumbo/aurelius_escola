@@ -473,7 +473,8 @@
 
 
 
-    function carregarPautaEstudante() {
+   // 📊 RENDERIZADOR DE NOTAS REAL DO ESTUDANTE (SINCRONIZADO COM A NUVEM)
+function carregarPautaEstudante() {
     const elIdEscolar = document.getElementById('txt-id-escolar');
     const elClasse = document.getElementById('txt-classe-aluno');
     const corpoTabela = document.getElementById('corpo-tabela-pauta');
@@ -483,8 +484,9 @@
     const idEscolar = elIdEscolar.innerText.trim();
     const cursoStr = elClasse.innerText.trim();
 
+    // Se os dados do login ainda não bateram na tela, aguarda um instante
     if (idEscolar === "---" || cursoStr === "---") {
-        setTimeout(carregarPautaEstudante, 500); // Aguarda nova tentativa se o login estiver a processar
+        setTimeout(carregarPautaEstudante, 500);
         return;
     }
 
@@ -500,41 +502,46 @@
         disciplinasArr = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
     }
 
-    // 📡 Puxa as notas salvas do MySQL usando o ID Escolar ou ID Utilizador guardado
-    fetch(`buscar_notas.php?id_unico_escolar=${encodeURIComponent(idEscolar)}`)
+    // 💾 RECUPERA O ID DO UTILIZADOR GUARDADO NO LOGIN PARA CRUZAR NO PHP
+    // Se não achar o ID numérico, tentamos buscar pelo ID único de texto
+    const idUtilizador = localStorage.getItem("id_utilizador") || localStorage.getItem("id_unico_estudante");
+
+    // 📡 Faz a chamada ao buscar_notas.php passando o ID correto do estudante logado
+    fetch(`buscar_notas.php?id_utilizador=${encodeURIComponent(idUtilizador)}`)
     .then(res => res.json())
     .then(dados => {
         let htmlPauta = "";
         const mapaDeNotas = dados.sucesso ? dados.notas : {};
 
         disciplinasArr.forEach(nomeCadeira => {
-            const n1 = mapaDeNotas[nomeCadeira]?.n1 !== null && mapaDeNotas[nomeCadeira]?.n1 !== undefined ? parseFloat(mapaDeNotas[nomeCadeira].n1) : "-";
-            const n2 = mapaDeNotas[nomeCadeira]?.n2 !== null && mapaDeNotas[nomeCadeira]?.n2 !== undefined ? parseFloat(mapaDeNotas[nomeCadeira].n2) : "-";
-            const n3 = mapaDeNotas[nomeCadeira]?.n3 !== null && mapaDeNotas[nomeCadeira]?.n3 !== undefined ? parseFloat(mapaDeNotas[nomeCadeira].n3) : "-";
-            const faltas = mapaDeNotas[nomeCadeira]?.faltas !== undefined ? mapaDeNotas[nomeCadeira].faltas : "0";
+            // Captura segura convertendo para número ou mantendo traço se nulo
+            const n1 = mapaDeNotas[nomeCadeira]?.n1 !== null && mapaDeNotas[nomeCadeira]?.n1 !== undefined && mapaDeNotas[nomeCadeira]?.n1 !== "" ? parseFloat(mapaDeNotas[nomeCadeira].n1) : "-";
+            const n2 = mapaDeNotas[nomeCadeira]?.n2 !== null && mapaDeNotas[nomeCadeira]?.n2 !== undefined && mapaDeNotas[nomeCadeira]?.n2 !== "" ? parseFloat(mapaDeNotas[nomeCadeira].n2) : "-";
+            const n3 = mapaDeNotas[nomeCadeira]?.n3 !== null && mapaDeNotas[nomeCadeira]?.n3 !== undefined && mapaDeNotas[nomeCadeira]?.n3 !== "" ? parseFloat(mapaDeNotas[nomeCadeira].n3) : "-";
+            const faltas = mapaDeNotas[nomeCadeira]?.faltas !== undefined && mapaDeNotas[nomeCadeira]?.faltas !== null ? mapaDeNotas[nomeCadeira].faltas : "0";
 
-            // Cálculo reativo de Estatuto
+            // Motor de Cálculo do Estatuto Académico
             let estatuto = "Avaliação";
-            let corEstatuto = "#94a3b8";
+            let corEstatuto = "#94a3b8"; // Cinzento padrão
 
             if (n1 !== "-" && n2 !== "-" && n3 !== "-") {
                 const media = (n1 + n2 + n3) / 3;
                 if (media >= 9.5) {
-                    estatuto = "Aprovado";
-                    corEstatuto = "var(--brand-success, #22c55e)";
+                    estatuto = `Aprovado (${media.toFixed(1)})`;
+                    corEstatuto = "var(--brand-success, #22c55e)"; // Verde
                 } else {
-                    estatuto = "Reprovado";
-                    corEstatuto = "#ef4444";
+                    estatuto = `Reprovado (${media.toFixed(1)})`;
+                    corEstatuto = "#ef4444"; // Vermelho
                 }
             }
 
             htmlPauta += `
                 <tr>
                     <td style="padding: 10px; color: #fff; font-weight: 500;">📖 ${nomeCadeira}</td>
-                    <td style="text-align: center; font-weight: bold; color: #fff;">${n1}</td>
-                    <td style="text-align: center; font-weight: bold; color: #fff;">${n2}</td>
-                    <td style="text-align: center; font-weight: bold; color: #fff;">${n3}</td>
-                    <td style="text-align: center; color: #ef4444;">${faltas}</td>
+                    <td style="text-align: center; font-weight: bold; color: #fff;">${n1 !== "-" ? n1.toFixed(1) : "-"}</td>
+                    <td style="text-align: center; font-weight: bold; color: #fff;">${n2 !== "-" ? n2.toFixed(1) : "-"}</td>
+                    <td style="text-align: center; font-weight: bold; color: #fff;">${n3 !== "-" ? n3.toFixed(1) : "-"}</td>
+                    <td style="text-align: center; color: #f87171; font-weight: bold;">${faltas}</td>
                     <td style="text-align: right; color: ${corEstatuto}; font-weight: bold;">${estatuto}</td>
                 </tr>
             `;
@@ -542,7 +549,9 @@
 
         corpoTabela.innerHTML = htmlPauta;
     })
-    .catch(err => console.error("Erro na leitura de notas do aluno:", err));
+    .catch(err => {
+        console.error("Erro ao sincronizar notas no portal do aluno:", err);
+    });
 }
 
 
@@ -992,13 +1001,16 @@ function sincronizarChatAcademico() {
         alternarTela('view-login');
     }
 
-    // Inicialização segura ao carregar a página
-    document.addEventListener("DOMContentLoaded", () => {
-        const alunoGuardado = localStorage.getItem("id_aluno_ativo");
-        if (alunoGuardado && document.getElementById("view-dashboard").classList.contains("active")) {
-            carregarCadernoNotasEstudante(alunoGuardado);
-        }
-    });
+    // 🎯 DISPARADOR REATIVO AUTOMÁTICO DO PORTAL DO ESTUDANTE
+document.addEventListener("DOMContentLoaded", function() {
+    // Inicia a renderização contínua do chat interativo
+    if (typeof iniciarChatEstudante === "function") {
+        iniciarChatEstudante();
+    }
+    
+    // Dispara a busca reativa de notas e cálculo de médias na nuvem
+    setTimeout(carregarPautaEstudante, 300); 
+});
 
     
     
