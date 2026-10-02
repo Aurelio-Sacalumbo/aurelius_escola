@@ -1127,9 +1127,13 @@ function abrirCadernetaIndividualDoAluno(idUtilizador, nomeAluno, cursoCodificad
     .catch(err => console.error("Erro ao puxar notas:", err));
 }
 
-// 💾 3. GUARDA TODAS AS NOTAS DE TODAS AS DISCIPLINAS DO ALUNO COM UM ÚNICO CLIQUE (DESBLOQUEADO DEFINTIVO)
+
+
+
+
+
+
 function salvarPautaCompletaDoAluno() {
-    // Validação correta utilizando a variável id unificada
     if (alunoFocoIdUtilizador === null || alunoFocoDisciplinasArr.length === 0) {
         alert("⚠️ Erro Interno: O identificador do aluno não foi carregado corretamente na memória.");
         return;
@@ -1174,16 +1178,10 @@ function salvarPautaCompletaDoAluno() {
         if (dados.sucesso) {
             alert("🎉 Perfeito! A pauta de todas as disciplinas foi guardada e sincronizada com sucesso no Render!");
             
-            // 🌟 O SEGREDO PARA NÃO FECHAR:
-            // Em vez de resetar a tela inteira, chamamos a re-leitura apenas das notas 
-            // do aluno focado, mantendo a caderneta aberta no ecrã com os novos valores!
+            // Re-alimenta o ecrã do aluno focado mantendo-o visível e atualizado!
             const nomeAlunoAtual = document.getElementById("nome-aluno-foco-pauta").innerText;
             const selectClasse = document.getElementById("filtro-classe").value;
-            
-            if (alunoFocoIdUtilizador) {
-                // Mantém o painel visível e recarrega os inputs com os dados gravados no MySQL
-                abrirCadernetaIndividualDoAluno(alunoFocoIdUtilizador, nomeAlunoAtual, encodeURIComponent(selectClasse));
-            }
+            abrirCadernetaIndividualDoAluno(alunoFocoIdUtilizador, nomeAlunoAtual, encodeURIComponent(selectClasse));
         } else {
             alert("❌ Erro do Servidor: " + dados.mensagem);
         }
@@ -1198,9 +1196,7 @@ function salvarPautaCompletaDoAluno() {
             btnSalvarGeral.innerText = "Guardar e Sincronizar Pauta Completa ✓";
         }
     });
-
-
-
+}
 
 
 

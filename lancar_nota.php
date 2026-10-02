@@ -1,5 +1,5 @@
 <?php
-// 📝 LANÇAMENTO DE NOTAS — ACADEMIA AURÉLIUS (COLUNAS OFICIAIS)
+// 📝 LANÇAMENTO DE NOTAS — ACADEMIA AURÉLIUS (BASE DE DADOS FORÇADA)
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
@@ -19,16 +19,16 @@ if (!$dados || !isset($dados['id_utilizador']) || !isset($dados['lista_notas']))
     exit;
 }
 
-$id_estudante = intval($dados['id_utilizador']); // id_utilizador vindo do JS mapeia para id_estudante
+$id_estudante = intval($dados['id_utilizador']);
 $lista_notas   = $dados['lista_notas'];
 
 try {
     $pdo->beginTransaction();
 
-    // 🌟 Casamento perfeito com o seu phpMyAdmin: id_estudante, nota_n1, nota_n2, nota_n3, faltas
-    $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM pautas WHERE id_estudante = ? AND disciplina = ?");
-    $stmtUpdate = $pdo->prepare("UPDATE pautas SET nota_n1 = ?, nota_n2 = ?, nota_n3 = ?, faltas = ? WHERE id_estudante = ? AND disciplina = ?");
-    $stmtInsert = $pdo->prepare("INSERT INTO pautas (id_estudante, disciplina, nota_n1, nota_n2, nota_n3, faltas) VALUES (?, ?, ?, ?, ?, ?)");
+    // 🌟 BLINDAGEM MÁXIMA: Força explicitamente a base 'aurelius_escola' antes do nome da tabela!
+    $stmtCheck  = $pdo->prepare("SELECT COUNT(*) FROM aurelius_escola.pautas WHERE id_estudante = ? AND disciplina = ?");
+    $stmtUpdate = $pdo->prepare("UPDATE aurelius_escola.pautas SET nota_n1 = ?, nota_n2 = ?, nota_n3 = ?, faltas = ? WHERE id_estudante = ? AND disciplina = ?");
+    $stmtInsert = $pdo->prepare("INSERT INTO aurelius_escola.pautas (id_estudante, disciplina, nota_n1, nota_n2, nota_n3, faltas) VALUES (?, ?, ?, ?, ?, ?)");
 
     foreach ($lista_notas as $item) {
         $disciplina = trim($item['disciplina']);
