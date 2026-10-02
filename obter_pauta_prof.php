@@ -1,60 +1,144 @@
 <?php
-// 📊 CENTRAL DE PROCESSAMENTO DOCENTE - ACADEMIA AURÉLIUS
+// 📊 MOTOR DE INDICADORES BLINDADO E CORRIGIDO — ACADEMIA AURÉLIUS
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Methods: GET");
 header('Content-Type: application/json; charset=utf-8');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
-}
 
 require_once 'conexao.php';
 
-$resposta = ['sucesso' => false];
-$acao = isset($_GET['acao']) ? $_GET['acao'] : 'indicadores';
+$acao = isset($_GET['acao']) ? $_GET['acao'] : '';
 
-try {
-    // 🧮 AÇÃO 1: INDICADORES E LISTAGEM DE TURMAS REAIS DO BANCO
-    if ($acao === 'indicadores') {
-        $inscritos = $pdo->query("SELECT COUNT(*) FROM utilizadores")->fetchColumn();
-        $matriculados = $pdo->query("SELECT COUNT(*) FROM utilizadores WHERE id_unico_escolar IS NOT NULL AND id_unico_escolar LIKE 'AUR-%'")->fetchColumn();
-        
-        $regular = $pdo->query("SELECT COUNT(*) FROM utilizadores WHERE periodo LIKE '%Manhã%' OR periodo LIKE '%manhã%' OR periodo LIKE '%Tarde%' OR periodo LIKE '%tarde%'")->fetchColumn();
-        $posLaboral = $pdo->query("SELECT COUNT(*) FROM utilizadores WHERE periodo LIKE '%Noite%' OR periodo LIKE '%noite%'")->fetchColumn();
-        
-        $faturamento = $matriculados * 15000;
+// 🔍 1. PROCESSADOR DE INDICADORES DE FATURAMENTO REAL
+if ($acao === 'indicadores') {
+    try {
+        $stmt = $pdo->query("SELECT * FROM utilizadores");
+        $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // 🌟 DINÂMICO: Agrupa e extrai os valores reais diretamente da coluna 'periodo'
-        $stmtTurmas = $pdo->query("SELECT DISTINCT periodo FROM utilizadores WHERE periodo IS NOT NULL AND periodo != '' ORDER BY periodo ASC");
-        $turmas = $stmtTurmas->fetchAll(PDO::FETCH_COLUMN);
+        $totalInscritos = 0;
+        $totalMatriculados = 0;
+        $regularCount = 0;
+        $noiteCount = 0;
+        $faturamentoTotal = 0;
+        $turmasDetectadas = [];
+
+        $stmtPreco = $pdo->prepare("SELECT preco_base FROM cursos_disciplinas WHERE nome = ? LIMIT 1");
+
+        foreach ($usuarios as $u) {
+            $cursoStr = "";
+            $periodoStr = "";
+            $isEstudante = false;
+
+            // Varredura por conteúdo para suportar colunas deslocadas
+            foreach ($u as $chave => $valor) {
+                $val = trim((string)$valor);
+                if (empty($val)) continue;
+
+                if ($val === 'estudante') {
+                    $isEstudante = true;
+                }
+                if (strpos($val, '[') !== false || stripos($val, 'classe') !== false) {
+                    $cursoStr = $val;
+                }
+                if (stripos($val, 'Manhã') !== false || stripos($val, 'Tarde') !== false || stripos($val, 'Noite') !== false) {
+                    $periodoStr = $val;
+                }
+            }
+
+            if (!$isEstudante && empty($cursoStr)) continue;
+
+            $totalInscritos++;
+            $isNoite = (!empty($periodoStr) && stripos($periodoStr, 'Noite') !== false);
+
+            // Verifica se possui disciplinas ativas entre colchetes [ ] (Matriculado)
+            if (!empty($cursoStr) && strpos($cursoStr, '[') !== false && strpos($cursoStr, 'Inscrição') === false) {
+                $totalMatriculados++;
+                if ($isNoite) $noiteCount++; else $regularCount++;
+
+                // 🌟 CORREÇÃO CIRÚRGICA: Isola o primeiro índice do array antes de aplicar o trim!
+                $partesClasse = explode('[', $cursoStr);
+                $nomeClasseApenas = isset($partesClasse[0]) ? trim($partesClasse[0]) : "9ª classe";
+                
+                if (!empty($nomeClasseApenas) && !in_array($nomeClasseApenas, $turmasDetectadas)) {
+                    $turmasDetectadas[] = $nomeClasseApenas;
+                }
+
+                // Calcula os preços reais das disciplinas associadas
+                preg_match('/\[(.*?)\]/', $cursoStr, $matches);
+                if (isset($matches[1])) {
+                    $listaDisc = explode(',', $matches[1]);
+                    $subTotalAluno = 0;
+                    $cadeirasContadas = 0;
+
+                    foreach ($listaDisc as $d) {
+                        $nomeCadeira = trim($d);
+                        if (empty($nomeCadeira)) continue;
+
+                        $stmtPreco->execute([$nomeCadeira]);
+                        $precoBanc = $stmtPreco->fetchColumn();
+                        $subTotalAluno += ($precoBanc !== false) ? floatval($precoBanc) : 1500.00;
+                        $cadeirasContadas++;
+                    }
+
+                    if ($cadeirasContadas >= 4) {
+                        $subTotalAluno *= 0.80; // 20% OFF
+                    }
+                    $faturamentoTotal += $subTotalAluno;
+                }
+            } else {
+                // Caso seja apenas inscrição básica
+                $faturamentoTotal += 1500.00; 
+                
+                $partesClasse = explode('[', $cursoStr);
+                $nomeClasseApenas = isset($partesClasse[0]) ? trim($partesClasse[0]) : "9ª classe";
+                if (empty($nomeClasseApenas)) { $nomeClasseApenas = "9ª classe"; }
+
+                if (!in_array($nomeClasseApenas, $turmasDetectadas)) {
+                    $turmasDetectadas[] = $nomeClasseApenas;
+                }
+                
+                if ($isNoite) $noiteCount++; else $regularCount++;
+            }
+        }
 
         echo json_encode([
             'sucesso' => true,
-            'inscritos' => intval($inscritos),
-            'matriculados' => intval($matriculados),
-            'regular' => intval($regular),
-            'pos_laboral' => intval($posLaboral),
-            'faturamento' => floatval($faturamento),
-            'turmas' => $turmas
-        ]);
-        exit;
-    }
+            'inscritos' => $totalInscritos,
+            'matriculados' => $totalMatriculados,
+            'regular' => $regularCount,
+            'pos_laboral' => $noiteCount,
+            'faturamento' => $faturamentoTotal,
+            'turmas' => $turmasDetectadas
+        ], JSON_UNESCAPED_UNICODE);
 
-    // 📚 AÇÃO 2: CARREGA OS ESTUDANTES FILTRADOS PELA TURMA (COLUNA PERIODO)
-    if ($acao === 'carregar_alunos') {
-        $classe = isset($_GET['classe']) ? trim($_GET['classe']) : '';
-        
-        $stmt = $pdo->prepare("SELECT id_utilizador, id_unico_escolar, nome, email as nota_n1, senha as nota_n2, nivel as nota_n3, saldo_propina as faltas, telefone FROM utilizadores WHERE periodo = ? ORDER BY nome ASC");
-        $stmt->execute([$classe]);
-        
-        echo json_encode([
-            'sucesso' => true,
-            'alunos' => $stmt->fetchAll(PDO::FETCH_ASSOC)
-        ]);
-        exit;
+    } catch (Exception $e) {
+        echo json_encode(['sucesso' => false, 'mensagem' => 'Erro nos indicadores: ' . $e->getMessage()]);
     }
-} catch (Exception $e) {
-    echo json_encode(['sucesso' => false, 'mensagem' => $e->getMessage()]);
     exit;
 }
+
+// 🔍 2. LISTAR ESTUDANTES DA TURMA SELECIONADA
+if (isset($_GET['classe'])) {
+    $classeAlvo = trim($_GET['classe']);
+    try {
+        // 🌟 BLINDAGEM IMPERIAL: Procura o termo na coluna curso OU na coluna periodo
+        // Isso garante que se o professor filtrar por "Manhã", "Noite" ou pelo nome do Curso, os alunos aparecem!
+        $stmt = $pdo->prepare("
+            SELECT id_utilizador, id_unico_escolar, nome, periodo, curso 
+            FROM utilizadores 
+            WHERE (curso LIKE ? OR periodo LIKE ? OR id_unico_escolar = ?)
+              AND nome IS NOT NULL AND nome != ''
+            ORDER BY nome ASC
+        ");
+        
+        $termoBusca = "%" . $classeAlvo . "%";
+        $stmt->execute([$termoBusca, $termoBusca, $classeAlvo]);
+        $alunos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode(['sucesso' => true, 'alunos' => $alunos], JSON_UNESCAPED_UNICODE);
+    } catch (Exception $e) {
+        echo json_encode(['sucesso' => false, 'mensagem' => 'Erro na listagem: ' . $e->getMessage()]);
+    }
+    exit;
+}
+?>
