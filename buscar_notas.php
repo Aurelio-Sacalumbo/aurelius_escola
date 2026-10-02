@@ -1,38 +1,34 @@
 <?php
-// 🔌 API DE NOTAS: TRAZ AS PAUTAS PARA O estudante.html
+// 🔍 BUSCA DE NOTAS CORRIGIDA — ACADEMIA AURÉLIUS
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Access-Control-Allow-Methods: POST");
-header("Content-Type: application/json; charset=UTF-8");
+header('Content-Type: application/json; charset=utf-8');
 
-require_once "conexao.php";
+require_once 'conexao.php';
+
+$id_utilizador = isset($_GET['id_utilizador']) ? intval($_GET['id_utilizador']) : 0;
 
 try {
-    $dados = json_decode(file_get_contents("php://input"), true);
+    $notasAgrupadas = [];
 
-    if (!$dados || empty($dados['estudante_id'])) {
-        echo json_encode(["sucesso" => false, "mensagem" => "ID do estudante em falta."]);
-        exit;
+    if ($id_utilizador > 0) {
+        // Alinhado com as colunas reais do phpMyAdmin: nota_n1, nota_n2, nota_n3, faltas
+        $stmt = $pdo->prepare("SELECT disciplina, nota_n1 AS n1, nota_n2 AS n2, nota_n3 AS n3, faltas FROM pautas WHERE id_estudante = ?");
+        $stmt->execute([$id_utilizador]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($rows as $r) {
+            $notasAgrupadas[$r['disciplina']] = [
+                'n1' => $r['n1'],
+                'n2' => $r['n2'],
+                'n3' => $r['n3'],
+                'faltas' => $r['faltas']
+            ];
+        }
     }
 
-    // Limpa o ID recebido (Garante compatibilidade com id_estudante INT)
-    $estudante_id = (int)trim($dados['estudante_id']);
-
-    // 🔍 CORREÇÃO AQUI: Mapeado exatamente com as colunas reais da sua tabela 'pautas'
-    $query = "SELECT disciplina, nota_n1, nota_n2, nota_n3, faltas FROM pautas WHERE id_estudante = ?";
-    $stmt = $pdo->prepare($query);
-    $stmt->execute([$estudante_id]);
-    $pautas = $stmt->fetchAll();
-
-    echo json_encode([
-        "sucesso" => true,
-        "disciplinas" => $pautas
-    ]);
-
+    echo json_encode(['sucesso' => true, 'notas' => $notasAgrupadas], JSON_UNESCAPED_UNICODE);
 } catch (Exception $e) {
-    echo json_encode([
-        "sucesso" => false, 
-        "mensagem" => "Erro ao processar pautas: " . $e->getMessage()
-    ]);
+    echo json_encode(['sucesso' => false, 'mensagem' => $e->getMessage()]);
 }
+exit;
 ?>
