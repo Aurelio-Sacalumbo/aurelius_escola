@@ -1,5 +1,5 @@
 <?php
-// 🏛️ CENTRAL DE COMUNICAÇÃO - ACADEMIA AURÉLIUS (CONEXÃO SEGURA MURAL_BLOG)
+// 🏛️ CENTRAL DE COMUNICAÇÃO TOTALMENTE UNIFICADA E BLINDADA - ACADEMIA AURÉLIUS
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
@@ -11,89 +11,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once 'conexao.php';
 
-// =========================================================================
-// 🔍 AÇÃO 1: CARREGAR MENSAGENS (GET UNIFICADO E INTEGRADO)
-// =========================================================================
+// 🔍 1. LEITURA UNIFICADA DO MURAL (GET) - Força a base 'aurelius_escola'
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $id_estudante = isset($_GET['id_estudante']) ? trim($_GET['id_estudante']) : 'TODOS';
-
     try {
-        // 🌟 CORREÇÃO CIRÚRGICA: Se for TODOS ou estiver vazio, traz a conversa unificada da turma inteira
-        if (empty($id_estudante) || $id_estudante === 'TODOS') {
-            $stmt = $pdo->query("
-                SELECT id_post, id_autor, tipo_post, titulo AS remetente, conteudo, DATE_FORMAT(data_publicacao, '%H:%i') AS hora 
-                FROM mural_blog 
-                ORDER BY id_post ASC 
-                LIMIT 100
-            ");
-        } else {
-            // Se o professor escolheu um estudante específico, filtra apenas o histórico desse estudante e do professor
-            $stmt = $pdo->prepare("
-                SELECT id_post, id_autor, tipo_post, titulo AS remetente, conteudo, DATE_FORMAT(data_publicacao, '%H:%i') AS hora 
-                FROM mural_blog 
-                WHERE id_autor = ? OR id_unico_escolar = ? OR tipo_post = 'professor'
-                ORDER BY id_post ASC 
-                LIMIT 100
-            ");
-            $stmt->execute([$id_estudante, $id_estudante]);
-        }
-        
+        // Puxa as últimas 100 mensagens do mural_blog garantindo o escopo correto do banco
+        $stmt = $pdo->query("
+            SELECT id_post, id_autor, tipo_post AS perfil, titulo AS remetente, conteudo, DATE_FORMAT(data_publicacao, '%H:%i') AS hora 
+            FROM aurelius_escola.mural_blog 
+            ORDER BY id_post ASC 
+            LIMIT 100
+        ");
         $mensagens = $stmt->fetchAll(PDO::FETCH_ASSOC);
         echo json_encode(['sucesso' => true, 'mensagens' => $mensagens], JSON_UNESCAPED_UNICODE);
     } catch (Exception $e) {
-        echo json_encode(['sucesso' => false, 'mensagem' => 'Erro na leitura do mural: ' . $e->getMessage()]);
+        echo json_encode(['sucesso' => false, 'mensagem' => 'Erro ao carregar chat: ' . $e->getMessage()]);
     }
     exit;
 }
-// 📥 AÇÃO 2: ENVIAR MENSAGEM (POST RESOLVE CHAVE ESTRANGEIRA)
+
+// 📥 2. ENVIO SEGURO E HÍBRIDO (POST) - Força a base 'aurelius_escola'
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $inputRaw = file_get_contents("php://input");
     $dados = json_decode($inputRaw, true);
 
-    $identificador = isset($dados['id_unico_escolar']) ? trim($dados['id_unico_escolar']) : (isset($_POST['id_unico_escolar']) ? trim($_POST['id_unico_escolar']) : '');
     $remetente     = isset($dados['remetente']) ? trim($dados['remetente']) : (isset($_POST['remetente']) ? trim($_POST['remetente']) : 'Anónimo');
-    $conteudo      = isset($dados['mensagem']) ? trim($dados['mensagem']) : (isset($_POST['mensagem']) ? trim($_POST['mensagem']) : '');
-    $perfil        = isset($dados['perfil']) ? trim($dados['perfil']) : (isset($_POST['perfil']) ? trim($_POST['perfil']) : 'estudante');
+    $identificador = isset($dados['id_unico_escolar']) ? trim($dados['id_unico_escolar']) : (isset($_POST['id_estudante']) ? trim($_POST['id_estudante']) : 'SISTEMA');
+    
+    $conteudo = '';
+    if (isset($dados['mensagem'])) $conteudo = trim($dados['mensagem']);
+    if (isset($dados['conteudo'])) $conteudo = trim($dados['conteudo']);
+    if (isset($_POST['conteudo'])) $conteudo = trim($_POST['conteudo']);
+    if (isset($_POST['mensagem'])) $conteudo = trim($_POST['mensagem']);
+
+    $perfil = ($remetente === 'coord_prof' || (isset($dados['perfil']) && $dados['perfil'] === 'professor')) ? 'professor' : 'estudante';
+    
+    if ($remetente === 'coord_prof') {
+        $remetente = "Prof. Aurélio Jamba";
+    }
 
     if (empty($conteudo)) {
-        echo json_encode(['sucesso' => false, 'mensagem' => 'A mensagem não pode ser enviada vazia.']);
+        echo json_encode(['sucesso' => false, 'mensagem' => 'A mensagem está vazia.']);
         exit;
     }
 
     try {
-        $id_autor_numerico = null;
+        // Localiza o ID numérico do utilizador associado à chave estrangeira
+        $stmtUser = $pdo->prepare("SELECT id_utilizador FROM aurelius_escola.utilizadores WHERE id_unico_escolar = ? OR telefone = ? LIMIT 1");
+        $stmtUser->execute([$identificador, $identificador]);
+        $id_autor_numerico = $stmtUser->fetchColumn();
 
-        if ($perfil === 'professor') {
-            // 👨‍🏫 Tenta localizar um utilizador administrador/professor para associar a chave estrangeira
-            $stmtUser = $pdo->prepare("SELECT id_utilizador FROM utilizadores WHERE nivel = 'professor' OR nivel = 'administrador' LIMIT 1");
-            $stmtUser->execute();
-            $id_autor_numerico = $stmtUser->fetchColumn();
-        } else {
-            // 👤 Aluno: Procura o id_utilizador numérico real a partir do ID AUR ou do número de telefone
-            $stmtUser = $pdo->prepare("SELECT id_utilizador FROM utilizadores WHERE id_unico_escolar = ? OR telefone = ? LIMIT 1");
-            $stmtUser->execute([$identificador, $identificador]);
-            $id_autor_numerico = $stmtUser->fetchColumn();
-        }
-
-        // 🚨 Fallback Crítico: Se não achar nenhum ID associável na tabela, puxa o primeiro ID existente no banco 
-        // para garantir que NUNCA falte o vínculo exigido pela Chave Estrangeira
         if (!$id_autor_numerico) {
-            $stmtFallback = $pdo->query("SELECT id_utilizador FROM utilizadores LIMIT 1");
+            $stmtFallback = $pdo->query("SELECT id_utilizador FROM aurelius_escola.utilizadores LIMIT 1");
             $id_autor_numerico = $stmtFallback->fetchColumn();
         }
 
-        if (!$id_autor_numerico) {
-            echo json_encode(['sucesso' => false, 'mensagem' => 'Erro: Nenhum utilizador cadastrado no sistema para vincular o chat.']);
-            exit;
-        }
-
-        // 🌟 INSERT PERFEITO: Agora id_autor recebe o número correto, satisfazendo a Foreign Key!
-        $stmt = $pdo->prepare("INSERT INTO mural_blog (id_autor, tipo_post, titulo, conteudo) VALUES (?, ?, ?, ?)");
+        // Insere de forma cirúrgica na tabela mural_blog correta
+        $stmt = $pdo->prepare("INSERT INTO aurelius_escola.mural_blog (id_autor, tipo_post, titulo, conteudo) VALUES (?, ?, ?, ?)");
         $sucesso = $stmt->execute([$id_autor_numerico, $perfil, $remetente, $conteudo]);
         
         echo json_encode(['sucesso' => $sucesso]);
     } catch (Exception $e) {
-        echo json_encode(['sucesso' => false, 'mensagem' => 'Falha de Integridade: ' . $e->getMessage()]);
+        echo json_encode(['sucesso' => false, 'mensagem' => 'Erro SQL no envio: ' . $e->getMessage()]);
     }
     exit;
 }

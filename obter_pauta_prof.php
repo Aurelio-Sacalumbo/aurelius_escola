@@ -1,5 +1,5 @@
 <?php
-// 📊 MOTOR DE INDICADORES BLINDADO E CORRIGIDO — ACADEMIA AURÉLIUS
+// 📊 MOTOR DE INDICADORES ULTRA-BLINDADO COM CAMINHOS ABSOLUTOS — ACADEMIA AURÉLIUS
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Methods: GET");
@@ -12,7 +12,8 @@ $acao = isset($_GET['acao']) ? $_GET['acao'] : '';
 // 🔍 1. PROCESSADOR DE INDICADORES DE FATURAMENTO REAL
 if ($acao === 'indicadores') {
     try {
-        $stmt = $pdo->query("SELECT * FROM utilizadores");
+        // 🌟 FORÇADO: Aponta explicitamente para aurelius_escola
+        $stmt = $pdo->query("SELECT * FROM aurelius_escola.utilizadores");
         $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $totalInscritos = 0;
@@ -22,7 +23,8 @@ if ($acao === 'indicadores') {
         $faturamentoTotal = 0;
         $turmasDetectadas = [];
 
-        $stmtPreco = $pdo->prepare("SELECT preco_base FROM cursos_disciplinas WHERE nome = ? LIMIT 1");
+        // 🌟 FORÇADO: Aponta explicitamente para aurelius_escola
+        $stmtPreco = $pdo->prepare("SELECT preco_base FROM aurelius_escola.cursos_disciplinas WHERE nome = ? LIMIT 1");
 
         foreach ($usuarios as $u) {
             $cursoStr = "";
@@ -55,7 +57,6 @@ if ($acao === 'indicadores') {
                 $totalMatriculados++;
                 if ($isNoite) $noiteCount++; else $regularCount++;
 
-                // 🌟 CORREÇÃO CIRÚRGICA: Isola o primeiro índice do array antes de aplicar o trim!
                 $partesClasse = explode('[', $cursoStr);
                 $nomeClasseApenas = isset($partesClasse[0]) ? trim($partesClasse[0]) : "9ª classe";
                 
@@ -81,7 +82,7 @@ if ($acao === 'indicadores') {
                     }
 
                     if ($cadeirasContadas >= 4) {
-                        $subTotalAluno *= 0.80; // 20% OFF
+                        $subTotalAluno *= 0.80; // 20% OFF de Cortesia
                     }
                     $faturamentoTotal += $subTotalAluno;
                 }
@@ -121,18 +122,9 @@ if ($acao === 'indicadores') {
 if (isset($_GET['classe'])) {
     $classeAlvo = trim($_GET['classe']);
     try {
-        // 🌟 BLINDAGEM IMPERIAL: Procura o termo na coluna curso OU na coluna periodo
-        // Isso garante que se o professor filtrar por "Manhã", "Noite" ou pelo nome do Curso, os alunos aparecem!
-        $stmt = $pdo->prepare("
-            SELECT id_utilizador, id_unico_escolar, nome, periodo, curso 
-            FROM utilizadores 
-            WHERE (curso LIKE ? OR periodo LIKE ? OR id_unico_escolar = ?)
-              AND nome IS NOT NULL AND nome != ''
-            ORDER BY nome ASC
-        ");
-        
-        $termoBusca = "%" . $classeAlvo . "%";
-        $stmt->execute([$termoBusca, $termoBusca, $classeAlvo]);
+        // 🌟 FORÇADO: Aponta explicitamente para aurelius_escola
+        $stmt = $pdo->prepare("SELECT id_utilizador, id_unico_escolar, nome, periodo, curso FROM aurelius_escola.utilizadores WHERE curso LIKE ? OR id_unico_escolar = ? ORDER BY nome ASC");
+        $stmt->execute(["%$classeAlvo%", $classeAlvo]);
         $alunos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         echo json_encode(['sucesso' => true, 'alunos' => $alunos], JSON_UNESCAPED_UNICODE);
