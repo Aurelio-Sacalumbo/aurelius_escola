@@ -1173,7 +1173,17 @@ function salvarPautaCompletaDoAluno() {
     .then(dados => {
         if (dados.sucesso) {
             alert("🎉 Perfeito! A pauta de todas as disciplinas foi guardada e sincronizada com sucesso no Render!");
-            carregarPautaGlobalProf(); 
+            
+            // 🌟 O SEGREDO PARA NÃO FECHAR:
+            // Em vez de resetar a tela inteira, chamamos a re-leitura apenas das notas 
+            // do aluno focado, mantendo a caderneta aberta no ecrã com os novos valores!
+            const nomeAlunoAtual = document.getElementById("nome-aluno-foco-pauta").innerText;
+            const selectClasse = document.getElementById("filtro-classe").value;
+            
+            if (alunoFocoIdUtilizador) {
+                // Mantém o painel visível e recarrega os inputs com os dados gravados no MySQL
+                abrirCadernetaIndividualDoAluno(alunoFocoIdUtilizador, nomeAlunoAtual, encodeURIComponent(selectClasse));
+            }
         } else {
             alert("❌ Erro do Servidor: " + dados.mensagem);
         }
@@ -1188,7 +1198,6 @@ function salvarPautaCompletaDoAluno() {
             btnSalvarGeral.innerText = "Guardar e Sincronizar Pauta Completa ✓";
         }
     });
-}
 
 
 
@@ -1206,65 +1215,14 @@ function salvarPautaCompletaDoAluno() {
 
 
 
-function salvarPautaCompletaDoAluno() {
-    if (!alunoFocoIdUtilizador || alunoFocoDisciplinasArr.length === 0) return;
 
-    const btnSalvarGeral = document.querySelector("#painel-pauta-individual-aluno .btn") || document.querySelector("button[onclick='salvarPautaCompletaDoAluno()']");
-    if (btnSalvarGeral) {
-        btnSalvarGeral.disabled = true;
-        btnSalvarGeral.innerText = "⏳ A sincronizar com o Banco Central da Aiven...";
-    }
 
-    const pacoteNotas = [];
 
-    // Junta as notas de todas as caixas de texto do ecrã
-    alunoFocoDisciplinasArr.forEach((nomeCadeira, idx) => {
-        const inputN1 = document.getElementById(`input-n1-${idx}`);
-        const inputN2 = document.getElementById(`input-n2-${idx}`);
-        const inputN3 = document.getElementById(`input-n3-${idx}`); // ✨ CORRIGIDO: Removido o input-input duplicado
-        const inputF  = document.getElementById(`input-faltas-${idx}`);
 
-        pacoteNotas.push({
-            disciplina: nomeCadeira,
-            n1: inputN1 && inputN1.value.trim() !== "" ? parseFloat(inputN1.value) : null,
-            n2: inputN2 && inputN2.value.trim() !== "" ? parseFloat(inputN2.value) : null,
-            n3: inputN3 && inputN3.value.trim() !== "" ? parseFloat(inputN3.value) : null,
-            faltas: inputF && inputF.value.trim() !== "" ? parseInt(inputF.value) : 0
-        });
-    });
 
-    // Envia o lote inteiro de uma só vez para o arquivo existente
-    fetch('lancar_nota.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: JSON.stringify({
-            id_utilizador: alunoFocoIdUtilizador,
-            lista_notas: pacoteNotas
-        })
-    })
-    .then(res => {
-        if (!res.ok) throw new Error("Erro na rede do Render");
-        return res.json();
-    })
-    .then(dados => {
-        if (dados.sucesso) {
-            alert("🎉 Perfeito! A pauta de todas as disciplinas foi guardada e sincronizada com sucesso no Render!");
-            carregarPautaGlobalProf(); // Atualiza reativamente a tabela lateral
-        } else {
-            alert("❌ Erro do Servidor: " + dados.mensagem);
-        }
-    })
-    .catch(err => {
-        console.error("Erro no envio:", err);
-        alert("❌ Erro de Execução: Falha ao alcançar o servidor académico central.");
-    })
-    .finally(() => {
-        if (btnSalvarGeral) {
-            btnSalvarGeral.disabled = false;
-            btnSalvarGeral.innerText = "Guardar e Sincronizar Pauta Completa ✓";
-        }
-    });
-}
+
+
+
 
 
 
