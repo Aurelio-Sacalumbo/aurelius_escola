@@ -11,10 +11,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once 'conexao.php';
 
-// 🔍 1. LEITURA UNIFICADA DO MURAL (GET) - Força a base 'aurelius_escola'
+// 🔍 1. LEITURA UNIFICADA DO MURAL (GET)
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
-        // Puxa as últimas 100 mensagens do mural_blog garantindo o escopo correto do banco
+        // Puxa as últimas 100 mensagens do mural_blog garantindo o escopo absoluto
         $stmt = $pdo->query("
             SELECT id_post, id_autor, tipo_post AS perfil, titulo AS remetente, conteudo, DATE_FORMAT(data_publicacao, '%H:%i') AS hora 
             FROM aurelius_escola.mural_blog 
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
-// 📥 2. ENVIO SEGURO E HÍBRIDO (POST) - Força a base 'aurelius_escola'
+// 📥 2. ENVIO SEGURO E HÍBRIDO (POST)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $inputRaw = file_get_contents("php://input");
     $dados = json_decode($inputRaw, true);
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        // Localiza o ID numérico do utilizador associado à chave estrangeira
+        // Localiza o ID numérico do utilizador associado à chave estrangeira na base certa
         $stmtUser = $pdo->prepare("SELECT id_utilizador FROM aurelius_escola.utilizadores WHERE id_unico_escolar = ? OR telefone = ? LIMIT 1");
         $stmtUser->execute([$identificador, $identificador]);
         $id_autor_numerico = $stmtUser->fetchColumn();
@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id_autor_numerico = $stmtFallback->fetchColumn();
         }
 
-        // Insere de forma cirúrgica na tabela mural_blog correta
+        // 🌟 CORREÇÃO DEFINITIVA: Força explicitamente a inserção em aurelius_escola.mural_blog!
         $stmt = $pdo->prepare("INSERT INTO aurelius_escola.mural_blog (id_autor, tipo_post, titulo, conteudo) VALUES (?, ?, ?, ?)");
         $sucesso = $stmt->execute([$id_autor_numerico, $perfil, $remetente, $conteudo]);
         
