@@ -570,18 +570,26 @@ function renderizarLivrosAluno(cursoAlunoStr) {
     const contentor = document.getElementById('contentor-livros-aluno');
     if (!contentor) return;
 
+    // Função interna para remover acentos e deixar o texto limpo para comparação segura
+    const normalizarTexto = (texto) => {
+        if (!texto) return "";
+        return texto.toString().toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // Remove acentos (É -> E, Í -> I)
+            .trim();
+    };
+
     let disciplinasAluno = [];
-    // Isola as cadeiras de dentro dos colchetes da matrícula do estudante
     if (cursoAlunoStr && cursoAlunoStr.includes('[')) {
         const match = cursoAlunoStr.match(/\[(.*?)\]/);
         if (match && match[1]) {
-            disciplinasAluno = match[1].split(',').map(d => d.trim().toLowerCase());
+            disciplinasAluno = match[1].split(',').map(d => normalizarTexto(d));
         }
     }
 
-    // Se estiver em modo inscrição base, assume a grade padrão de verificação
+    // Se estiver em modo inscrição base ou sem cadeiras na matriz, assume a grade padrão sanitizada
     if (disciplinasAluno.length === 0) {
-        disciplinasAluno = ['língua portuguesa', 'matemática', 'história', 'geografia', 'inglês', 'biologia', 'química'];
+        disciplinasAluno = ['lingua portuguesa', 'matematica', 'historia', 'geografia', 'ingles', 'biologia', 'quimica'];
     }
 
     contentor.innerHTML = `<p style="font-size: 11px; color: #64748b;">🔄 A ler prateleira digital da academia...</p>`;
@@ -590,11 +598,16 @@ function renderizarLivrosAluno(cursoAlunoStr) {
     fetch('buscar_livros.php')
     .then(res => res.json())
     .then(dados => {
-        if (dados.sucesso && dados.livros.length > 0) {
-            // Filtra os livros da nuvem que pertencem às disciplinas do aluno
+        if (dados.sucesso && dados.livros && dados.livros.length > 0) {
+            
+            // 🌟 FILTRAGEM INTELIGENTE SANITIZADA: Cruza os dados ignorando maiúsculas e acentos!
             const livrosFiltrados = dados.livros.filter(livro => {
-                const tituloLimpo = livro.titulo_livro.toLowerCase();
-                return disciplinasAluno.some(disc => tituloLimpo.includes(disc) || disc.includes(tituloLimpo));
+                const tituloLivroNormalizado = normalizarTexto(livro.titulo_livro);
+                
+                // Verifica se o título do livro bate com alguma disciplina do aluno
+                return disciplinasAluno.some(disc => {
+                    return tituloLivroNormalizado.includes(disc) || disc.includes(tituloLivroNormalizado);
+                });
             });
 
             if (livrosFiltrados.length === 0) {
@@ -602,14 +615,14 @@ function renderizarLivrosAluno(cursoAlunoStr) {
                 return;
             }
 
-            // Injeta reativamente os blocos de livros na prateleira com botão de download real
+            // Injeta reativamente os blocos de livros na prateleira com link real do Render
             contentor.innerHTML = livrosFiltrados.map(livro => `
-                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; border-left: 3px solid var(--brand-blue-glow, #00d2ff);">
+                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; border-left: 3px solid var(--brand-blue-glow, #00d2ff); text-align: left; margin-bottom: 8px;">
                     <div>
                         <div style="font-size: 12px; font-weight: bold; color: #fff; text-transform: uppercase;">📖 ${livro.titulo_livro}</div>
                         <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Autor: ${livro.autor}</div>
                     </div>
-                    <a href="${livro.caminho_pdf}" target="_blank" class="btn" style="margin-top: auto; padding: 4px 10px; font-size: 11px; text-align: center; text-decoration: none; display: inline-block; background: rgba(0, 210, 255, 0.1); color: var(--brand-blue-glow, #00d2ff); border: 1px solid rgba(0, 210, 255, 0.2); font-weight: bold; border-radius: 4px;">
+                    <a href="${livro.caminho_pdf}" target="_blank" class="btn" style="margin-top: auto; padding: 4px 10px; font-size: 11px; text-align: center; text-decoration: none; display: inline-block; background: rgba(0, 210, 255, 0.1); color: var(--brand-blue-glow, #00d2ff); border: 1px solid rgba(0, 210, 255, 0.2); font-weight: bold; border-radius: 4px; width: auto;">
                         Baixar PDF ⬇️
                     </a>
                 </div>
@@ -619,11 +632,10 @@ function renderizarLivrosAluno(cursoAlunoStr) {
         }
     })
     .catch(err => {
-        console.error("Erro ao carregar livros na prateleira do aluno:", err);
+        console.error("Erro ao carregar livros:", err);
         contentor.innerHTML = `<p style="font-size: 12px; color: #ef4444; padding: 10px; text-align:center; width:100%;">❌ Erro ao conectar ao repositório de livros.</p>`;
     });
 }
-
 
 
 
