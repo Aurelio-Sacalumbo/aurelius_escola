@@ -550,13 +550,13 @@ document.addEventListener("DOMContentLoaded", function() {
                         </div>
                         <div>
                             <label style="font-size: 11px; font-weight: bold;">Autor/Coordenador:</label>
-                            <input type="text" id="upload-autor" class="form-input" placeholder="Ex: Prof. Alfredo" required>
+                            <input type="text" id="upload-autor" class="form-input"  required>
                         </div>
                     </div>
                     
                     <div style="margin-bottom: 12px;">
                         <label style="font-size: 11px; font-weight: bold;">Vincular à Disciplina Alvo:</label>
-                        <input type="text" id="upload-disciplina" class="form-input" placeholder="Ex: Química (Escreva exatamente igual ao configurador)" required>
+                        <input type="text" id="upload-disciplina" class="form-input" required>
                     </div>
 
                     <div style="margin-bottom: 12px;">
@@ -598,28 +598,29 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
-        <div class="card">
-                <div class="titulo">💬 Central de Respostas do Chat Académico</div>
-                
-                <!-- 👥 SELETOR DE ALUNOS ATIVOS -->
-                <div style="margin-bottom: 12px;">
-                    <select id="chat-seletor-aluno" onchange="mudarAlunoChat(this.value)" style="width: 100%; padding: 10px; background: #060b19; color: #fff; border: 1px solid #1e293b; border-radius: 6px; font-weight: bold; font-size: 13px;">
-                        <option value="">-- Escolha um Aluno para Conversar --</option>
-                    </select>
-                </div>
-            
-                <!-- CAIXA DE TEXTO DO HISTÓRICO -->
-                <div class="chat-box" id="caixa-mensagens-chat-prof" style="height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-                    <div style="color: var(--brand-blue-glow);"><b>[Coordenação]:</b> Painel docente ligado. Selecione um aluno acima para monitorizar as dúvidas.</div>
-                </div>
-                
-                <!-- FORMULÁRIO DE ENVIO -->
-                <form onsubmit="enviarMensagemProfessor(event)" style="display: flex; gap: 8px; margin-top: 10px;">
-                    <input type="text" id="campo-texto-chat-prof" class="form-input" style="margin-top:0; flex: 1;" placeholder="Escreva a resposta ou orientação oficial..." required>
-                    <button type="submit" class="btn" style="margin-top:0; width: auto; padding: 0 20px;">Responder Alunos</button>
-                </form>
-            </div>
+       <!-- =========================================================================
+     💬 CENTRAL DE RESPOSTAS DO CHAT ACADÉMICO (PAINEL DO PROFESSOR)
+     ========================================================================= -->
+<div class="card" style="border-top: 4px solid var(--brand-gold);">
+    <div class="titulo">💬 Central de Respostas do Chat Académico</div>
+    
+    <!-- 👤 MENU SELETOR DE ALUNOS ATIVOS -->
+    <select id="select-alunos-chat" class="form-select" onchange="mudarAlunoChat(this.value)" style="margin-bottom: 12px; width: 100%;">
+        <option value="">-- Escolha um Aluno para Conversar --</option>
+        <option value="TODOS">📢 [Geral] Mural de Toda a Turma</option>
+    </select>
 
+    <!-- 📥 CAIXA ÚNICA DE MENSAGENS (HISTÓRICO DINÂMICO) -->
+    <div class="chat-box" id="caixa-mensagens-chat-prof" style="height: 250px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px;">
+            <!-- O JavaScript vai injetar dinamicamente as mensagens da nuvem aqui, deitando fora os fantasmas! -->
+        </div>
+    
+    <!-- 🚀 FORMULÁRIO DE ENVIO UNIFICADO -->
+    <form onsubmit="return enviarMensagemProfessor(event)" style="display: flex; gap: 8px; margin-top: 10px;">
+        <input type="text" id="campo-texto-chat-prof" class="form-input" style="margin-top:0; flex: 1;" placeholder="Escreva a resposta ou orientação oficial..." required>
+        <button type="submit" class="btn" style="margin-top:0; width: auto; padding: 0 20px; background: var(--brand-gold); color: #000; font-weight: bold;">Responder Alunos</button>
+    </form>
+</div>
 
 
 
@@ -650,119 +651,60 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
-// =========================================================================
-// 💬 CENTRAL DE COMUNICAÇÃO UNIFICADA E BLINDADA - PAINEL DO PROFESSOR
-// =========================================================================
-let alunoChatSelecionado = "TODOS"; 
+    let alunoChatSelecionado = "TODOS"; 
 
-// 🔄 1. DETETA MUDANÇA DE ALUNO NO SELETOR
-function mudarAlunoChat(idAluno) {
-    alunoChatSelecionado = idAluno ? idAluno : "TODOS";
-    sincronizarChatProfessor();
-}
-
-let ultimoHtmlChatProf = "";
-
-function sincronizarChatProfessor() {
-    fetch('chat_academico.php')
-    .then(res => {
-        if (!res.ok) throw new Error("Erro de rede");
-        return res.json();
-    })
-    .then(dados => {
-        const caixaChat = document.getElementById('caixa-mensagens-chat-prof');
-        if (!caixaChat) return;
-
-        if (dados.sucesso && dados.mensagens.length > 0) {
-            // Gera o novo HTML na memória primeiro
-            const novoHtml = dados.mensagens.map(m => {
-                const isProf = (m.perfil === 'professor' || m.remetente === 'Prof. Aurélio Jamba');
-                const corEtiqueta = isProf ? '#f59e0b' : '#3b82f6';
-                const label = isProf ? "[Tu / Professor]" : `[👤 Aluno: ${m.remetente}]`;
-                const horaSMS = m.hora ? m.hora : '00:00';
-                
-                return `
-                    <div style="margin-bottom: 6px; font-size: 13px; text-align: left; line-height: 1.4;">
-                        <span style="color: ${corEtiqueta}; font-weight: bold;">${label}:</span> 
-                        <span style="color: #fff; margin-left: 4px;">${m.conteudo}</span>
-                        <span style="font-size: 10px; color: #64748b; margin-left: 8px;">(${horaSMS})</span>
-                    </div>
-                `;
-            }).join('');
-
-            // 🌟 SÓ ATUALIZA A TELA SE CHEGOU MENSAGEM NOVA (Elimina o piscar!)
-            if (novoHtml !== ultimoHtmlChatProf) {
-                ultimoHtmlChatProf = novoHtml;
-                caixaChat.innerHTML = novoHtml;
-                caixaChat.scrollTop = caixaChat.scrollHeight; // Rola para o fim
-            }
-        } else if (dados.sucesso && dados.mensagens.length === 0) {
-            if (caixaChat.innerHTML !== `<div style="color: #64748b; font-size: 13px; text-align: center; padding-top: 20px;">Nenhuma mensagem registada no mural da turma.</div>`) {
-                caixaChat.innerHTML = `<div style="color: #64748b; font-size: 13px; text-align: center; padding-top: 20px;">Nenhuma mensagem registada no mural da turma.</div>`;
-                ultimoHtmlChatProf = "";
-            }
-        }
-    })
-    .catch(err => console.error("Erro ao sincronizar chat:", err));
-}
-
-// 🔄 3. DISPARAR ENVIO DA MENSAGEM (POST HÍBRIDO)
-function enviarMensagemProfessor(event) {
-    if (event) {
-        event.preventDefault();
-        event.stopPropagation();
+    // 👤 1. DETETA A MUDANÇA NO SELETOR E FILTRA O CHAT INSTANTANEAMENTE
+    function mudarAlunoChat(idAluno) {
+        alunoChatSelecionado = idAluno ? idAluno : "TODOS";
+        ultimoHtmlChatProf = ""; // Limpa a memória temporária para forçar a re-renderização
+        sincronizarChatProfessor(); // Atualiza o chat na hora com o filtro novo
     }
-
-    const inputTexto = document.getElementById('campo-texto-chat-prof');
-    if (!inputTexto || inputTexto.value.trim() === "") return;
-
-    const formData = new FormData();
-    formData.append('remetente', 'coord_prof');
-    formData.append('id_estudante', alunoChatSelecionado ? alunoChatSelecionado : 'TODOS');
-    formData.append('conteudo', inputTexto.value.trim());
-
-    // Bloqueia o botão para evitar cliques múltiplos em conexões instáveis
-    const btnEnviar = event.target ? event.target.querySelector('button[type="submit"]') : null;
-    if (btnEnviar) btnEnviar.disabled = true;
-
-    fetch("chat_academico.php", {
-        method: "POST",
-        body: formData
-    })
-    .then(res => {
-        if (!res.ok) throw new Error("Erro no servidor Render");
-        return res.json();
-    })
-    .then(dados => {
-        if (dados.sucesso) {
-            inputTexto.value = ""; // Limpa a caixa de texto local
-            
-            // 🌟 O SEGREDO DA BLINDAGEM: Limpa a variável de histórico antigo 
-            // para forçar a renderização real de todas as mensagens na próxima atualização!
-            if (typeof ultimoHtmlChatProf !== 'undefined') {
-                ultimoHtmlChatProf = ""; 
+    
+    // 👥 2. BUSCA OS ALUNOS MATRICULADOS ONLINE E PREENCHE O SELETOR AUTOMATICAMENTE
+    function carregarListaAlunosParaChat() {
+        const selectAlunos = document.getElementById("select-alunos-chat");
+        if (!selectAlunos) return;
+    
+        // Faz a requisição ao seu arquivo de listagem existente
+        fetch('listar_estudantes.php?acao=listar')
+        .then(res => {
+            if (!res.ok) throw new Error("Erro na ligação ao Render");
+            return res.json();
+        })
+        .then(dados => {
+            if (dados.sucesso && dados.alunos) {
+                let htmlOpcoes = `<option value="">-- Escolha um Aluno para Conversar --</option>`;
+                htmlOpcoes += `<option value="TODOS">📢 [Geral] Mural de Toda a Turma</option>`;
+    
+                dados.alunos.forEach(aluno => {
+                    // Suporta o ID de utilizador ou número de inscrição de forma segura
+                    const idIdentificador = aluno.id_unico_escolar ? aluno.id_unico_escolar : aluno.id_utilizador;
+                    if (aluno.nome) {
+                        htmlOpcoes += `<option value="${idIdentificador}">👤 ${aluno.nome} (${aluno.id_unico_escolar || 'Inscrito'})</option>`;
+                    }
+                });
+    
+                selectAlunos.innerHTML = htmlOpcoes;
             }
-            
-            // Aguarda 100 milissegundos para dar tempo ao MySQL da Aiven de processar a escrita antes da leitura
-            setTimeout(sincronizarChatProfessor, 100);
-        } else {
-            alert("❌ Erro ao enviar mensagem: " + dados.mensagem);
-        }
-    })
-    .catch(err => console.error("Erro ao processar envio do chat:", err))
-    .finally(() => {
-        // Reativa o botão em segurança
-        if (btnEnviar) btnEnviar.disabled = false;
+        })
+        .catch(err => console.warn("A aguardar sincronização dos utilizadores no Huambo...", err));
+    }
+    
+    // 🕒 3. ADICIONE O DISPARADOR NO DOMCONTENTLOADED EXISTENTE
+    document.addEventListener("DOMContentLoaded", function() {
+        // Mantém as suas inicializações anteriores
+        if (typeof sincronizarPainelEIndicadoresProf === "function") sincronizarPainelEIndicadoresProf();
+        if (typeof iniciarChatProfessor === "function") iniciarChatProfessor();
+        if (typeof renderHistoricoDicasNuvem === "function") renderHistoricoDicasNuvem();
+        
+        // 🌟 GATILHO REATIVO: Carrega a lista de alunos no select assim que a página abre!
+        carregarListaAlunosParaChat();
     });
-}
 
-// 🕒 4. INICIALIZADOR AUTOMÁTICO DO LOOP DO CHAT DO PROFESSOR (3 SEGUNDOS)
-let intervaloProfessorChat = null;
-function iniciarChatProfessor() {
-    sincronizarChatProfessor();
-    if (intervaloProfessorChat) clearInterval(intervaloProfessorChat);
-    intervaloProfessorChat = setInterval(sincronizarChatProfessor, 3000);
-}
+
+
+
+
 
 
 
@@ -814,7 +756,123 @@ function carregarIndicadoresETurmas() {
     .catch(err => console.error("Erro ao carregar indicadores:", err));
 }
 
-//
+let ultimoHtmlChatProf = "";
+
+function sincronizarChatProfessor() {
+    fetch('chat_academico.php')
+    .then(res => {
+        if (!res.ok) throw new Error("Erro na rede do Render");
+        return res.json();
+    })
+    .then(dados => {
+        const caixaChat = document.getElementById('caixa-mensagens-chat-prof');
+        if (!caixaChat) return;
+
+        // 🌟 CORREÇÃO CIRÚRGICA: Base institucional limpa e pura para deitar fora as letras fantasmas do cache estático!
+        let htmlBase = `<div style="color: var(--brand-blue-glow, #00d2ff); margin-bottom: 8px; text-align: left;"><b>[Coordenação]:</b> Central de atendimento ativa.</div>`;
+
+        if (dados.sucesso && dados.mensagens && dados.mensagens.length > 0) {
+            
+            // Monta o histórico unificado lendo estritamente o que vem da Aiven Cloud
+            const corpoConversa = dados.mensagens.map(m => {
+                const isProf = (m.perfil === 'professor' || (m.remetente && m.remetente.includes('Prof')));
+                const corEtiqueta = isProf ? 'var(--brand-gold, #eab308)' : 'var(--brand-blue-glow, #3b82f6)';
+                const label = isProf ? "[Tu / Professor]" : `[👤 Aluno: ${m.remetente}]`;
+                const horaSMS = m.hora ? m.hora : '00:00';
+                
+                // Leitura híbrida para suportar qualquer retorno do PHP
+                const textoReal = m.conteudo !== undefined ? m.conteudo : (m.mensagem !== undefined ? m.mensagem : "");
+
+                return `
+                    <div style="margin-bottom: 6px; font-size: 13px; text-align: left; line-height: 1.4;">
+                        <span style="color: ${corEtiqueta}; font-weight: bold;">${label}:</span> 
+                        <span style="color: #fff; margin-left: 4px;">${textoReal}</span>
+                        <span style="font-size: 10px; color: #64748b; margin-left: 8px;">(${horaSMS})</span>
+                    </div>
+                `;
+            }).join('');
+
+            const novoHtmlCompleto = htmlBase + corpoConversa;
+
+            // Só altera a tela se houver mudança real no banco central
+            if (novoHtmlCompleto !== ultimoHtmlChatProf) {
+                ultimoHtmlChatProf = novoHtmlCompleto;
+                caixaChat.innerHTML = novoHtmlCompleto;
+                caixaChat.scrollTop = caixaChat.scrollHeight; // Auto-scroll para o fundo
+            }
+        } else {
+            if (caixaChat.innerHTML !== htmlBase) {
+                caixaChat.innerHTML = htmlBase;
+                ultimoHtmlChatProf = htmlBase;
+            }
+        }
+    })
+    .catch(err => console.error("Erro ao sincronizar mural do professor:", err));
+}
+
+// 📥 2. ENVIO REATIVO EM JSON PURO (DESTRAVA E TRAVA RECARREGAMENTO)
+function enviarMensagemProfessor(event) {
+    if (event) {
+        event.preventDefault(); // 🌟 TRAVA ABSOLUTA: Impede a página de atualizar!
+        event.stopPropagation();
+    }
+
+    const inputTexto = document.getElementById('campo-texto-chat-prof');
+    if (!inputTexto || inputTexto.value.trim() === "") return false;
+
+    // 🌟 ALINHAMENTO COM O PHP: Envia as chaves em formato de objeto JSON puro!
+    const payload = {
+        id_unico_escolar: "PROF-01",
+        remetente: "Prof. Aurélio Jamba",
+        mensagem: inputTexto.value.trim(),
+        perfil: "professor"
+    };
+
+    const btnEnviar = document.querySelector("#campo-texto-chat-prof + button") || document.querySelector("button[type='submit']");
+    if (btnEnviar) btnEnviar.disabled = true;
+
+    fetch("chat_academico.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        body: JSON.stringify(payload) // Converte o objeto em string JSON para o PHP ler
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Erro na rede do Render");
+        return res.json();
+    })
+    .then(dados => {
+        if (dados.sucesso) {
+            inputTexto.value = ""; // Limpa a caixa de texto localmente
+            ultimoHtmlChatProf = ""; // Reseta cache visual
+            sincronizarChatProfessor(); // Atualiza o ecrã imediatamente
+        } else {
+            alert("❌ Erro interno do chat: " + dados.mensagem);
+        }
+    })
+    .catch(err => console.error("Erro ao processar envio do professor:", err))
+    .finally(() => {
+        if (btnEnviar) btnEnviar.disabled = false;
+    });
+
+    return false; // Retorno falso extra de segurança contra recarregamentos
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // 📥 ENVIA NOTA INDIVIDUAL LANÇADA PARA O BANCO CENTRAL NA NUVEM
 function salvarNotaEstudante(idUtilizador, nomeDisciplina) {
