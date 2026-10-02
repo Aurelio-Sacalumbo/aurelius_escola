@@ -34,11 +34,13 @@ self.addEventListener("activate", (event) => {
 });
 
 // Interceção de Rede
-self.addEventListener("fetch", (event) => {
-  // ATENÇÃO: Nunca guarda em cache ficheiros PHP para não congelar os dados do banco
-  if (event.request.url.includes('.php')) {
-    return; 
+self.addEventListener('fetch', event => {
+  if (event.request.url.includes('chat_academico.php') || event.request.url.includes('buscar_notas.php')) {
+      // Força buscar sempre na rede viva e nunca salvar no cache do Service Worker
+      return event.respondWith(fetch(event.request));
   }
+  // Restante do seu código do sw.js...
+});
 
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
