@@ -1,22 +1,21 @@
 {
-  "name": "Portal Académico Aurélius",
   "short_name": "Aurélius",
-  "description": "Ecossistema de Gestão e Estudo do Grupo Aurélius - Huambo",
-  "start_url": "Principal.html",
-  "display": "standalone",
-  "background_color": "#060b19",
-  "theme_color": "#eab308",
-  "orientation": "portrait-primary",
+  "name": "Academia Aurélius",
   "icons": [
     {
-      "src": "ícone-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
+      "src": "icone-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
     },
     {
-      "src": "ícone-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "icone-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
-  ]
+  ],
+  "start_url": "./Principal.html",
+  "background_color": "#070b14",
+  "theme_color": "#eab308",
+  "display": "standalone",
+  "orientation": "portrait"
 }
