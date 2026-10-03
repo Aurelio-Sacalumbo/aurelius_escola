@@ -57,7 +57,7 @@ try {
 
     // 🗃️ AÇÃO PADRÃO: LISTAGEM ANTIGA DO CHAT
     // Puxa apenas utilizadores com perfil de estudante que tenham ID escolar gerado
-    $query = "SELECT id_unico_escolar, nome FROM utilizadores WHERE id_unico_escolar IS NOT NULL AND id_unico_escolar != '' ORDER BY nome ASC";
+    $query = "SELECT IFNULL(id_unico_escolar, telefone) AS id_unico_escolar, nome FROM utilizadores WHERE nome IS NOT NULL AND nome != '' ORDER BY nome ASC";
     $stmt = $pdo->prepare($query);
     $stmt->execute();
     

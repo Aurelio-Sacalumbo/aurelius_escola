@@ -13,7 +13,8 @@ RUN echo "DirectoryIndex Principal.html" > /etc/apache2/conf-available/pwa-index
 # Copia os ficheiros para o diretório padrão do Apache
 COPY . /var/www/html/
 
-# Dá as permissões de leitura corretas ao Apache
-RUN chown -R www-data:www-data /var/www/html/
+# Dá as permissões de leitura e define o dono correto ao Apache
+RUN chown -R www-data:www-data /var/www/html/ \
+    && chmod -R 755 /var/www/html/uploads
 
 EXPOSE 80

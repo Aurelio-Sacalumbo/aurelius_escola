@@ -99,7 +99,7 @@
      
         <ul class="menu-horizontal-top">
                 <li><a href="Principal.html" onclick="alternarTela('view-login')">Home</a></li>
-            <li><a href="#" onclick="alternarTela('view-login')">Login</a></li>
+            <li><a href="#" onclick="alternarTela('view-login')">Turma</a></li>
             <li><a href="#" onclick="alternarTela('view-cadastro')" style="color: var(--brand-blue);">Inscrição </a></li>
             <li id="menu-logout" style="display: none;"><a href="#" onclick="fazerLogout(event)" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">Sair 🚪</a></li>
         </ul>
@@ -123,7 +123,7 @@
                 <form id="form-login" onsubmit="processarAcesso(event)">
                         <div style="margin-bottom: 16px;">
                             <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
-                                ID do Estudante ou Nº de Telefone:
+                                ID ou Nº de Telefone:
                             </label>
                             <input type="text" id="login-identificador" class="form-input" required>
                         </div>
@@ -138,14 +138,14 @@
                         <!-- 🔑 LINK DE RECUPERAÇÃO DE SENHA -->
                         <div style="text-align: right; margin-bottom: 15px;">
                             <a href="recuperar.php" style="font-size: 12px; color: var(--brand-gold, #eab308); text-decoration: none; font-weight: 600; transition: color 0.2s;" onmouseover="this.style.color='#facc15'" onmouseout="this.style.color='var(--brand-gold, #eab308)'">
-                                Esqueceu a password?
+                                Esqueceu a palavra-passe ?
                             </a>
                         </div>
                     
                         <!-- 🛑 ELEMENTO ADICIONADO: Contentor para exibir as mensagens de erro dinâmicas do PHP -->
                         <div id="mensagem-erro" style="display: none; color: #f87171; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 15px; font-weight: 500;"></div>
                     
-                        <button type="submit" class="btn">Aceder à Plataforma ➔</button>
+                        <button type="submit" class="btn">Entrar</button>
                     </form>
             </div>
         </div>
@@ -153,7 +153,7 @@
  <!-- 🆕 TELA 2: INSCRIÇÃO DE ALUNOS (GERADOR DINÂMICO E AUTOMÁTICO) -->
  <div class="tela-view" id="view-cadastro">
         <div class="card" style="border-top: 4px solid var(--brand-blue);">
-            <div class="titulo"> Faça sua Inscrição aqui✍🏾</div>
+            <div class="titulo"> Faça sua Inscrição aqui</div>
             <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">Registe-se e garanta sua vaga, no melhor centro de Explicação Domiciliar e Presencial da Província.</p>
             
             <!-- 🌟 O onsubmit centraliza o envio único aqui -->
@@ -403,12 +403,12 @@
                 const elNome = document.getElementById('txt-nome-aluno');
                 const nomeAluno = elNome ? elNome.innerText.trim() : "Estudante";
                 
-                let htmlChat = `<div style="color: #3b82f6; margin-bottom:10px;">👋 Olá, <b>${nomeAluno}</b>! Bem-vindo à Sala Interativa da sua Turma.</div>`;
+                let htmlChat = `<div style="color: #3b82f6; margin-bottom:10px;">👋 Olá, <b>${nomeAluno}</b>! Bem-vindo.</div>`;
                 
                 dados.mensagens.forEach(msg => {
                     const isProf = (msg.perfil === 'professor');
                     const corNome = isProf ? '#f59e0b' : '#3b82f6';
-                    const tagPerfil = isProf ? ' [👨‍🏫 Professor]' : '';
+                    const tagPerfil = isProf ? ' [ Professor]' : '';
                     const horaSMS = msg.hora ? msg.hora : '00:00';
                     
                     // 🌟 LÊ DIRETAMENTE .conteudo (Elimina o Undefined de vez!)
@@ -547,7 +547,7 @@
 
             htmlPauta += `
                 <tr>
-                    <td style="padding: 10px; color: #fff; font-weight: 500;">📖 ${nomeCadeira}</td>
+                    <td style="padding: 10px; color: #fff; font-weight: 500;"> ${nomeCadeira}</td>
                     <td style="text-align: center; font-weight: bold; color: #fff;">${n1 !== "-" ? n1.toFixed(1) : "-"}</td>
                     <td style="text-align: center; font-weight: bold; color: #fff;">${n2 !== "-" ? n2.toFixed(1) : "-"}</td>
                     <td style="text-align: center; font-weight: bold; color: #fff;">${n3 !== "-" ? n3.toFixed(1) : "-"}</td>
@@ -592,7 +592,7 @@ function renderizarLivrosAluno(cursoAlunoStr) {
         disciplinasAluno = ['lingua portuguesa', 'matematica', 'historia', 'geografia', 'ingles', 'biologia', 'quimica'];
     }
 
-    contentor.innerHTML = `<p style="font-size: 11px; color: #64748b;">🔄 A ler prateleira digital da academia...</p>`;
+    contentor.innerHTML = `<p style="font-size: 11px; color: #64748b;">🔄 A ler prateleira...</p>`;
 
     // Conecta ao buscador de livros do Render
     fetch('buscar_livros.php')
@@ -611,7 +611,7 @@ function renderizarLivrosAluno(cursoAlunoStr) {
             });
 
             if (livrosFiltrados.length === 0) {
-                contentor.innerHTML = `<p style="font-size: 12px; color: #64748b; padding: 10px; text-align:center; width:100%;">📚 Nenhum manual digital alocado para as suas disciplinas de momento.</p>`;
+                contentor.innerHTML = `<p style="font-size: 12px; color: #64748b; padding: 10px; text-align:center; width:100%;">Nenhum manual digital alocado para as suas disciplinas de momento.</p>`;
                 return;
             }
 
@@ -619,7 +619,7 @@ function renderizarLivrosAluno(cursoAlunoStr) {
             contentor.innerHTML = livrosFiltrados.map(livro => `
                 <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; border-left: 3px solid var(--brand-blue-glow, #00d2ff); text-align: left; margin-bottom: 8px;">
                     <div>
-                        <div style="font-size: 12px; font-weight: bold; color: #fff; text-transform: uppercase;">📖 ${livro.titulo_livro}</div>
+                        <div style="font-size: 12px; font-weight: bold; color: #fff; text-transform: uppercase;">${livro.titulo_livro}</div>
                         <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Autor: ${livro.autor}</div>
                     </div>
                     <a href="${livro.caminho_pdf}" target="_blank" class="btn" style="margin-top: auto; padding: 4px 10px; font-size: 11px; text-align: center; text-decoration: none; display: inline-block; background: rgba(0, 210, 255, 0.1); color: var(--brand-blue-glow, #00d2ff); border: 1px solid rgba(0, 210, 255, 0.2); font-weight: bold; border-radius: 4px; width: auto;">
@@ -641,7 +641,7 @@ function renderizarLivrosAluno(cursoAlunoStr) {
 
 
 
-// 📖 CARREGA AS NOTAS E DISCIPLINAS DO ALUNO LOGADO (VIA ID AUR)
+//  CARREGA AS NOTAS E DISCIPLINAS DO ALUNO LOGADO (VIA ID AUR)
 function carregarCadernoNotasEstudante(idUnicoEscolar) {
     const containerTabela = document.getElementById("corpo-tabela-pauta");
     
@@ -690,7 +690,7 @@ function carregarCadernoNotasEstudante(idUnicoEscolar) {
                     if (disciplinasArray.length > 0) {
                         containerTabela.innerHTML = disciplinasArray.map(c => `
                             <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                <td style="padding: 12px 10px; color: #fff; font-weight: 500;">📖 ${c}</td>
+                                <td style="padding: 12px 10px; color: #fff; font-weight: 500;"> ${c}</td>
                                 <td style="padding: 12px 10px; text-align: center; color: var(--brand-gold, #eab308); font-weight: bold;">-</td>
                                 <td style="padding: 12px 10px; text-align: center; color: var(--brand-gold, #eab308); font-weight: bold;">-</td>
                                 <td style="padding: 12px 10px; text-align: center; color: var(--brand-gold, #eab308); font-weight: bold;">-</td>
@@ -706,7 +706,7 @@ function carregarCadernoNotasEstudante(idUnicoEscolar) {
                 // Mensagem reativa de boas-vindas no Chat
                 const msgBoasVindas = document.getElementById("msg-boas-vindas");
                 if (msgBoasVindas) {
-                    msgBoasVindas.innerHTML = `👋 Olá, <b>${info.nome}</b>! Bem-vindo ao chat da sua turma.`;
+                    msgBoasVindas.innerHTML = ` Olá, <b>${info.nome}</b>! Bem-vindo ao chat da sua turma.`;
                 }
             }
         })
@@ -890,7 +890,7 @@ function processarAcesso(event) {
         if (telaAlvo) {
             telaAlvo.style.display = 'block';
             telaAlvo.classList.add('active');
-            console.log("🎯 Navegação executada para: " + idTelaAlvo);
+            console.log(" Navegação executada para: " + idTelaAlvo);
         } else {
             console.warn("⚠️ A tela de destino '" + idTelaAlvo + "' não existe no HTML.");
         }
@@ -911,7 +911,7 @@ function carregarCadernoNotasEstudante(idEstudanteLogado) {
     if (!corpoTabelaEstudante) return;
 
     // Mensagem amigável de carregamento em tempo real
-    corpoTabelaEstudante.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:12px; color:var(--brand-gold);">⏳ A sincronizar caderneta com a base central...</td></tr>`;
+    corpoTabelaEstudante.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:12px; color:var(--brand-gold);">⏳ A sincronizar caderneta ...</td></tr>`;
 
     // Consulta dinâmica universal à rota GET do banco de dados
     fetch(`obter_notas_estudante.php?id_estudante=${encodeURIComponent(idEstudanteLogado)}`)
@@ -977,15 +977,15 @@ function carregarCadernoNotasEstudante(idEstudanteLogado) {
             // Preenche dinamicamente o Chat Académico Rápido
             const msgBoasVindas = document.getElementById("msg-boas-vindas");
             if (msgBoasVindas) {
-                msgBoasVindas.innerHTML = `👋 Olá, <b>${info.nome}</b>! Bem-vindo à Sala Interativa da sua Turma.`;
+                msgBoasVindas.innerHTML = ` Olá, <b>${info.nome}</b>! Bem-vindo à Sala Interativa da sua Turma.`;
             }
         } else {
-            corpoTabelaEstudante.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;">⚠️ Erro: Perfil do aluno inválido na base de dados.</td></tr>`;
+            corpoTabelaEstudante.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;">⚠️ Erro: Perfil do aluno inválido .</td></tr>`;
         }
     })
     .catch(err => {
         console.error("Erro de sincronismo no painel do aluno:", err);
-        corpoTabelaEstudante.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#ef4444;">⚠️ Erro de rede ao buscar notas no Render.</td></tr>`;
+        corpoTabelaEstudante.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#ef4444;">⚠️ Erro de rede.</td></tr>`;
     });
 }
 
@@ -1025,7 +1025,7 @@ function sincronizarChatAcademico() {
 
 
     
-    // 📊 INJEÇÃO DOS DADOS NO PAINEL
+
     function carregarDadosDashboard() {
         if (!estudanteLogado) return;
         

@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // =========================================================================
-// 📥 ROTA 1: PROCESSAMENTO POST BALANCEADO (GRAVAÇÃO REAL NA NUVEM)
+// 📥 ROTA 1: PROCESSAMENTO POST (REGISTAR PAGAMENTO)
 // =========================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json; charset=utf-8');
@@ -37,44 +37,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($telefone)) {
         try {
             $nomeCompleto = !empty($nome) ? $nome : "Estudante Inscrito";
-            $cursoInicial = !empty($curso) ? $curso : "11ª Classe [Inscrição]";
-            $periodoInicial = !empty($periodo) ? $periodo : "Manhã";
 
-            // Verifica duplicados
-            $check = $pdo->prepare("SELECT id_utilizador FROM utilizadores WHERE telefone = ?");
-            $check->execute([$telefone]);
+            // 🌟 DUPLA VERIFICAÇÃO: Só barra se for o MESMO NOME e o MESMO TELEFONE!
+            $check = $pdo->prepare("SELECT id_utilizador FROM utilizadores WHERE telefone = ? AND nome = ?");
+            $check->execute([$telefone, $nomeCompleto]);
             $alunoExiste = $check->fetch();
 
             if ($alunoExiste) {
-                echo json_encode(['sucesso' => true, 'mensagem' => 'Aluno já se encontra registado.'], JSON_UNESCAPED_UNICODE);
-                exit;
+                echo json_encode(['sucesso' => true, 'mensagem' => 'Aluno já se encontra registado no sistema.']);
+            } else {
+                // Insere com a senha em texto limpo de 6 dígitos
+                $stmt = $pdo->prepare("INSERT INTO utilizadores (nome, telefone, email, senha, nivel, id_unico_escolar, curso, periodo, saldo_propina) VALUES (?, ?, ?, ?, 'estudante', ?, ?, ?, 0)");
+                $executo = $stmt->execute([$nomeCompleto, $telefone, $validacao, $validacao, $id_escolar, $curso, $periodo]);
+                
+                echo json_encode(['sucesso' => $executo, 'mensagem' => '🎉 Novo aluno integrado com sucesso no MySQL!']);
             }
-
-            // 🌟 CORREÇÃO REAL: 8 Colunas explicitadas para preencher exatamente a estrutura da Aiven
-            $queryInsert = "INSERT INTO utilizadores (id_unico_escolar, nome, email, senha, telefone, curso, periodo, nivel) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, 'estudante')";
-            
-            $stmt = $pdo->prepare($queryInsert);
-            $executo = $stmt->execute([
-                $id_escolar, 
-                $nomeCompleto, 
-                $validacao, // Coluna email (Código)
-                $validacao, // Coluna senha (Código)
-                $telefone, 
-                $cursoInicial, 
-                $periodoInicial
-            ]);
-            
-            echo json_encode(['sucesso' => $executo, 'mensagem' => '🎉 Novo aluno integrado com sucesso no MySQL!'], JSON_UNESCAPED_UNICODE);
         } catch (Exception $e) {
-            // Se der erro no banco, devolve o erro real para não mascarar no front-end
-            echo json_encode(['sucesso' => false, 'mensagem' => 'Erro interno MySQL: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['sucesso' => false, 'mensagem' => 'Vai até a Pagina Principal, (Home) e Faz sua Matrícula, selecionando sua classe e disciplinas ou Cursos que pretendes estudar 😎🤠🧏 , Venha fazer parte da Nossa Família.........................................................................................................................................................................................................................................................................'. $e->getMessage()]);
         }
         exit;
     }
 }
+
 // =========================================================================
-// 🔍 ROTA 2: PROCESSAMENTO GET BLINDADO POR DETECÇÃO DE CONTEÚDO
+// 🔍 ROTA 2: PROCESSAMENTO GET (PESQUISA AUTOMÁTICA DO ALUNO)
 // =========================================================================
 if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     header('Content-Type: application/json; charset=utf-8');
@@ -83,94 +69,232 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     $termo = trim($_GET['termo']);
     
     try {
-        // Busca ampla e irrestrita na tabela central
-        $stmt = $pdo->prepare("SELECT * FROM utilizadores WHERE id_unico_escolar = ? OR nome LIKE ? OR telefone = ? LIMIT 1");
+        $stmt = $pdo->prepare("SELECT id_utilizador, nome, telefone, saldo_propina, curso, id_unico_escolar FROM utilizadores WHERE (id_unico_escolar = ? OR nome LIKE ? OR telefone = ?) AND nivel = 'estudante' LIMIT 1");
         $stmt->execute([$termo, "%$termo%", $termo]);
-        $alunoRaw = $stmt->fetch(PDO::FETCH_ASSOC);
+        $aluno = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        if ($alunoRaw) {
-            // Variables de extração inteligente
-            $nomeFinal = "";
-            $telFinal = "";
-            $idFinal = "";
-            $cursoReal = "";
-
-            // Varre o registo para atribuir as variáveis pelo conteúdo real e não pelo nome da coluna
-            foreach ($alunoRaw as $coluna => $valor) {
-                $v = trim((string)$valor);
-                if (empty($v)) continue;
-
-                if (strpos($v, 'AUR-') !== false) {
-                    $idFinal = $v;
-                } elseif (strpos($v, '[') !== false || stripos($v, 'classe') !== false) {
-                    $cursoReal = $v;
-                } elseif (is_numeric($v) && strlen($v) >= 9 && (strpos($v, '9') === 0 || strpos($v, '222') === 0)) {
-                    $telFinal = $v; // Captura número de telefone válido em Angola (começado por 9 ou 222)
-                } elseif (empty($nomeFinal) && !is_numeric($v) && $v !== 'estudante' && strpos($v, '2026-') === false) {
-                    $nomeFinal = $v; // Captura o Nome do estudante
-                }
-            }
-
-            // Fallbacks de segurança se o aluno for novo e não tiver curso preenchido
-            if (empty($nomeFinal)) $nomeFinal = isset($alunoRaw['nome']) ? $alunoRaw['nome'] : "Estudante";
-            if (empty($telFinal)) $telFinal = isset($alunoRaw['telefone']) ? $alunoRaw['telefone'] : "900000000";
-            if (empty($cursoReal)) $cursoReal = "9ª Classe [Língua Portuguesa, Matemática, História, Geografia, Inglês, Biologia]";
-
+        if ($aluno) {
+            $cursoBruto = !empty($aluno['curso']) ? $aluno['curso'] : "";
             $disciplinasEstruturadas = [];
             $precoTotalOriginal = 0;
             
-            // Parser das chaves [ ] das disciplinas
-            if (strpos($cursoReal, '[') !== false) {
-                preg_match('/\[(.*?)\]/', $cursoReal, $matches);
-                $listaDisciplinas = isset($matches[1]) ? $matches[1] : $cursoReal;
-                $partes = explode(',', $listaDisciplinas);
-            } else {
-                $partes = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
+            if (!empty($cursoBruto)) {
+                // Remove colchetes extras gerados na string de matrícula
+                $limpaCurso = str_replace(['[Inscrição]', '[', ']'], '', $cursoBruto);
+                $partes = explode(',', $limpaCurso);
+                
+                // ⏬ AQUI ENTRA A MODIFICAÇÃO CIRÚRGICA ⏬
+                $stmtPreco = $pdo->prepare("SELECT preco_base FROM cursos_disciplinas WHERE nome = ? OR (nome = ? AND nivel_academico LIKE ?) LIMIT 1");
+
+                foreach ($partes as $parte) {
+                    $nomeItem = trim($parte);
+                    if (empty($nomeItem)) continue;
+
+                    // Isola o nome do curso (ex: "Economia - 1º Ano" ou "12ª Classe") para cruzar com a tabela de preços
+                    $partesCurso = explode('[', $cursoBruto);
+                    $classeFiltro = "%" . trim($partesCurso[0]) . "%";
+                    
+                    $stmtPreco->execute([$nomeItem, $nomeItem, $classeFiltro]);
+                    $precoBanco = $stmtPreco->fetchColumn();
+
+                    $precoReal = ($precoBanco !== false) ? floatval($precoBanco) : 1500.00;
+                    $precoTotalOriginal += $precoReal;
+                    
+                    // Nota: mantido 'nome' em vez de 'name' para sincronizar com a sua renderizarListaDeCadeirasCliente()
+                    $disciplinasEstruturadas[] = [
+                        'nome' => $nomeItem, 
+                        'preco' => $precoReal
+                    ];
+                }
+                // ⏫ FIM DA MODIFICAÇÃO CIRÚRGICA ⏫
             }
 
-            // Puxa os preços originais do banco de dados
-            $stmtPreco = $pdo->prepare("SELECT preco_base FROM cursos_disciplinas WHERE nome = ? LIMIT 1");
-            
-            foreach ($partes as $parte) {
-                $nomeItem = trim($parte);
-                if (empty($nomeItem)) continue;
-                
-                $stmtPreco->execute([$nomeItem]);
-                $precoBanco = $stmtPreco->fetchColumn();
-                
-                $precoReal = ($precoBanco !== false) ? floatval($precoBanco) : 1500.00;
-                $precoTotalOriginal += $precoReal;
-                
-                $disciplinasEstruturadas[] = [
-                    'nome' => $nomeItem,
-                    'preco' => $precoReal
-                ];
-            }
-
+            // Lógica de descontos e envio do JSON de resposta...
             $contagemItens = count($disciplinasEstruturadas);
             $descontoCortesia = ($contagemItens >= 4) ? 1800.00 : 0.00;
             $totalAPagarFinal = max(0, $precoTotalOriginal - $descontoCortesia);
-            $saldoReal = (isset($alunoRaw['saldo_propina'])) ? floatval($alunoRaw['saldo_propina']) : 0;
+            $saldoReal = ($aluno['saldo_propina'] > 0) ? floatval($aluno['saldo_propina']) : 0;
 
-            // Retorna o JSON perfeitamente alinhado com o que o JavaScript espera receber
             echo json_encode([
                 'status' => 'encontrado',
-                'nome' => $nomeFinal,
-                'telefone' => $telFinal,
+                'nome' => $aluno['nome'],
+                'telefone' => $aluno['telefone'],
                 'turma' => 'Turma Única A',
-                'classe' => $cursoReal,
+                'classe' => $cursoBruto,
                 'saldo_interno' => $saldoReal,
                 'preco_total' => $precoTotalOriginal,
                 'desconto' => $descontoCortesia,
                 'total_a_pagar' => $totalAPagarFinal,
                 'disciplinas' => $disciplinasEstruturadas
-            ], JSON_UNESCAPED_UNICODE);
-            
+            ]);
         } else {
-            echo json_encode(['status' => 'nao_encontrado'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['status' => 'nao_encontrado']);
         }
     } catch (Exception $e) {
-        echo json_encode(['status' => 'erro', 'mensagem' => 'Erro de mapeamento: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        echo json_encode(['status' => 'erro', 'mensagem' => $e->getMessage()]);
+    }
+    exit;
+}
+?>
+<?php
+// Adicione estes cabeçalhos no topo do unitel.php para evitar bloqueios de rede (CORS)
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit(0);
+}
+
+// =========================================================================
+// 📥 ROTA 1: PROCESSAMENTO POST (REGISTAR PAGAMENTO)
+// =========================================================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Content-Type: application/json; charset=utf-8');
+    require_once 'conexao.php';
+
+    // Captura tanto JSON do Render quanto FormData tradicional
+    $inputRaw = file_get_contents("php://input");
+    $dadosJson = json_decode($inputRaw, true);
+
+    if ($dadosJson) {
+        $acao         = isset($dadosJson['acao_financeira']) ? trim($dadosJson['acao_financeira']) : 'registar_pagamento';
+        $nome         = isset($dadosJson['nome']) ? trim($dadosJson['nome']) : '';
+        $telefone     = isset($dadosJson['telefone']) ? trim($dadosJson['telefone']) : '';
+        $curso        = isset($dadosJson['curso']) ? trim($dadosJson['curso']) : '';
+        $periodo      = isset($dadosJson['periodo']) ? trim($dadosJson['periodo']) : '';
+        $id_escolar   = isset($dadosJson['id_unico_escolar']) ? trim($dadosJson['id_unico_escolar']) : '';
+        $validacao    = isset($dadosJson['codigo_validacao']) ? trim($dadosJson['codigo_validacao']) : '';
+        $saldoAbatido = isset($dadosJson['saldo_abatido']) ? floatval($dadosJson['saldo_abatido']) : 0;
+    } else {
+        $acao         = isset($_POST['acao_financeira']) ? trim($_POST['acao_financeira']) : 'registar_pagamento';
+        $nome         = isset($_POST['nome']) ? trim($_POST['nome']) : '';
+        $telefone     = isset($_POST['telefone']) ? trim($_POST['telefone']) : '';
+        $curso        = isset($_POST['curso']) ? trim($_POST['curso']) : '';
+        $periodo      = isset($_POST['periodo']) ? trim($_POST['periodo']) : '';
+        $id_escolar   = isset($_POST['id_unico_escolar']) ? trim($_POST['id_unico_escolar']) : '';
+        $validacao    = isset($_POST['codigo_validacao']) ? trim($_POST['codigo_validacao']) : '';
+        $saldoAbatido = 0;
+    }
+
+    if ($acao === 'registar_pagamento') {
+        if (empty($telefone)) {
+            echo json_encode(['sucesso' => false, 'mensagem' => 'Contacto do aluno em falta.']);
+            exit;
+        }
+
+        try {
+            // 🔍 1. Verifica se o aluno já existe na tabela utilizadores
+            $check = $pdo->prepare("SELECT id_utilizador, id_unico_escolar FROM utilizadores WHERE telefone = ?");
+            $check->execute([$telefone]);
+            $alunoExiste = $check->fetch(PDO::FETCH_ASSOC);
+
+            $senha_padrao_hash = md5($validacao); 
+            $nomeCompleto = !empty($nome) ? $nome : "Estudante Inscrito";
+
+            if ($alunoExiste) {
+                // 🔄 Se o aluno já existe, ATUALIZA com os novos códigos e turma gerados para entrar na plataforma
+                $stmt = $pdo->prepare("UPDATE utilizadores SET nome = ?, id_unico_escolar = ?, email = ?, senha = ?, curso = ?, periodo = ?, nivel = 'estudante' WHERE telefone = ?");
+                $executo = $stmt->execute([$nomeCompleto, $id_escolar, $validacao, $senha_padrao_hash, $curso, $periodo, $telefone]);
+                $msg = "Inscrição e códigos atualizados com sucesso para o aluno existente!";
+            } else {
+                // 🆕 Se o aluno NÃO existe, faz o INSERT real com os códigos gerados
+                $stmt = $pdo->prepare("INSERT INTO utilizadores (nome, telefone, email, senha, nivel, id_unico_escolar, curso, periodo, saldo_propina) VALUES (?, ?, ?, ?, 'estudante', ?, ?, ?, 0)");
+                $executo = $stmt->execute([$nomeCompleto, $telefone, $validacao, $senha_padrao_hash, $id_escolar, $curso, $periodo]);
+                $msg = "Novo aluno gravado com sucesso no banco de dados central!";
+            }
+
+            echo json_encode([
+                'sucesso' => $executo, 
+                'mensagem' => $msg,
+                'id_unico' => $id_escolar,
+                'codigo_validacao' => $validacao,
+                'telefone' => $telefone
+            ]);
+        } catch (Exception $e) {
+            echo json_encode(['sucesso' => false, 'mensagem' => 'Erro crítico MySQL: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+}
+// =========================================================================
+// 🔍 ROTA 2: PROCESSAMENTO GET (PESQUISA AUTOMÁTICA DO ALUNO)
+// =========================================================================
+// =========================================================================
+// 🔍 ROTA 2: PROCESSAMENTO GET (MÓDULOS REAIS E DESCONTO SINCRONIZADO)
+// =========================================================================
+if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    require_once 'conexao.php';
+    
+    $termo = trim($_GET['termo']);
+    
+    try {
+        $stmt = $pdo->prepare("SELECT id_utilizador, nome, telefone, saldo_propina, curso, id_unico_escolar FROM utilizadores WHERE (id_unico_escolar = ? OR nome LIKE ? OR telefone = ?) AND nivel = 'estudante' LIMIT 1");
+        $stmt->execute([$termo, "%$termo%", $termo]);
+        $aluno = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($aluno) {
+            $cursoBruto = !empty($aluno['curso']) ? $aluno['curso'] : "";
+            
+            // 💰 TABELA UNIFICADA DE PREÇOS ORIGINAIS (AKZ)
+            $tabelaPrecos = [
+                'Língua Portuguesa' => 1500.00, 'Ling. Portuguesa' => 1500.00, 'Ling. Potuguesa' => 1500.00,
+                'Matemática'        => 1500.00, 'Matematica'        => 1500.00,
+                'História'          => 1500.00, 'Historia'          => 1500.00,
+                'Física'            => 1500.00, 'Fisica'            => 1500.00,
+                'Química'           => 1500.00, 'Quimica'           => 1500.00,
+                'Inglês'            => 1500.00, 'Ingles'            => 1500.00,
+                'Biologia'          => 1500.00
+            ];
+            
+            $disciplinasEstruturadas = [];
+            $precoTotalOriginal = 0;
+            
+            if (!empty($cursoBruto)) {
+                // Remove os colchetes textuais gerados na string da matrícula
+                $limpaCurso = str_replace(['[Inscrição]', '[', ']'], '', $cursoBruto);
+                $partes = explode(',', $limpaCurso);
+                
+                foreach ($partes as $parte) {
+                    $nomeCadeira = trim($parte);
+                    if (empty($nomeCadeira)) continue;
+                    
+                    // Associa ao preço oficial ou assume 1500,00 se não estiver listada
+                    $precoCadeira = isset($tabelaPrecos[$nomeCadeira]) ? $tabelaPrecos[$nomeCadeira] : 1500.00;
+                    $precoTotalOriginal += $precoCadeira;
+                    
+                    $disciplinasEstruturadas[] = [
+                        'nome' => $nomeCadeira,
+                        'preco' => $precoCadeira
+                    ];
+                }
+            }
+
+            // 🎯 LÓGICA DO DESCONTO DE CORTESIA SINCRONIZADA (Apenas 4 ou mais cadeiras)
+            $contagemCadeiras = count($disciplinasEstruturadas);
+            $descontoCortesia = ($contagemCadeiras >= 4) ? 1800.00 : 0.00;
+            $totalAPagarFinal = $precoTotalOriginal - $descontoCortesia;
+            
+            $saldoReal = ($aluno['saldo_propina'] > 0) ? floatval($aluno['saldo_propina']) : 0;
+
+            echo json_encode([
+                'status' => 'encontrado',
+                'nome' => $aluno['nome'],
+                'telefone' => $aluno['telefone'],
+                'turma' => 'Turma Única A',
+                'classe' => $cursoBruto,
+                'saldo_interno' => $saldoReal,
+                'preco_total' => $precoTotalOriginal,
+                'desconto' => $descontoCortesia,
+                'total_a_pagar' => $totalAPagarFinal,
+                'disciplinas' => $disciplinasEstruturadas
+            ]);
+        } else {
+            echo json_encode(['status' => 'nao_encontrado']);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['status' => 'erro', 'mensagem' => $e->getMessage()]);
     }
     exit;
 }
@@ -226,9 +350,7 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
         <div class="header-logo-escrita">
         <div>
                     <a href="Principal.html" style="color: #cbd5e1; text-decoration: none; font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s;" onmouseover="this.style.background='rgba(234, 179, 8, 0.15)'; this.style.color='var(--brand-gold)';" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.color='#cbd5e1';">Home</a>
-                </div> <br>
-            <p style="color:#fff; font-size: 14px; font-weight:bold;">Módulo Financeiro: Emissão de Propinas & Mensalidades</p>
-        </div>
+              <br> <br> <br> <br>
 
         <!-- Painéis Informativos Automatizados (Leitura Direta do Banco) -->
         <div id="msg_status_aluno" class="alerta-box"></div>
@@ -238,7 +360,7 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
         <!-- CAMPO DE PESQUISA INICIAL -->
         <div class="form-group">
             <label>Pesquisar Aluno (Nome, Nº Telefone ou ID AUR):</label>
-            <input type="text" id="pesquisa_aluno" class="form-input" placeholder="Digite o nome ou AUR- ..." oninput="buscarAlunoSincronizado(this.value)" required>
+            <input type="text" id="pesquisa_aluno" class="form-input" placeholder="Digite aqui" oninput="buscarAlunoSincronizado(this.value)" required>
         </div>
     
         <!-- BLOCO DE FATURAMENTO (EXIBIDO APÓS SELECIONAR O ESTUDANTE) -->
