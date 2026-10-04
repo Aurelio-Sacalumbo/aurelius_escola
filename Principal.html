@@ -895,6 +895,8 @@ function calcularPrecoTotal() {
 }
 
 
+
+
 function submeterMatriculaEscolaReal(event) {
     if (event) event.preventDefault();
 
@@ -991,15 +993,20 @@ function submeterMatriculaEscolaReal(event) {
         console.error(err);
         alert("❌ Erro de Ligação: Não foi possível validar a inscrição. Verifique se estais ligado a uma rede móvel.");
     });
-} // 🌟 Encerramento real e definitivo da função!
+}
+
 function executarSalvamentoMatricula(dadosMatricula) {
-    // Envia o payload limpo e unificado diretamente para o PHP
-    fetch("guardar_matricula.php", {
+    // 🚀 FORM DATA LIMPO: Envia estritamente os dados preenchidos, sem gerar IDs ou senhas locais
+    const formData = new FormData();
+    formData.append('nome', dadosMatricula.nome);
+    formData.append('telefone', dadosMatricula.telefone);
+    formData.append('curso', dadosMatricula.classe);
+    formData.append('periodo', dadosMatricula.periodo);
+
+    // Envia diretamente para o motor de liberação oficial
+    fetch("efetuar_matricula_oficial.php", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
-        },
-        body: JSON.stringify(dadosMatricula)
+        body: formData
     })
     .then(res => {
         if (!res.ok) {
@@ -1008,24 +1015,60 @@ function executarSalvamentoMatricula(dadosMatricula) {
         return res.json();
     })
     .then(resultado => {
-        if (resultado.sucesso) {
-            alert("🎉 Perfeito! Matrícula guardada com sucesso e sincronizada nos Portais!");
+        const isSucesso = resultado.sucesso || resultado.status === "sucesso" || resultado.status === true;
+
+        if (isSucesso) {
+            // 🌟 RECONHECIMENTO EXCLUSIVO: Captura o ID e a Senha originais criados no estudante.html
+            const idOriginalDoBanco = resultado.id_unico_escolar;
+            const senhaOriginalDoBanco = resultado.senha_gerada;
+
+            alert(`🎉 Perfeito! Matrícula guardada com sucesso e sincronizada nos Portais!\n\nAluno: ${dadosMatricula.nome}\nID Único: ${idOriginalDoBanco}\nSenha de Acesso: ${senhaOriginalDoBanco}`);
             
-            // Limpa o formulário de matrícula após o sucesso
+            // Preenche o formulário de login automaticamente com as credenciais estáveis da inscrição
+            const campoID = document.getElementById("campo_login_id") || document.getElementById("identificador") || document.getElementById("login-id");
+            const campoSenha = document.getElementById("campo_login_senha") || document.getElementById("senha") || document.getElementById("login-senha");
+            
+            if (campoID) campoID.value = idOriginalDoBanco;
+            if (campoSenha) campoSenha.value = senhaOriginalDoBanco;
+
+            // Limpa o formulário de matrícula
             const form = document.getElementById('form-matricula') || document.querySelector('form');
             if (form) form.reset();
             
-            // Recarrega a página para limpar os estados de preços da tela anterior
-            window.location.reload();
+            // Alterna a interface de abas para o ecrã de Login
+            if (typeof alternarTela === "function") {
+                alternarTela("view-login");
+            } else {
+                const secLogin = document.getElementById("view-login") || document.getElementById("aba-login");
+                if (secLogin) secLogin.classList.add("active");
+                const secMat = document.getElementById("view-cadastro") || document.getElementById("view-dashboard");
+                if (secMat) secMat.classList.remove("active");
+            }
+
+            window.scrollTo({ top: 0, behavior: "smooth" });
         } else {
             alert("⚠️ O servidor recusou o registo: " + (resultado.mensagem || "Erro de processamento interno."));
         }
     })
     .catch(err => {
         console.error("Detalhes do erro detetado:", err);
-        alert("❌ Erro de Execução: Não foi possível sincronizar os dados.");
+        alert("❌ Erro de Execução: Falha ao sincronizar dados com a base académica central.");
     });
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ========================================================================
 // 🚀 5. PROCESSADOR DE SUBMISSÃO DINÂMICA COMPLETO (ORDEM DE VARIÁVEIS SEGURA)

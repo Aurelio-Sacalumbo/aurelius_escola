@@ -341,6 +341,7 @@
             console.error("❌ Erro: A div '" + idTelaAlvo + "' não existe.");
         }
     }
+
     function cadastrarEstudanteAutomatico(event) {
         // 🛑 Bloqueio absoluto do recarregamento de página (?#) que causava a tela preta
         if (event) {
@@ -368,93 +369,104 @@
             return false;
         }
     
-        // 🎲 GERAÇÃO REATIVA E DINÂMICA DE IDS ESCOLARES E CÓDIGOS DE VALIDAÇÃO (6 DÍGITOS)
-        const idEscolarGerado = "AUR-" + Math.floor(100000 + Math.random() * 900000);
-        const codigoValidacaoGerado = Math.floor(100000 + Math.random() * 900000).toString();
-    
-        // Guarda na memória do navegador para consistência do ecossistema
+        // Guarda na memória local do navegador para consistência do ecossistema
         localStorage.setItem("telefone_estudante", telefone);
     
-        // 📋 🌟 INJEÇÃO COMPLETA E IMEDIATA DE DADOS NA FATURA IMPERIAL (Antes do Fetch e do Reset)
-        try {
-            if (document.getElementById("rec_nome")) document.getElementById("rec_nome").innerText = nome;
-            if (document.getElementById("rec_tel")) document.getElementById("rec_tel").innerText = telefone;
-            if (document.getElementById("rec_mes")) document.getElementById("rec_mes").innerText = "Inscrição Inicial";
-            if (document.getElementById("rec_turma")) document.getElementById("rec_turma").innerText = periodo;
-            if (document.getElementById("rec_qtd")) document.getElementById("rec_qtd").innerText = classe;
-            
-            // Exibe de forma visível o ID AUR e a Senha que o aluno usará para fazer o login
-            if (document.getElementById("rec_id_escolar")) document.getElementById("rec_id_escolar").innerText = idEscolarGerado;
-            if (document.getElementById("rec_codigo_val")) document.getElementById("rec_codigo_val").innerText = codigoValidacaoGerado;
-    
-            // Gera a data atual de emissão formatada por extenso para o Huambo
-            if (document.getElementById("rec_data")) {
-                const d = new Date();
-                const mesesAno = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-                document.getElementById("rec_data").innerText = `${String(d.getDate()).padStart(2, '0')} de ${mesesAno[d.getMonth()]} de ${d.getFullYear()}`;
-            }
-        } catch (erroDom) {
-            console.warn("Aviso: Alguns contêineres visuais do recibo imperial não foram localizados.", erroDom);
-        }
-    
-        // Garante que o bloco oculto da fatura de impressão fica visível no ecrã
-        const blocoFatura = document.getElementById("bloco_fatura_recibo");
-        if (blocoFatura) {
-            blocoFatura.style.display = "block";
-        }
-    
-        // 🚀 ENVIO ADAPTADO: Como formulário tradicional FormData para o Render/Aiven aceitar nativamente
+        // 🚀 ENVIO ADAPTADO: Passa apenas as variáveis do formulário sem inventar códigos aleatórios locais
         const formData = new FormData();
-        formData.append('acao_financeira', 'registar_pagamento');
         formData.append('nome', nome);
         formData.append('telefone', telefone);
-        formData.append('curso', `${classe} [Inscrição]`);
+        formData.append('curso', classe);
         formData.append('periodo', periodo);
-        formData.append('id_unico_escolar', idEscolarGerado);
-        formData.append('codigo_validacao', codigoValidacaoGerado);
-        formData.append('valor_pago', '0');
     
-        fetch("unitel.php", {
+        fetch("guardar_matrícula.php", {
             method: "POST",
-            body: formData 
+            body: formData
         })
         .then(res => {
             if (!res.ok) throw new Error("Erro na resposta do servidor Render");
             return res.json();
         })
         .then(resposta => {
-            if (resposta.sucesso || resposta.status === "sucesso") {
-                // Alerta Imperial completo exibindo todas as variáveis geradas de forma clara
-                alert(`🎉 Inscrição integrada com sucesso no MySQL!\n\nEstudante: ${nome}\nID Único: ${idEscolarGerado}\nCódigo Validação / Senha: ${codigoValidacaoGerado}\n\nUse o ID Único ou o Telefone para aceder ao Portal.`);
+            const isSucesso = resposta.sucesso || resposta.status === "sucesso" || resposta.status === true;
+    
+            if (isSucesso) {
+                // 🌟 RECONHECIMENTO COM SUCESSO: Captura os dados oficiais e imutáveis vindos do banco de dados
+                const idOficial = resposta.id_unico_escolar;
+                const senhaOficial = resposta.senha_gerada;
+    
+                // 📋 INJEÇÃO EM TEMPO REAL NA FATURA VISUAL COM OS DADOS REAIS DO BANCO
+                try {
+                    if (document.getElementById("rec_nome")) document.getElementById("rec_nome").innerText = nome;
+                    if (document.getElementById("rec_tel")) document.getElementById("rec_tel").innerText = telefone;
+                    if (document.getElementById("rec_mes")) document.getElementById("rec_mes").innerText = "Inscrição Inicial";
+                    if (document.getElementById("rec_turma")) document.getElementById("rec_turma").innerText = periodo;
+                    if (document.getElementById("rec_qtd")) document.getElementById("rec_qtd").innerText = classe;
+                    if (document.getElementById("rec_id_escolar")) document.getElementById("rec_id_escolar").innerText = idOficial;
+                    if (document.getElementById("rec_codigo_val")) document.getElementById("rec_codigo_val").innerText = senhaOficial;
+    
+                    if (document.getElementById("rec_data")) {
+                        const d = new Date();
+                        const mesesAno = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                        document.getElementById("rec_data").innerText = `${String(d.getDate()).padStart(2, '0')} de ${mesesAno[d.getMonth()]} de ${d.getFullYear()}`;
+                    }
+                    
+                    const blocoFatura = document.getElementById("bloco_fatura_recibo");
+                    if (blocoFatura) blocoFatura.style.display = "block";
+                } catch (erroDom) {
+                    console.warn("Aviso visual do recibo:", erroDom);
+                }
+    
+                // Exibe o Alerta Imperial com os dados estáveis do MySQL
+                alert(`🎉 Inscrição integrada com sucesso no MySQL!\n\nEstudante: ${nome}\nID Único: ${idOficial}\nCódigo Validação / Senha: ${senhaOficial}\n\nA abrir a área de acesso...`);
                 
-                // Remove o # da URL de forma limpa via Histórico do Navegador
+                // 📋 PREENCHIMENTO AUTOMÁTICO DO FORMULÁRIO DE LOGIN
+                const campoID = document.getElementById("campo_login_id") || document.getElementById("login-id") || document.getElementById("login_id") || document.getElementById("identificador");
+                const campoSenha = document.getElementById("campo_login_senha") || document.getElementById("login-senha") || document.getElementById("login_senha") || document.getElementById("senha");
+                
+                if (campoID) campoID.value = idOficial;
+                if (campoSenha) campoSenha.value = senhaOficial;
+    
+                // 🔄 MUDANÇA DE ABA AUTOMÁTICA
+                if (typeof alternarTela === "function") {
+                    alternarTela("view-login");
+                } else {
+                    const secoes = ["view-login", "aba-login", "login-section", "view-cadastro", "aba-cadastro", "cadastro-section"];
+                    secoes.forEach(idSecao => {
+                        const el = document.getElementById(idSecao);
+                        if (el) {
+                            if (idSecao.includes("login")) {
+                                el.style.setProperty('display', 'block', 'important');
+                                el.classList.add("active");
+                            } else if (idSecao.includes("cadastro")) {
+                                el.style.setProperty('display', 'none', 'important');
+                                el.classList.remove("active");
+                            }
+                        }
+                    });
+                }
+    
                 if (window.location.href.includes('#')) {
                     window.history.pushState("", document.title, window.location.pathname);
                 }
                 
-                // Limpa apenas o formulário de cadastro, mantendo a fatura visível por trás
-                document.getElementById("form-cadastro").reset();
+                if (document.getElementById("form-cadastro")) {
+                    document.getElementById("form-cadastro").reset();
+                }
                 
-                // Faz scroll suave até ao recibo gerado
-                window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+                window.scrollTo({ top: 0, behavior: "smooth" });
             } else {
                 alert(`⚠️ Atenção: O servidor processou, mas retornou um aviso: ${resposta.mensagem}`);
             }
         })
         .catch(err => {
             console.error("Erro no fetch:", err);
-            // Fallback offline visível completo para o Huambo nunca parar
-            alert(`🚨 Modo Offline Activo:\nAnote os seus dados de acesso obrigatoriamente antes de fechar a página!\n\nEstudante: ${nome}\nID Único: ${idEscolarGerado}\nSenha: ${codigoValidacaoGerado}`);
-            
-            if (document.getElementById("form-cadastro")) document.getElementById("form-cadastro").reset();
+            alert("❌ Erro de Execução: Não foi possível alcançar a base académica central.");
         });
     
         return false;
     }
     
-    
-
-
 
 
 
