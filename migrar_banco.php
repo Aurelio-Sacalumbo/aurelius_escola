@@ -1,28 +1,41 @@
 <?php
-// 🚀 MOTOR DE MIGRAÇÃO AUTOMÁTICA DE TABELAS - ACADEMIA AURÉLIUS
+// 🚀 MOTOR DE MIGRAÇÃO INTELIGENTE DE ALUNOS (LOCAL -> NUVEM) - ACADEMIA AURÉLIUS
 header('Content-Type: text/html; charset=utf-8');
+set_time_limit(0); // Impede que o script vá abaixo se tiver muitos alunos
 
-// Chaves explícitas para conectar diretamente à Aiven Cloud na Nuvem
-\$host = "mysql-1a34c184-aureliosacalumbo42-bf60.a.aivencloud.com";
-\$port = "22002";
-\$user = "avnadmin";
-\$password = "AVNS_6AyaHMtSplThuvy6uGm";
-\$dbname = "defaultdb";
+// 1️⃣ Configurações do Banco de Dados LOCAL (Origem)
+\$host_local = "127.0.0.1";
+\$user_local = "root";
+\$pass_local = ""; // Deixe a sua senha do XAMPP aqui
+\$db_local   = "aurelius_escola";
+
+// 2️⃣ Configurações do Banco de Dados na NUVEM (Destino - Aiven)
+\$host_nuvem = "mysql-1a34c184-aureliosacalumbo42-bf60.a.aivencloud.com";
+\$port_nuvem = "22002";
+\$user_nuvem = "avnadmin";
+\$pass_nuvem = "AVNS_6AyaHMtSplThuvy6uGm";
+\$db_nuvem   = "aurelius_escola"; // 🌟 Correção: Nome unificado da base de dados
 
 try {
-    \$options = [
+    // Conexão com o Banco Local
+    \$pdo_local = new PDO("mysql:host=\$host_local;dbname=\$db_local;charset=utf8mb4", \$user_local, \$pass_local, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+    ]);
+    echo "<h3>🔌 Conectado ao Localhost (Origem)...</h3>";
+
+    // Conexão com a Nuvem (Aiven)
+    \$options_nuvem = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4",
         PDO::MYSQL_ATTR_SSL_CA => true,
         PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false
     ];
+    
+    // 🌟 Correção Crítica: Adicionados os modificadores '\$' nas variáveis de conexão
+    \$pdo_nuvem = new PDO("mysql:host=\$host_nuvem;port=\$port_nuvem;dbname=\$db_nuvem;charset=utf8mb4", \$user_nuvem, \$pass_nuvem, \$options_nuvem);
+    echo "<h3 style='color:green;'>☁️ Conectado à Aiven Cloud (Destino)...</h3>";
 
-    echo "<h3>🔄 Conectando à Nuvem da Aiven...</h3>";
-    \$pdo = new PDO("mysql:host=host;port=port;dbname=dbname;charset=utf8mb4", user, password, options);
-    echo "<p style='color:green;'>✔️ Conexão estabelecida com sucesso!</p>";
-
-    // 🏗️ 1. CRIAÇÃO AUTOMÁTICA DA TABELA UTILIZADORES
-    echo "<h3>🏗️ Estruturando a Tabela 'utilizadores' no MySQL Remoto...</h3>";
+    // 🏗️ Garantir que a tabela existe na nuvem
     \$sqlTabela = "CREATE TABLE IF NOT EXISTS `utilizadores` (
         `id_utilizador` INT AUTO_INCREMENT PRIMARY KEY,
         `nome` VARCHAR(255) NOT NULL,
@@ -35,38 +48,56 @@ try {
         `periodo` VARCHAR(100) NULL,
         `saldo_propina` DECIMAL(10,2) NOT NULL DEFAULT 0.00
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+    \$pdo_nuvem->exec(\$sqlTabela);
+
+    // 3️⃣ Buscar TODOS os alunos que estão guardados no seu computador
+    \$stmt_local = \$pdo_local->query("SELECT * FROM utilizadores");
+    \$alunos_locais = \$stmt_local->fetchAll(PDO::FETCH_ASSOC);
     
-    pdo->exec(sqlTabela);
-    echo "<p style='color:green;'>✔️ Tabela criada ou validada com sucesso!</p>";
+    echo "<p>Encontrados <b>" . count(\$alunos_locais) . "</b> registos locais para processar.</p>";
 
-    // 👥 2. POPULAÇÃO AUTOMÁTICA COM OS ALUNOS CRÍTICOS (Moma, Sabina, Margarida)
-    echo "<h3>👥 Injetando Alunos de Teste Homologados...</h3>";
-    
-    \$alunosParaMigrar = [
-        ['Margarida Cassinda', '925347372', 'aureliosacalumbo42@gmail.com', '123456', 'estudante', 'MAT-2026-01', '8ª Classe (I Ciclo) [Língua Portuguesa, Matemática]', 'Manhã', 0.00],
-        ['Moma', '900112233', '900112233@aurelius.com', '123456', 'estudante', 'AUR-916717', NULL, 'Tarde', 36008.00],
-        ['Sabina Bongo (Enc: Mário Tatiana)', '925347370', '928524', '928524', 'estudante', 'AUR-799922', NULL, 'Noite (18h - 21h)', 0.00],
-        ['Moma (Enc: Martinha)', '900112233', '438252', '438252', 'estudante', 'AUR-566603', NULL, 'Manhã | Longonjo (Goia)', 0.00]
-    ];
+    // Preparar a query de inserção na nuvem de forma segura (Previne duplicados com a Madalena)
+    \$stmt_nuvem_ins = \$pdo_nuvem->prepare("INSERT INTO utilizadores 
+        (nome, telefone, email, senha, nivel, id_unico_escolar, curso, periodo, saldo_propina) 
+        VALUES (:nome, :telefone, :email, :senha, :nivel, :id_unico_escolar, :curso, :periodo, :saldo_propina)
+        ON DUPLICATE KEY UPDATE 
+            nome = VALUES(nome), 
+            senha = VALUES(senha),
+            id_unico_escolar = IFNULL(id_unico_escolar, VALUES(id_unico_escolar))");
 
-    stmt = pdo->prepare("INSERT INTO utilizadores (nome, telefone, email, senha, nivel, id_unico_escolar, curso, periodo, saldo_propina) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    \$inseridos = 0;
+    \$atualizados = 0;
 
-    foreach (alunosParaMigrar as aluno) {
-        // Verifica se o aluno já está inserido pelo telefone para não duplicar
-        check = pdo->prepare("SELECT id_utilizador FROM utilizadores WHERE telefone = ? AND nome = ?");
-        \$check->execute([\(aluno[1],\)aluno[0]]);
+    foreach (\$alunos_locais as \$aluno) {
+        // Verifica se o aluno já existe na Nuvem pelo telefone ou pelo número de inscrição escolar
+        \$check = \$pdo_nuvem->prepare("SELECT id_utilizador FROM utilizadores WHERE telefone = ? OR (id_unico_escolar = ? AND id_unico_escolar IS NOT NULL)");
+        \$check->execute([\$aluno['telefone'], \$aluno['id_unico_escolar'] ?? '']);
+        
         if (!\$check->fetch()) {
-            stmt->execute(aluno);
-            echo "<p>🔹 Aluno <b>{\$aluno[0]}</b> inserido na nuvem.</p>";
+            // Se não existir, insere um novo aluno
+            \$stmt_nuvem_ins->execute([
+                ':nome'             => \$aluno['nome'],
+                ':telefone'         => \$aluno['telefone'],
+                ':email'            => \$aluno['email'] ?? null,
+                ':senha'            => \$aluno['senha'],
+                ':nivel'            => \$aluno['nivel'] ?? 'estudante',
+                ':id_unico_escolar' => \$aluno['id_unico_escolar'] ?? null,
+                ':curso'            => \$aluno['curso'] ?? null,
+                ':periodo'          => \$aluno['periodo'] ?? null,
+                ':saldo_propina'    => \$aluno['saldo_propina'] ?? 0.00
+            ]);
+            echo "<p style='color:blue;'>🔹 Aluno <b>{\$aluno['nome']}</b> migrado com sucesso para a Nuvem.</p>";
+            \$inseridos++;
         } else {
-            echo "<p style='color:orange;'>🔸 Aluno {\$aluno[0]} já existia na Aiven. Pulado.</p>";
+            echo "<p style='color:orange;'>🔸 Aluno <b>{\$aluno['nome']}</b> já existe no Render. Dados mantidos e protegidos.</p>";
+            \$atualizados++;
         }
     }
 
-    echo "<h2 style='color:green;'>🎉 Processo Concluído! O seu Banco de Dados Remoto está pronto para Operar!</h2>";
-    echo "<p>Pode apagar este ficheiro do seu servidor local por questões de segurança.</p>";
+    echo "<h2 style='color:green;'>🎉 Sincronização Concluída com Sucesso!</h2>";
+    echo "<p><b>Novos alunos na nuvem:</b> \$inseridos | <b>Alunos protegidos/já existentes:</b> \$atualizados</p>";
 
 } catch (PDOException \$e) {
-    die("<h3 style='color:red;'>❌ Erro Fatal de Migração: " . \$e->getMessage() . "</h3>");
+    die("<h3 style='color:red;'>❌ Erro de Migração: " . \$e->getMessage() . "</h3>");
 }
 ?>
