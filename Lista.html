@@ -75,9 +75,9 @@
     function carregarListaPublicaBancoNuvem() {
         const container = document.getElementById('listaPublicaAcordeon');
         if (!container) return;
-
-        // Faz o fetch dinâmico para a rota de professores atualizada
-        fetch('obter_pauta_prof.php')
+    
+        // 🌟 MUDANÇA CIRÚRGICA: Aponta para a tabela pública de turmas sem passar parâmetros nulos
+        fetch('obter_turmas_publicas.php')
             .then(res => res.json())
             .then(resposta => {
                 if (!resposta.sucesso || resposta.dados.length === 0) {
