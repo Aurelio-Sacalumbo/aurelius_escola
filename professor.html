@@ -291,8 +291,10 @@
             <h3 style="color: #eab308; text-align: center; margin-bottom: 20px;"> Direcionamento & Aprovação</h3>
             
             <!-- 📄 Formulário Exclusivo do Professor -->
-            <form id="pautaFormLocal" onsubmit="event.preventDefault(); event.stopPropagation();" style="margin-bottom: 25px; background: #060b19; padding: 20px; border-radius: 6px;">
-                <input type="hidden" id="id_matricula">
+            <form id="pautaFormLocal" onsubmit="enviarDirecionamentoTurmaNuvem(event)" style="margin-bottom: 25px; background: #060b19; padding: 20px; border-radius: 6px;">
+                    <!-- Campo oculto para associar o ID do aluno da base de dados -->
+                    <input type="hidden" id="id_utilizador_prof" name="id_utilizador">
+                    <input type="hidden" id="id_matricula">
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
                     <div>
@@ -369,174 +371,7 @@
 
 
 
-       <script>
-
-function carregarListaAlunosParaChat() {
-    // Procura o elemento select no painel do professor
-    const selectAlunos = document.getElementById("select-alunos-chat") || document.querySelector("select");
-    if (!selectAlunos) return;
-
-    // Faz o varrimento reativo nos utilizadores com inscrição ou matrícula ativa
-    fetch('listar_estudantes.php?acao=listar')
-    .then(res => {
-        if (!res.ok) throw new Error("Erro ao ligar ao servidor Render");
-        return res.json();
-    })
-    .then(dados => {
-        if (dados.sucesso && dados.alunos) {
-            // Mantém a opção padrão intacta
-            let htmlOpcoes = `<option value="">-- Escolha um Aluno para Conversar --</option>`;
-            htmlOpcoes += `<option value="TODOS"> Enviar para Toda a Turma</option>`;
-
-            dados.alunos.forEach(aluno => {
-                // Filtra para garantir que não exibe nomes vazios ou IDs nulos
-                if (aluno.nome && aluno.id_unico_escolar) {
-                    htmlOpcoes += `<option value="${aluno.id_unico_escolar}"> ${aluno.nome} (${aluno.id_unico_escolar})</option>`;
-                }
-            });
-
-            selectAlunos.innerHTML = htmlOpcoes;
-        }
-    })
-    .catch(err => console.warn("A aguardar carregamento estável dos alunos no Huambo...", err));
-}
-
-// 🎯 GATILHO: Execute esta função assim que o ecrã do professor carregar!
-document.addEventListener("DOMContentLoaded", function() {
-    carregarListaAlunosParaChat();
-    // Inicializa também o pooling de mensagens do canal do professor
-    if (typeof iniciarChatProfessor === "function") iniciarChatProfessor();
-});
-
-
-
-
-
-
-
-    // 🧠 GESTOR DE ABA LOCAL CORRIGIDO E SEM TRAVAMENTOS
-    if (!localStorage.getItem('bd_pautas_professor')) {
-        localStorage.setItem('bd_pautas_professor', JSON.stringify([]));
-    }
-
-    // Força o fecho absoluto e prepara a contagem inicial no carregamento da página
-    document.addEventListener("DOMContentLoaded", () => {
-        gerenciarAbaLocal(false); 
-        
-        // Sincroniza o clique do botão de fechar fisicamente se ele existir no seu ecrã
-        const btnFecharVisual = document.getElementById('btnFecharAba');
-        if (btnFecharVisual) {
-            btnFecharVisual.onclick = () => { gerenciarAbaLocal(false); };
-        }
-    });
-    setTimeout(() => { gerenciarAbaLocal(false); }, 100);
-
-    function gerenciarAbaLocal(deveAbrir) {
-        const containerAba = document.getElementById('abaTabelaProfessor');
-        const btnAbrir = document.getElementById('btnAbrirAba'); 
-        const btnFechar = document.getElementById('btnFecharAba'); 
-        const tbodyProf = document.getElementById('dadosPautaProfessor');
-
-        if (!containerAba) return;
-
-        const dadosLocais = JSON.parse(localStorage.getItem('bd_pautas_professor')) || [];
-
-        if (deveAbrir) {
-            containerAba.style.setProperty('display', 'block', 'important');
-            if(btnAbrir) btnAbrir.style.display = 'none';
-            if(btnFechar) btnFechar.style.display = 'inline-block';
-            
-            renderizarTabelaLocal(dadosLocais, tbodyProf);
-        } else {
-            containerAba.style.setProperty('display', 'none', 'important');
-            if(btnAbrir) {
-                btnAbrir.style.display = 'inline-block';
-                btnAbrir.innerText = ` Abrir Aba (${dadosLocais.length} Alunos)`;
-            }
-            if(btnFechar) btnFechar.style.display = 'none';
-        }
-    }
-
-    function renderizarTabelaLocal(dadosLocais, tbodyProf) {
-        if (!tbodyProf) return;
-        tbodyProf.innerHTML = "";
-        
-        if (dadosLocais.length === 0) {
-            tbodyProf.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:#cbd5e1; font-size:12px;">Nenhum registo de turma encontrado .</td></tr>`;
-            return;
-        }
-
-        dadosLocais.forEach(row => {
-            let badgeColor = row.estado === 'aprovado' ? '#10b981' : (row.estado === 'rejeitado' ? '#ef4444' : '#f59e0b');
-            tbodyProf.innerHTML += `
-                <tr style="border-bottom: 1px solid #1e293b; font-size: 13px;">
-                    <td style="padding:10px;"><b>${row.nome_aluno}</b></td>
-                    <td style="padding:10px;">${row.classe}</td>
-                    <td style="padding:10px;">${row.periodo}</td>
-                    <td style="padding:10px;"><code>${row.hora}</code></td>
-                    <td style="padding:10px;">${row.disciplina}</td>
-                    <td style="padding:10px;">${row.professor}</td>
-                    <td style="padding:10px;"><span style="background:${badgeColor}; color:#000; padding:3px 6px; font-size:11px; font-weight:bold; border-radius:3px; text-transform:uppercase;">${row.estado}</span></td>
-                    <td style="padding:10px;">
-                        <button type="button" style="background:#ef4444; border:none; padding:4px 8px; border-radius:3px; font-size:12px; color:#fff; cursor:pointer;" onclick="eliminarRegistoDireto('${row.id_matricula}')">Eliminar</button>
-                    </td>
-                </tr>
-            `;
-        });
-    }
-
-    // Processamento do Formulário Local
-    const formLocal = document.getElementById('pautaFormLocal');
-    if (formLocal) {
-        formLocal.onsubmit = function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            let dadosLocais = JSON.parse(localStorage.getItem('bd_pautas_professor')) || [];
-            
-            const novoRegisto = {
-                id_matricula: 'MAT-' + Math.floor(100000 + Math.random() * 900000),
-                nome_aluno: document.getElementById('nome_aluno').value.trim(),
-                classe: document.getElementById('classe').value.trim(),
-                periodo: document.getElementById('periodo').value,
-                hora: document.getElementById('hora').value.trim(),
-                disciplina: document.getElementById('disciplina').value.trim(),
-                professor: document.getElementById('professor').value.trim(),
-                estado: document.getElementById('estado').value
-            };
-    
-            dadosLocais.push(novoRegisto);
-            localStorage.setItem('bd_pautas_professor', JSON.stringify(dadosLocais));
-            
-            this.reset();
-            alert(" Registo salvo com sucesso!");
-            gerenciarAbaLocal(false); // Mantém recolhido para economizar espaço
-        };
-    }
-
-    function eliminarRegistoDireto(id) {
-        if (confirm("Deseja eliminar esta pauta/turma?")) {
-            let dadosLocais = JSON.parse(localStorage.getItem('bd_pautas_professor')) || [];
-            
-            // 🌟 CORREÇÃO CIRÚRGICA: Transforma o ID em String para garantir o casamento exato do filtro
-            dadosLocais = dadosLocais.filter(item => String(item.id_matricula) !== String(id));
-            localStorage.setItem('bd_pautas_professor', JSON.stringify(dadosLocais));
-            
-            const tbodyProf = document.getElementById('dadosPautaProfessor');
-            renderizarTabelaLocal(dadosLocais, tbodyProf);
-            
-            // Atualiza o contador de alunos do botão sem fechar a janela ativa
-            const btnAbrir = document.getElementById('btnAbrirAba');
-            if(btnAbrir) btnAbrir.innerText = ` Abrir Aba (${dadosLocais.length} Alunos)`;
-            
-            // Se limpou o último aluno, esconde a pauta automaticamente
-            if(dadosLocais.length === 0) {
-                gerenciarAbaLocal(false);
-            }
-        }
-    }
-</script>
-
+     
 <br>
 
 
@@ -595,7 +430,200 @@ document.addEventListener("DOMContentLoaded", function() {
 
     <script>
       
+  // Processamento do Formulário Unificado (Local + Nuvem em Tempo Real)
+   // 🧠 GESTOR DE ABA LOCAL CORRIGIDO E SEM TRAVAMENTOS
+   if (!localStorage.getItem('bd_pautas_professor')) {
+    localStorage.setItem('bd_pautas_professor', JSON.stringify([]));
+}
 
+// Força o fecho absoluto e prepara a contagem inicial no carregamento da página
+document.addEventListener("DOMContentLoaded", () => {
+    gerenciarAbaLocal(false); 
+    
+    const btnFecharVisual = document.getElementById('btnFecharAba');
+    if (btnFecharVisual) {
+        btnFecharVisual.onclick = () => { gerenciarAbaLocal(false); };
+    }
+});
+
+// Pequeno atraso para garantir renderização correta
+setTimeout(() => { gerenciarAbaLocal(false); }, 100);
+
+function gerenciarAbaLocal(deveAbrir) {
+    const containerAba = document.getElementById('abaTabelaProfessor');
+    const btnAbrir = document.getElementById('btnAbrirAba'); 
+    const btnFechar = document.getElementById('btnFecharAba'); 
+    const tbodyProf = document.getElementById('dadosPautaProfessor');
+
+    if (!containerAba) return;
+
+    const dadosLocais = JSON.parse(localStorage.getItem('bd_pautas_professor')) || [];
+
+    if (deveAbrir) {
+        containerAba.style.setProperty('display', 'block', 'important');
+        if(btnAbrir) btnAbrir.style.display = 'none';
+        if(btnFechar) btnFechar.style.display = 'inline-block';
+        
+        renderizarTabelaLocal(dadosLocais, tbodyProf);
+    } else {
+        containerAba.style.setProperty('display', 'none', 'important');
+        if(btnAbrir) {
+            btnAbrir.style.display = 'inline-block';
+            btnAbrir.innerText = `📁 Abrir Aba (${dadosLocais.length} Alunos)`;
+        }
+        if(btnFechar) btnFechar.style.display = 'none';
+    }
+}
+
+function renderizarTabelaLocal(dadosLocais, tbodyProf) {
+    if (!tbodyProf) return;
+    tbodyProf.innerHTML = "";
+    
+    if (dadosLocais.length === 0) {
+        tbodyProf.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:#cbd5e1; font-size:12px;">Nenhum registo de pauta ou turma encontrado localmente.</td></tr>`;
+        return;
+    }
+
+    dadosLocais.forEach(row => {
+        let badgeColor = row.estado === 'aprovado' ? '#10b981' : (row.estado === 'rejeitado' ? '#ef4444' : '#f59e0b');
+        
+        // 🌟 CORREÇÃO CRÍTICA: Escapa as aspas simples nos nomes para não quebrar o clique do botão
+        let alunoNomeEscapado = row.nome_aluno.replace(/'/g, "\\'");
+        let disciplinaEscapada = row.disciplina.replace(/'/g, "\\'");
+
+        tbodyProf.innerHTML += `
+            <tr style="border-bottom: 1px solid #1e293b; font-size: 13px;">
+                <td style="padding:10px;"><b>${row.nome_aluno}</b></td>
+                <td style="padding:10px;">${row.classe}</td>
+                <td style="padding:10px;">${row.periodo}</td>
+                <td style="padding:10px;"><code>${row.hora}</code></td>
+                <td style="padding:10px;">${row.disciplina}</td>
+                <td style="padding:10px;">${row.professor}</td>
+                <td style="padding:10px;"><span style="background:${badgeColor}; color:#000; padding:3px 6px; font-size:11px; font-weight:bold; border-radius:3px; text-transform:uppercase;">${row.estado}</span></td>
+                <td style="padding:10px;">
+                    <!-- 🚀 ENVIADO CORRETAMENTE: Passa as variáveis exatas que existem no seu LocalStorage -->
+                    <button type="button" style="background:#ef4444; border:none; padding:4px 8px; border-radius:3px; font-size:12px; color:#fff; cursor:pointer;" 
+                        onclick="eliminarRegistoDireto('${row.id_matricula}', '${alunoNomeEscapado}', '${disciplinaEscapada}')">
+                        Eliminar
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+// Processamento do Formulário Local + Nuvem Sincronizado
+const formLocal = document.getElementById('pautaFormLocal');
+if (formLocal) {
+    formLocal.onsubmit = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const nomeAluno   = document.getElementById('nome_aluno').value.trim();
+        const classe      = document.getElementById('classe').value.trim();
+        const periodo     = document.getElementById('periodo').value;
+        const hora        = document.getElementById('hora').value.trim();
+        const disciplina  = document.getElementById('disciplina').value.trim();
+        const professor   = document.getElementById('professor').value.trim();
+        const estado      = document.getElementById('estado').value;
+        const idMatricula = 'MAT-' + Math.floor(100000 + Math.random() * 900000);
+
+        if (!nomeAluno || !disciplina) {
+            alert("⚠️ Por favor, introduza o nome do estudante e a disciplina.");
+            return false;
+        }
+
+        // 1️⃣ Gravação do Cache Local (Mantém a sua aba intacta)
+        let dadosLocais = JSON.parse(localStorage.getItem('bd_pautas_professor')) || [];
+        const novoRegisto = {
+            id_matricula: idMatricula,
+            nome_aluno: nomeAluno,
+            classe: classe,
+            periodo: periodo,
+            hora: hora,
+            disciplina: disciplina,
+            professor: professor,
+            estado: estado
+        };
+        dadosLocais.push(novoRegisto);
+        localStorage.setItem('bd_pautas_professor', JSON.stringify(dadosLocais));
+        
+        // 2️⃣ 🚀 Envio Assíncrono para o Servidor MySQL no Render
+        const payload = {
+            acao_professor: 'salvar_turma_direcionamento',
+            nome_aluno: nomeAluno,
+            classe: classe,
+            periodo: periodo,
+            hora: hora,
+            disciplina: disciplina,
+            professor: professor,
+            estado: estado
+        };
+
+        fetch('salvar_notas_prof.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(dados => {
+            if (dados.sucesso) {
+                console.log("🎉 Sincronização em tempo real concluída no Render!");
+            }
+        })
+        .catch(err => console.error("A nuvem está pendente, dados mantidos localmente:", err));
+
+        // 3️⃣ Limpeza e Resete
+        this.reset();
+        alert("🎉 Registo guardado com sucesso no sistema!");
+        gerenciarAbaLocal(false); // Fecha a aba conforme o seu comportamento padrão
+    };
+}
+function eliminarRegistoDireto(idMatricula, nomeEstudante, nomeDisciplina) {
+    if (confirm(`Deseja eliminar a disciplina ${nomeDisciplina} do aluno ${nomeEstudante} na nuvem?`)) {
+        
+        // 1. Limpa localmente (O que já fez)
+        let dadosLocais = JSON.parse(localStorage.getItem('bd_pautas_professor')) || [];
+        dadosLocais = dadosLocais.filter(item => String(item.id_matricula) !== String(idMatricula));
+        localStorage.setItem('bd_pautas_professor', JSON.stringify(dadosLocais));
+        
+        // 2. 🔥 Força o Render a atualizar a coluna 'curso' da tabela utilizadores
+        fetch('salvar_notas_prof.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: JSON.stringify({
+                acao_professor: 'eliminar_disciplina_pauta',
+                nome_aluno: nomeEstudante,
+                disciplina: nomeDisciplina
+            })
+        })
+        .then(res => res.json())
+        .then(dados => {
+            if (dados.sucesso) {
+                alert("✔️ Sincronizado: Eliminado com sucesso da base de dados remota!");
+                window.location.reload(); // Recarrega a página para atualizar os indicadores
+            }
+        });
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
 
     // 🛡️ CREDENCIAIS DE ACESSO DOCENTE EXCLUSIVAS
     const credencialProfessor = {
@@ -1381,6 +1409,7 @@ function eliminarDicaPedagogica(index) {
             }
         }
     
+
         let totalAlunos = listaAlunos.length;
         let totalRegular = 0;
         let totalSuperior = 0;
@@ -1436,45 +1465,63 @@ function eliminarDicaPedagogica(index) {
 
 
 
-   // 🧠 PUBLICAR MÉTODOS DE ESTUDO DIRETAMENTE NA NUVEM AIVEN
-function publicarDicaPedagogica(event) {
-    event.preventDefault();
-    
-    const tituloInput = document.getElementById('dica-titulo');
-    const textoInput = document.getElementById('dica-texto');
-    
-    if (!tituloInput || !textoInput) return;
-
-    const titulo = tituloInput.value.trim();
-    const texto = textoInput.value.trim();
-
-    // Dispara a dica em segundo plano para o MySQL da Aiven
-    fetch('guardar_dica.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ titulo: titulo, texto: texto })
-    })
-    .then(res => res.json())
-    .then(resposta => {
-        if (resposta.sucesso) {
-            alert(` SUCESSO !\nA orientação "${titulo}" foi gravada no mural global.`);
-            
-            // Reseta o formulário
-            document.getElementById('form-publicar-dica').reset();
-            
-            // Se tiver a função de histórico local, atualiza-a
-            if (typeof renderizarHistoricoDicas === 'function') {
-                renderizarHistoricoDicas();
-            }
-        } else {
-            alert("⚠️ Erro: " + resposta.mensagem);
+    function publicarDicaPedagogica(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
         }
-    })
-    .catch(erro => {
-        console.error("Erro ao publicar:", erro);
-        alert("❌ Falha de rede. Verifique a ligação ao servidor .");
-    });
-}
+    
+        const tituloInput = document.getElementById('dica-titulo');
+        const textoInput = document.getElementById('dica-texto');
+        const btnEnviar = document.querySelector("#form-publicar-dica button[type='submit']");
+    
+        if (!tituloInput || !textoInput) return false;
+    
+        // 🌟 ENQUADRAMENTO DA CHAVE: Passa o ID 47 (O seu utilizador Professor na nuvem)
+        const payload = {
+            acao_mural: 'publicar_orientacao',
+            id_autor: 47, 
+            titulo: tituloInput.value.trim(),
+            conteudo: textoInput.value.trim()
+        };
+    
+        if (btnEnviar) {
+            btnEnviar.disabled = true;
+            btnEnviar.innerText = "A transmitir... ⏳";
+        }
+    
+        fetch('processar_mural.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("A nuvem rejeitou a ligação.");
+            return res.json();
+        })
+        .then(dados => {
+            if (dados.sucesso) {
+                alert("🎉 Orientação metodológica publicada com sucesso na Central do Aluno!");
+                document.getElementById('form-publicar-dica').reset();
+            } else {
+                alert("❌ Falha na validação da nuvem: " + dados.mensagem);
+            }
+        })
+        .catch(err => {
+            console.error("Erro no mural:", err);
+            alert("⚠️ Falha de comunicação: Não foi possível alcançar o servidor.");
+        })
+        .finally(() => {
+            if (btnEnviar) {
+                btnEnviar.disabled = false;
+                btnEnviar.innerText = "Enviar";
+            }
+        });
+    
+        return false;
+    }
     </script>
 
 

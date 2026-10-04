@@ -8,7 +8,7 @@
     <title>Horário de Turmas Ocupadas - Academia Aurélius</title>
     <style>
         body { font-family: sans-serif; background: #060b19; color: #fff; padding: 20px; text-align: center; }
-        h1 { color: #eab308; }
+        h3 { color: #eab308; }
         .form-input {
             width: 90%; max-width: 500px; padding: 10px; margin: 10px auto; 
             background: #0d1527; color: #fff; border: 1px solid #1e293b; border-radius: 6px; font-size: 14px;
@@ -33,20 +33,16 @@
         <a href="Principal.html" style="display: inline-block; color: #eab308; border: 1px solid #1e293b; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; background-color: #0d1527;">Home</a>
     </nav>
 
-    <h1>Horário Geral de Turmas Ocupadas</h1>
-    <p style="color: #94a3b8; font-size: 13px;">Introduza o termo de pesquisa completo ou parcial para testar o banco de dados do Huambo em tempo real.</p>
+    <h3>Horário de turmas ocupada</h3>
+    <p style="color: #94a3b8; font-size: 13px;">Introduza o termo de pesquisa completo.</p>
     
     <!-- 🔍 PESQUISA REALIMENTADA EM TEMPO REAL PELO SEU ENDPOINT GET -->
-    <input type="text" id="campo_busca_alunos" class="form-input" placeholder="🔍 Digite o nome do aluno ou número para pesquisar..." oninput="filtrarAcordeonPublico(this.value)">
+    <input type="text" id="campo_busca_alunos" class="form-input" placeholder="🔍 Digite o nome ou número para pesquisar..." oninput="filtrarAcordeonPublico(this.value)">
 
-    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; width: 90%; max-width: 1000px; margin: 20px auto 0 auto; padding: 10px 15px; font-weight: bold; font-size: 11px; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #1e293b; text-align: left;">
-        <div>Nome do Aluno</div>
-        <div>Classe Alocada</div>
-        <div>Período Atual</div>
-    </div>
+    
 
     <div id="listaPublicaAcordeon" class="container-acordeon">
-        <div id="status_carregamento_inicial" style="text-align:center; padding:20px; color:#64748b;">Aguardando termo de pesquisa académica...</div>
+        <div id="status_carregamento_inicial" style="text-align:center; padding:20px; color:#64748b;">Aguardando nome de pesquisa académica...</div>
     </div>
 
 
@@ -74,7 +70,7 @@
         const container = document.getElementById('listaPublicaAcordeon');
         if (!container) return;
 
-        container.innerHTML = `<div style="text-align:center; padding:20px; color:#eab308;">A consultar base académica do Render... ⏳</div>`;
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:#eab308;">A consultar base académica .... </div>`;
 
         fetch(`obter_turmas_publicas.php?termo=${encodeURIComponent(termo)}`)
             .then(res => {
@@ -84,7 +80,7 @@
             .then(resposta => {
                 // Validação defensiva do array de dados
                 if (!resposta.sucesso || !resposta.dados || resposta.dados.length === 0) {
-                    container.innerHTML = `<div style="text-align:center; padding:30px; color:#ef4444;">❌ Nenhum estudante localizado com o termo "${termo}" no Huambo.</div>`;
+                    container.innerHTML = `<div style="text-align:center; padding:30px; color:#ef4444;">❌ Nenhum estudante localizado com o nome "${termo}".</div>`;
                     return;
                 }
 
@@ -100,13 +96,13 @@
                         aluno.modulos.forEach(m => {
                             let estadoLimpo = m.estatuto ? m.estatuto.toLowerCase() : 'pendente';
                             let badgeColor = (estadoLimpo === 'aprovado' || estadoLimpo === 'alocado') ? '#10b981' : '#f59e0b';
-                            let textoBadge = (estadoLimpo === 'aprovado' || estadoLimpo === 'alocado') ? '✔ Aprovado' : '⏳ Pendente';
+                            let textoBadge = (estadoLimpo === 'aprovado' || estadoLimpo === 'alocado') ? 'Apto' : ' Pendente';
 
                             linhasTabela += `
                                 <tr>
-                                    <td><b>📖 ${m.disciplina}</b></td>
+                                    <td><b> ${m.disciplina}</b></td>
                                     <td><code>${m.horario}</code></td>
-                                    <td>👨‍🏫 ${m.professor}</td>
+                                    <td> ${m.professor}</td>
                                     <td><span class="badge" style="background:${badgeColor}; color:#000;">${textoBadge}</span></td>
                                 </tr>
                             `;
@@ -118,7 +114,7 @@
                     htmlAcordeon += `
                         <div class="bloco-estudante-lista">
                             <div class="aluno-header-gatilho" onclick="alternarVisibilidadeListaPublica(${aluno.id})">
-                                <div style="font-weight: bold; color: #fff;">👤 ${aluno.nome} <small style="color:#64748b; font-weight:normal; margin-left:8px;">(${aluno.telefone})</small></div>
+                                <div style="font-weight: bold; color: #fff;"> ${aluno.nome} <small style="color:#64748b; font-weight:normal; margin-left:8px;">(${aluno.telefone})</small></div>
                                 <div style="color: #eab308;">${aluno.classe}</div>
                                 <div style="color: #38bdf8;">${aluno.periodo}</div>
                             </div>
@@ -127,9 +123,9 @@
                                     <thead>
                                         <tr>
                                             <th>Disciplina</th>
-                                            <th>Horário Escolar</th>
-                                            <th>Docente Responsável</th>
-                                            <th>Estatuto Público</th>
+                                            <th>Horário</th>
+                                            <th>Docente </th>
+                                            <th>Estado </th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -145,7 +141,7 @@
             })
             .catch(err => {
                 console.error("Erro na Fetch API:", err);
-                container.innerHTML = `<div style="text-align:center; padding:30px; color:#ef4444;">⚠️ Falha de comunicação com o servidor central do Render.</div>`;
+                container.innerHTML = `<div style="text-align:center; padding:30px; color:#ef4444;">⚠️ Falha de comunicação com o servidor central.</div>`;
             });
     }
 

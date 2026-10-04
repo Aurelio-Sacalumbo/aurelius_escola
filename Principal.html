@@ -368,8 +368,7 @@
                          ========================================================================= -->
                     <div class="tela-view" id="tela-5">
                         <button class="btn-voltar" onclick="voltarTela(1)"> Voltar</button>
-                        <h2 class="titulo-sessao" style="color:var(--brand-gold);">EXERCITE CONTROLANDO O TEMPOO TEMPORIZADOR E SEM DISTRAÇÃO:</h2>
-                        
+                       
                         <div class="bloco-card pomodoro-container" style="padding:20px; border-radius:12px; margin-bottom:16px; text-align:center;">
                             <div class="bloco-titulo" style="justify-content:center; font-weight:bold; margin-bottom:10px;">Temporizador Pomodoro</div>
                             <div class="pomodoro-timer" id="pomodoro-display">25:00</div>
@@ -1142,39 +1141,79 @@ function limparEVoltar() {
     proximaTela(1);
 }
 
+
+
+
+
+
 // =========================================================================
-//  6. CENTRAL DE ALTO RENDIMENTO PEDAGÓGICO E METODOLOGIAS
+//  6. CENTRAL DE ALTO RENDIMENTO PEDAGÓGICO E METODOLOGIAS (NUVEM + LOCAL)
 // =========================================================================
 function carregarDicasAltoRendimento() {
     const contentor = document.getElementById('contentor-dicas-dinamicas');
     if (!contentor) return;
 
-    if (!localStorage.getItem('bd_dicas_estudo')) {
-        const dicasPadrao = [
-            { titulo: "Augusto Cury", texto: "Jamais desista dos seus sonhos! A vida sem sonhos é como um céu sem estrelas,uma manhã sem orvalho.“Apaixone-se pela vida.”Tenha uma excelente leitura e inspire-se para viver o melhor ano da sua história!." },
-            { titulo: "Augusto Cury", texto: "Uma excelente ajuda para gerenciar os pensamentos é a técnica D.C.D., ou seja; Duvidar, Criticar e Determinar que, a estrutura fortalece a liderança do Eu.Ela deve ser feita no silêncio da nossa mente várias vezes por dia com emoção, garra e coragem, como se fosse um grito de liberdade de alguémque sai da condição de espectador passivo na plateia, entra no teatro damente e proclama: “Eu escreverei o roteiro da minha história!”." },
-            { titulo: "Augusto Cury", texto: "O líder inteligente aprende com seus erros; o líder sábio aprende com os erros dos outros. O líder inteligente não tem uma boa gestão emocional, precisa quebrar a cara para aprender lições de vida, destruir suas nanças para perceber quão difícil é se divorciar da matemática nanceira, falir seu relacionamento para entender as diferenças entre o essencial e o trivial. " },
-            { titulo: " Distribuição de Carga Horária", texto: "Divida o estudo das suas disciplinas em blocos diários de no máximo 2 horas por cadeira para evitar a exaustão mental e garantir melhor fixação." },
-            { titulo: "Técnica de Feynman", texto: "Para dominar qualquer disciplina complexa do Grupo Aurélius, tente explicar a matéria a outra pessoa em termos simples. Se encontrar barreiras, volte aos livros no seu painel." },
-            { titulo: " Distribuição de Carga Horária", texto: "Divida o estudo das suas disciplinas em blocos diários de no máximo 2 horas por cadeira para evitar a exaustão mental e garantir melhor fixação." },
-        ];
-        localStorage.setItem('bd_dicas_estudo', JSON.stringify(dicasPadrao));
-    }
+    contentor.innerHTML = `<div style="text-align:center; padding:20px; color:#eab308;">A carregar orientações metodológicas da nuvem... ⏳</div>`;
 
-    const listaDicas = JSON.parse(localStorage.getItem('bd_dicas_estudo')) || [];
+    // 🚀 Consulta em tempo real: Puxa estritamente o que foi publicado pelo professor no MySQL
+    fetch('processar_mural.php?acao_mural=listar_orientacoes')
+        .then(res => {
+            if (!res.ok) throw new Error("A nuvem central do Render rejeitou a ligação.");
+            return res.json();
+        })
+        .then(dados => {
+            // Se o professor removeu tudo ou ainda não publicou nada
+            if (!dados.sucesso || !dados.mural || dados.mural.length === 0) {
+                contentor.innerHTML = `
+                    <div style="text-align:center; padding:30px; color:#64748b; border: 1px dashed rgba(255,255,255,0.05); border-radius:8px;">
+                         Nenhuma orientação metodológica ativa no momento.<br>
+                        <small style="font-size:11px; color:#475569;">Aguarde as diretrizes pedagógicas da direção.</small>
+                    </div>`;
+                return;
+            }
 
-    contentor.innerHTML = listaDicas.map(dica => `
-        <div class="bloco-card">
-            <div class="bloco-titulo">${dica.titulo}</div>
-            <p class="dica-texto" style="font-size:12.5px; color:#cbd5e1; line-height:1.5;">${dica.texto}</p>
-        </div>
-    `).reverse().join(''); 
+            // Renderiza apenas as dicas publicadas pelo corpo docente
+            desenharCardsMural(dados.mural, contentor);
+        })
+        .catch(err => {
+            console.error("Erro na comunicação com o mural remoto:", err);
+            contentor.innerHTML = `<div style="text-align:center; padding:20px; color:#ef4444;">⚠️ Não foi possível sincronizar o mural pedagógico com o Render.</div>`;
+        });
 }
 
+function desenharCardsMural(lista, contentor) {
+    if (!contentor || !Array.isArray(lista)) return;
+
+    try {
+        contentor.innerHTML = lista.map(dica => {
+            // Lógica exata alinhada com as colunas da tabela MuralDicas
+            let tituloReal = dica.titulo ? dica.titulo.trim() : "Diretriz Pedagógica";
+            let textoReal  = dica.texto ? dica.texto.trim() : "Consulte os seus manuais.";
+
+            return `
+                <div class="bloco-card" style="background:#0d1527; padding:15px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); margin-bottom:12px; text-align:left;">
+                    <div class="bloco-titulo" style="font-weight:bold; color:#eab308; font-size:14px; margin-bottom:6px;"> ${tituloReal}</div>
+                    <p class="dica-texto" style="font-size:12.5px; color:#cbd5e1; line-height:1.5; margin:0;">${textoReal}</p>
+                </div>
+            `;
+        }).reverse().join(''); // Mais recente sempre em cima
+    } catch (e) {
+        console.error("Erro na renderização das dicas:", e);
+    }
+}
 function verCentralRendimento() { 
     carregarDicasAltoRendimento(); 
     proximaTela(5); 
 }
+
+
+
+
+
+
+
+
+
 
 // ⏱️ MOTOR DO CRONÓMETRO POMODORO ACADÉMICO COM SINAL SONORO NATIVO
 let pomoTempo, pomoCorrendo = false;
