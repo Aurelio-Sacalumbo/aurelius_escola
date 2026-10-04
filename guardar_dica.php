@@ -26,7 +26,7 @@ try {
 
     echo json_encode([
         "sucesso" => true, 
-        "mensagem" => "Dica pedagógica publicada com sucesso na nuvem!"
+        "mensagem" => "Dica pedagógica publicada com sucesso ..!"
     ]);
 
 } catch (Exception $e) {

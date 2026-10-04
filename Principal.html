@@ -990,7 +990,7 @@ function submeterMatriculaEscolaReal(event) {
     }) // 🌟 Chave do bloco .then fechada corretamente com os parênteses do fetch!
     .catch((err) => {
         console.error(err);
-        alert("❌ Erro de Ligação: Não foi possível validar a inscrição no servidor do Render. Verifique se o arquivo listar_estudantes.php está no GitHub.");
+        alert("❌ Erro de Ligação: Não foi possível validar a inscrição. Verifique se estais ligado a uma rede móvel.");
     });
 } // 🌟 Encerramento real e definitivo da função!
 function executarSalvamentoMatricula(dadosMatricula) {
@@ -1024,16 +1024,16 @@ function executarSalvamentoMatricula(dadosMatricula) {
     })
     .catch(err => {
         console.error("Detalhes do erro detetado:", err);
-        alert("❌ Erro de Execução: Não foi possível sincronizar os dados.\n\nCertifique-se de que o ficheiro 'guardar_matricula.php' está com o código unificado JSON ativo.");
+        alert("❌ Erro de Execução: Não foi possível sincronizar os dados.");
     });
 }
 
-// =========================================================================
+// ========================================================================
 // 🚀 5. PROCESSADOR DE SUBMISSÃO DINÂMICA COMPLETO (ORDEM DE VARIÁVEIS SEGURA)
 // =========================================================================
 function submeterAgendamento() {
     // Alerta de diagnóstico instantâneo para confirmar resposta
-    alert("🤖 Atenção: Botão acionado! Iniciando validações de matrícula...");
+    alert(" Atenção: Botão acionado! Iniciando validações de matrícula...");
 
     let bdEstudantes = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
      // 1º: Captura rigorosa dos dados usando os IDs ORIGINAIS exatos do formulário HTML
@@ -1151,8 +1151,12 @@ function carregarDicasAltoRendimento() {
 
     if (!localStorage.getItem('bd_dicas_estudo')) {
         const dicasPadrao = [
+            { titulo: "Augusto Cury", texto: "Jamais desista dos seus sonhos! A vida sem sonhos é como um céu sem estrelas,uma manhã sem orvalho.“Apaixone-se pela vida.”Tenha uma excelente leitura e inspire-se para viver o melhor ano da sua história!." },
+            { titulo: "Augusto Cury", texto: "Uma excelente ajuda para gerenciar os pensamentos é a técnica D.C.D., ou seja; Duvidar, Criticar e Determinar que, a estrutura fortalece a liderança do Eu.Ela deve ser feita no silêncio da nossa mente várias vezes por dia com emoção, garra e coragem, como se fosse um grito de liberdade de alguémque sai da condição de espectador passivo na plateia, entra no teatro damente e proclama: “Eu escreverei o roteiro da minha história!”." },
+            { titulo: "Augusto Cury", texto: "O líder inteligente aprende com seus erros; o líder sábio aprende com os erros dos outros. O líder inteligente não tem uma boa gestão emocional, precisa quebrar a cara para aprender lições de vida, destruir suas nanças para perceber quão difícil é se divorciar da matemática nanceira, falir seu relacionamento para entender as diferenças entre o essencial e o trivial. " },
+            { titulo: " Distribuição de Carga Horária", texto: "Divida o estudo das suas disciplinas em blocos diários de no máximo 2 horas por cadeira para evitar a exaustão mental e garantir melhor fixação." },
             { titulo: "Técnica de Feynman", texto: "Para dominar qualquer disciplina complexa do Grupo Aurélius, tente explicar a matéria a outra pessoa em termos simples. Se encontrar barreiras, volte aos livros no seu painel." },
-            { titulo: " Distribuição de Carga Horária", texto: "Divida o estudo das suas disciplinas em blocos diários de no máximo 2 horas por cadeira para evitar a exaustão mental e garantir melhor fixação." }
+            { titulo: " Distribuição de Carga Horária", texto: "Divida o estudo das suas disciplinas em blocos diários de no máximo 2 horas por cadeira para evitar a exaustão mental e garantir melhor fixação." },
         ];
         localStorage.setItem('bd_dicas_estudo', JSON.stringify(dicasPadrao));
     }

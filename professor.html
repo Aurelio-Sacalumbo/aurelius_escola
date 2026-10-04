@@ -134,7 +134,7 @@
                         <input type="password" id="prof-codigo" class="form-input" style="font-family: monospace; letter-spacing: 2px;"  required>
                     </div>
 
-                    <button type="submit" class="btn">Autenticar no Sistema ➔</button>
+                    <button type="submit" class="btn">Entrar</button>
                 </form>
                 <div style="margin-top: 15px; text-align: center; font-size: 11px; color: var(--text-muted);">
                     Dica: <b> Somente para os professores</b> <br>
@@ -157,7 +157,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px;">
                 <div class="titulo" style="margin-bottom: 0;">Escolha a Turma para Trabalho</div>
                 <li style="list-style: none;">
-                    <a href="Principal.html" style="color: var(--brand-gold); text-decoration: none; font-size: 13px; font-weight: bold; background: rgba(234, 179, 8, 0.1); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(234, 179, 8, 0.2);">Home</a>
+                   
                 </li>
             </div>
             <select id="filtro-classe" class="form-select" onchange="carregarPautaGlobalProf()">
@@ -169,14 +169,14 @@
        <!-- 📊 CARD REATIVO DA PAUTA DE AVALIAÇÃO INTERATIVA -->
   <!-- 📊 SISTEMA REATIVO DE PAUTAS POR ALUNO (ACADEMIA AURÉLIUS) -->
 <div class="card" id="card-pauta-global" style="display: none; border-top: 4px solid var(--brand-gold);">
-        <div class="titulo">📊 Caderneta de Avaliação Escolar</div>
+        <div class="titulo"> Caderneta de Avaliação Escolar</div>
         <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 15px;">Selecione o estudante na lista da esquerda para desdobrar a sua pauta de notas individual à direita.</p>
         
         <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
             
             <!-- 👥 COLUNA ESQUERDA: LISTA EXCLUSIVA DE ALUNOS DA CLASSE -->
             <div style="flex: 1; min-width: 280px; background: rgba(255,255,255,0.01); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                <div style="font-size: 13px; font-weight: bold; color: var(--brand-gold); margin-bottom: 12px; border-bottom: 1px solid rgba(234,179,8,0.2); padding-bottom: 6px;">👥 Alunos Matriculados</div>
+                <div style="font-size: 13px; font-weight: bold; color: var(--brand-gold); margin-bottom: 12px; border-bottom: 1px solid rgba(234,179,8,0.2); padding-bottom: 6px;"> Alunos Matriculados</div>
                 <div class="table-wrapper" style="max-height: 450px; overflow-y: auto;">
                     <table>
                         <thead>
@@ -194,7 +194,7 @@
     
             <!-- 📝 COLUNA DIREITA: ESPAÇOS DE COLOCAR AS NOTAS DO ALUNO SELECIONADO -->
             <div id="painel-pauta-individual-aluno" style="flex: 1.5; min-width: 350px; display: none; background: #070b14; padding: 20px; border-radius: 8px; border: 2px solid var(--brand-success);">
-                <div style="font-size: 11px; font-weight: bold; color: var(--brand-success); text-transform: uppercase; letter-spacing: 1px;">Caderneta Ativa do Aluno:</div>
+                <div style="font-size: 11px; font-weight: bold; color: var(--brand-success); text-transform: uppercase; letter-spacing: 1px;">Caderneta do Aluno:</div>
                 <h3 id="nome-aluno-foco-pauta" style="font-size: 18px; font-weight: 800; color: #fff; margin-top: 4px; margin-bottom: 15px;">---</h3>
                 
                 <div class="table-wrapper">
@@ -215,7 +215,7 @@
                 </div>
                 
                 <button class="btn" onclick="salvarPautaCompletaDoAluno()" style="background: var(--brand-success); width: 100%; margin-top: 15px; font-weight: bold;">
-                    Guardar e Sincronizar Pauta Completa ✓
+                    Guardar Pauta ✓
                 </button>
             </div>
     
@@ -224,28 +224,28 @@
     
         <!-- 3. GESTOR DE MANUAIS: UPLOAD DE PDFs PARA A NUVEM -->
         <div class="card" style="border-top: 4px solid var(--brand-blue-glow);">
-            <div class="titulo">📚 Alocar Manual na Prateleira Inteligente</div>
+            <div class="titulo"> Enviar Lívro na Prateleira </div>
             <form id="form-upload-livro" onsubmit="enviarLivroNuvem(event)">
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 11px; font-weight: bold;">Título do Livro / Disciplina:</label>
-                    <input type="text" id="livro-titulo" class="form-input" placeholder="Ex: Manual de Química - 7ª Classe" required>
+                    <input type="text" id="livro-titulo" class="form-input"  required>
                 </div>
                 <div style="margin-bottom: 12px;">
-                    <label style="font-size: 11px; font-weight: bold;">Autor / Editorial:</label>
-                    <input type="text" id="livro-autor" class="form-input" placeholder="Ex: Editorial Aurélius" required>
+                    <label style="font-size: 11px; font-weight: bold;">Autor:</label>
+                    <input type="text" id="livro-autor" class="form-input" required>
                 </div>
                 <div style="margin-bottom: 12px;">
-                    <label style="font-size: 11px; font-weight: bold;">Selecionar Ficheiro PDF do Manual: *</label>
+                    <label style="font-size: 11px; font-weight: bold;">Selecionar Ficheiro PDF: *</label>
                     <input type="file" id="livro-ficheiro" accept="application/pdf" class="form-input" required>
                 </div>
-                <button type="submit" class="btn" style="background: var(--brand-blue-glow); color: #000;">Publicar Livro Digital 🚀</button>
+                <button type="submit" class="btn" style="background: var(--brand-blue-glow); color: #000;">Publicar Livro </button>
             </form>
         </div>
 
 
     <div class="card" style="border-top: 4px solid var(--brand-success);">
             <div class="titulo"> Indicadores de Faturamento</div>
-            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">Monitorização automatizada de faturamento real em tempo real baseado nas matrículas centralizadas.</p>
+           
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; text-align: center;">
                 <!-- Coluna 1: Estado da Inscrição -->
@@ -288,7 +288,7 @@
      🏫 SEÇÃO DE GESTÃO DE TURMAS (PROFESSOR.HTML)
      ========================================================================= -->
      <div class="container-gestao" style="padding: 20px; font-family: sans-serif; background: #0d1527; color: #fff; border-radius: 8px;">
-            <h3 style="color: #eab308; text-align: center; margin-bottom: 20px;">Painel de Administração: Direcionamento & Aprovação</h3>
+            <h3 style="color: #eab308; text-align: center; margin-bottom: 20px;"> Direcionamento & Aprovação</h3>
             
             <!-- 📄 Formulário Exclusivo do Professor -->
             <form id="pautaFormLocal" onsubmit="event.preventDefault(); event.stopPropagation();" style="margin-bottom: 25px; background: #060b19; padding: 20px; border-radius: 6px;">
@@ -300,7 +300,7 @@
                         <input type="text" id="nome_aluno" required style="width:100%; padding:8px; background:#0d1527; border:1px solid #1e293b; color:#fff; border-radius:4px;">
                     </div>
                     <div>
-                        <label style="color:#94a3b8; font-size:12px;">Classe/Turma</label>
+                        <label style="color:#94a3b8; font-size:12px;">Classe</label>
                         <input type="text" id="classe" required style="width:100%; padding:8px; background:#0d1527; border:1px solid #1e293b; color:#fff; border-radius:4px;">
                     </div>
                     <div>
@@ -316,7 +316,7 @@
                         <input type="text" id="hora" required placeholder="07:00-08:00" style="width:100%; padding:8px; background:#0d1527; border:1px solid #1e293b; color:#fff; border-radius:4px;">
                     </div>
                     <div>
-                        <label style="color:#94a3b8; font-size:12px;">Disciplina / Curso</label>
+                        <label style="color:#94a3b8; font-size:12px;">Disciplina</label>
                         <input type="text" id="disciplina" required style="width:100%; padding:8px; background:#0d1527; border:1px solid #1e293b; color:#fff; border-radius:4px;">
                     </div>
                     <div>
@@ -366,6 +366,9 @@
                 </div>
             </div>
         </div> <!-- Fim do container-gestao -->
+
+
+
        <script>
 
 function carregarListaAlunosParaChat() {
@@ -383,12 +386,12 @@ function carregarListaAlunosParaChat() {
         if (dados.sucesso && dados.alunos) {
             // Mantém a opção padrão intacta
             let htmlOpcoes = `<option value="">-- Escolha um Aluno para Conversar --</option>`;
-            htmlOpcoes += `<option value="TODOS">[Geral] Enviar para Toda a Turma</option>`;
+            htmlOpcoes += `<option value="TODOS"> Enviar para Toda a Turma</option>`;
 
             dados.alunos.forEach(aluno => {
                 // Filtra para garantir que não exibe nomes vazios ou IDs nulos
                 if (aluno.nome && aluno.id_unico_escolar) {
-                    htmlOpcoes += `<option value="${aluno.id_unico_escolar}">👤 ${aluno.nome} (${aluno.id_unico_escolar})</option>`;
+                    htmlOpcoes += `<option value="${aluno.id_unico_escolar}"> ${aluno.nome} (${aluno.id_unico_escolar})</option>`;
                 }
             });
 
@@ -448,7 +451,7 @@ document.addEventListener("DOMContentLoaded", function() {
             containerAba.style.setProperty('display', 'none', 'important');
             if(btnAbrir) {
                 btnAbrir.style.display = 'inline-block';
-                btnAbrir.innerText = `📁 Abrir Aba (${dadosLocais.length} Alunos)`;
+                btnAbrir.innerText = ` Abrir Aba (${dadosLocais.length} Alunos)`;
             }
             if(btnFechar) btnFechar.style.display = 'none';
         }
@@ -459,7 +462,7 @@ document.addEventListener("DOMContentLoaded", function() {
         tbodyProf.innerHTML = "";
         
         if (dadosLocais.length === 0) {
-            tbodyProf.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:#cbd5e1; font-size:12px;">Nenhum registo de turma encontrado localmente.</td></tr>`;
+            tbodyProf.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:#cbd5e1; font-size:12px;">Nenhum registo de turma encontrado .</td></tr>`;
             return;
         }
 
@@ -506,7 +509,7 @@ document.addEventListener("DOMContentLoaded", function() {
             localStorage.setItem('bd_pautas_professor', JSON.stringify(dadosLocais));
             
             this.reset();
-            alert("🎉 Registo salvo com sucesso na base local!");
+            alert(" Registo salvo com sucesso!");
             gerenciarAbaLocal(false); // Mantém recolhido para economizar espaço
         };
     }
@@ -524,7 +527,7 @@ document.addEventListener("DOMContentLoaded", function() {
             
             // Atualiza o contador de alunos do botão sem fechar a janela ativa
             const btnAbrir = document.getElementById('btnAbrirAba');
-            if(btnAbrir) btnAbrir.innerText = `📁 Abrir Aba (${dadosLocais.length} Alunos)`;
+            if(btnAbrir) btnAbrir.innerText = ` Abrir Aba (${dadosLocais.length} Alunos)`;
             
             // Se limpou o último aluno, esconde a pauta automaticamente
             if(dadosLocais.length === 0) {
@@ -534,80 +537,42 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 </script>
 
+<br>
 
 
-
-            <!-- GESTOR INTELIGENTE DE LIVROS (ENVIO DIRETAMENTE PARA O ALUNO) -->
-            <div class="card">
-                <div class="titulo">📚 Upload na Prateleira Inteligente de Livros</div>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Selecione o ficheiro do manual no seu telefone. O sistema vai integrá-lo de forma automática na conta de todos os alunos associados a essa disciplina.</p>
-                
-                <form id="form-upload-livro" onsubmit="enviarLivroParaAlunos(event)">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                        <div>
-                            <label style="font-size: 11px; font-weight: bold;">Título do Livro/Sebenta:</label>
-                            <input type="text" id="upload-titulo" class="form-input" placeholder="Ex: Manual Avançado de Química" required>
-                        </div>
-                        <div>
-                            <label style="font-size: 11px; font-weight: bold;">Autor/Coordenador:</label>
-                            <input type="text" id="upload-autor" class="form-input"  required>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 12px;">
-                        <label style="font-size: 11px; font-weight: bold;">Vincular à Disciplina Alvo:</label>
-                        <input type="text" id="upload-disciplina" class="form-input" required>
-                    </div>
-
-                    <div style="margin-bottom: 12px;">
-                        <label style="font-size: 11px; font-weight: bold; color: var(--brand-blue);">Selecionar Ficheiro do Telefone (PDF, Livro ou Imagem):</label>
-                        <input type="file" id="upload-ficheiro-real" class="form-input" accept=".pdf,.epub,.jpg,.jpeg,.png" style="padding: 8px; cursor: pointer;" required>
-                    </div>
-                    
-                    <button type="submit" class="btn" style="background: var(--brand-blue); color: #000; margin-top: 12px; padding: 10px;">Injetar e Sincronizar Ficheiro 🚀</button>
-                </form>
-            </div>
-
+            
 
              <!-- GESTOR DE CONTEÚDO: CENTRAL DE ALTO RENDIMENTO -->
 <div class="card" style="border-top: 4px solid var(--brand-blue-glow);">
-        <div class="titulo">🧠 Publicar Orientação na Central de Alto Rendimento</div>
-        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Escreva orientações pedagógicas, métodos de estudo ou avisos mentais de alto rendimento para todos os alunos.</p>
+        <div class="titulo"> Publicar Orientação na Central do Aluno</div>
+      
         
         <form id="form-publicar-dica" onsubmit="publicarDicaPedagogica(event)">
             <div style="margin-bottom: 12px;">
                 <label style="font-size: 11px; font-weight: bold;">Título da Orientação (Dica):</label>
-                <input type="text" id="dica-titulo" class="form-input" placeholder="Ex: 🎯 Como Estudar Anatomia para Medicina" required>
+                <input type="text" id="dica-titulo" class="form-input"  required>
             </div>
             <div style="margin-bottom: 12px;">
-                <label style="font-size: 11px; font-weight: bold;">Conteúdo / Explicação Detalhada:</label>
+                <label style="font-size: 11px; font-weight: bold;"> Explicação Detalhada:</label>
                 <textarea id="dica-texto" class="form-input" style="height: 80px; resize: none; font-family:inherit;" placeholder="Escreva o passo a passo metodológico para orientar os estudantes..." required></textarea>
             </div>
-            <button type="submit" class="btn" style="background: var(--brand-blue-glow); color: #000; margin-top: 5px; padding: 10px;">Disparar Orientação para os Alunos 🚀</button>
+            <button type="submit" class="btn" style="background: var(--brand-blue-glow); color: #000; margin-top: 5px; padding: 10px;">Enviar</button>
         </form>
     </div>
 
-    <div class="card" style="border-top: 4px solid #ef4444;">
-            <div class="titulo">📜 Histórico de Orientações Publicadas</div>
-            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Visualize ou elimine de forma permanente os métodos e dicas de estudo disponíveis na Central de Alto Rendimento.</p>
-            
-            <div id="lista-historico-dicas" style="display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto; padding-right: 5px;">
-                <!-- Injetado Dinamicamente via JS -->
-            </div>
-        </div>
-
+    
 
 
        <!-- =========================================================================
      💬 CENTRAL DE RESPOSTAS DO CHAT ACADÉMICO (PAINEL DO PROFESSOR)
      ========================================================================= -->
 <div class="card" style="border-top: 4px solid var(--brand-gold);">
-    <div class="titulo">💬 Central de Respostas do Chat Académico</div>
+    <div class="titulo"> Chat Académico</div>
     
     <!-- 👤 MENU SELETOR DE ALUNOS ATIVOS -->
     <select id="select-alunos-chat" class="form-select" onchange="mudarAlunoChat(this.value)" style="margin-bottom: 12px; width: 100%;">
-        <option value="">-- Escolha um Aluno para Conversar --</option>
-        <option value="TODOS">📢 [Geral] Mural de Toda a Turma</option>
+        <option value="">Escolha um Aluno para Conversar </option>
+        <option value="TODOS"> Mural de Toda a Turma</option>
     </select>
 
     <!-- 📥 CAIXA ÚNICA DE MENSAGENS (HISTÓRICO DINÂMICO) -->
@@ -617,7 +582,7 @@ document.addEventListener("DOMContentLoaded", function() {
     
     <!-- 🚀 FORMULÁRIO DE ENVIO UNIFICADO -->
     <form onsubmit="return enviarMensagemProfessor(event)" style="display: flex; gap: 8px; margin-top: 10px;">
-        <input type="text" id="campo-texto-chat-prof" class="form-input" style="margin-top:0; flex: 1;" placeholder="Escreva a resposta ou orientação oficial..." required>
+        <input type="text" id="campo-texto-chat-prof" class="form-input" style="margin-top:0; flex: 1;" placeholder="Escreva a resposta ..." required>
         <button type="submit" class="btn" style="margin-top:0; width: auto; padding: 0 20px; background: var(--brand-gold); color: #000; font-weight: bold;">Responder Alunos</button>
     </form>
 </div>
@@ -668,26 +633,26 @@ document.addEventListener("DOMContentLoaded", function() {
         // Faz a requisição ao seu arquivo de listagem existente
         fetch('listar_estudantes.php?acao=listar')
         .then(res => {
-            if (!res.ok) throw new Error("Erro na ligação ao Render");
+            if (!res.ok) throw new Error("Erro na ligação");
             return res.json();
         })
         .then(dados => {
             if (dados.sucesso && dados.alunos) {
-                let htmlOpcoes = `<option value="">-- Escolha um Aluno para Conversar --</option>`;
-                htmlOpcoes += `<option value="TODOS">📢 [Geral] Mural de Toda a Turma</option>`;
+                let htmlOpcoes = `<option value="">Escolha um Aluno para Conversar </option>`;
+                htmlOpcoes += `<option value="TODOS">Mural de Toda a Turma</option>`;
     
                 dados.alunos.forEach(aluno => {
                     // Suporta o ID de utilizador ou número de inscrição de forma segura
                     const idIdentificador = aluno.id_unico_escolar ? aluno.id_unico_escolar : aluno.id_utilizador;
                     if (aluno.nome) {
-                        htmlOpcoes += `<option value="${idIdentificador}">👤 ${aluno.nome} (${aluno.id_unico_escolar || 'Inscrito'})</option>`;
+                        htmlOpcoes += `<option value="${idIdentificador}"> ${aluno.nome} (${aluno.id_unico_escolar || 'Inscrito'})</option>`;
                     }
                 });
     
                 selectAlunos.innerHTML = htmlOpcoes;
             }
         })
-        .catch(err => console.warn("A aguardar sincronização dos utilizadores no Huambo...", err));
+        .catch(err => console.warn("A aguardar sincronização dos utilizadores...", err));
     }
     
     // 🕒 3. ADICIONE O DISPARADOR NO DOMCONTENTLOADED EXISTENTE
@@ -719,14 +684,14 @@ function inicializarFiltroTurmasProf() {
         if (!seletor) return;
 
         if (dados.sucesso && dados.turmas.length > 0) {
-            seletor.innerHTML = '<option value="">-- Selecione uma Classe Ativa --</option>' +
+            seletor.innerHTML = '<option value=""> Selecione uma Classe  </option>' +
                 dados.turmas.map(t => `<option value="${t}">${t}</option>`).join('');
         } else {
             // Se o MySQL falhar ou estiver vazio, mantém o backup local para testes
             const listaLocais = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
             const turmasUnicas = [...new Set(listaLocais.map(a => a.classe))].filter(Boolean);
             
-            seletor.innerHTML = '<option value="">-- Selecione uma Classe Ativa --</option>' +
+            seletor.innerHTML = '<option value=""> Selecione uma Classe </option>' +
                 turmasUnicas.map(t => `<option value="${t}">${t}</option>`).join('');
         }
     })
@@ -748,7 +713,7 @@ function carregarIndicadoresETurmas() {
             // Alimenta o filtro de classes dinamicamente
             const seletor = document.getElementById('filtro-classe');
             if (seletor && dados.turmas.length > 0) {
-                seletor.innerHTML = '<option value="">-- Selecione uma Classe Ativa --</option>' +
+                seletor.innerHTML = '<option value=""> Selecione uma Classe </option>' +
                     dados.turmas.map(t => `<option value="${t}">${t}</option>`).join('');
             }
         }
@@ -761,7 +726,7 @@ let ultimoHtmlChatProf = "";
 function sincronizarChatProfessor() {
     fetch('chat_academico.php')
     .then(res => {
-        if (!res.ok) throw new Error("Erro na rede do Render");
+        if (!res.ok) throw new Error("Erro na rede");
         return res.json();
     })
     .then(dados => {
@@ -777,7 +742,7 @@ function sincronizarChatProfessor() {
             const corpoConversa = dados.mensagens.map(m => {
                 const isProf = (m.perfil === 'professor' || (m.remetente && m.remetente.includes('Prof')));
                 const corEtiqueta = isProf ? 'var(--brand-gold, #eab308)' : 'var(--brand-blue-glow, #3b82f6)';
-                const label = isProf ? "[Tu / Professor]" : `[👤 Aluno: ${m.remetente}]`;
+                const label = isProf ? "[Tu / Professor]" : `[ Aluno: ${m.remetente}]`;
                 const horaSMS = m.hora ? m.hora : '00:00';
                 
                 // Leitura híbrida para suportar qualquer retorno do PHP
@@ -823,7 +788,7 @@ function enviarMensagemProfessor(event) {
     // 🌟 ALINHAMENTO COM O PHP: Envia as chaves em formato de objeto JSON puro!
     const payload = {
         id_unico_escolar: "PROF-01",
-        remetente: "Prof. Aurélio Jamba",
+        remetente: "Prof. Aurélio",
         mensagem: inputTexto.value.trim(),
         perfil: "professor"
     };
@@ -839,7 +804,7 @@ function enviarMensagemProfessor(event) {
         body: JSON.stringify(payload) // Converte o objeto em string JSON para o PHP ler
     })
     .then(res => {
-        if (!res.ok) throw new Error("Erro na rede do Render");
+        if (!res.ok) throw new Error("Erro na rede  ");
         return res.json();
     })
     .then(dados => {
@@ -900,7 +865,7 @@ function salvarNotaEstudante(idUtilizador, nomeDisciplina) {
         if (dados.sucesso) {
             // Pequeno feedback de sucesso no terminal ou alert discreto
             console.log(`Nota guardada com sucesso para ${nomeDisciplina}`);
-            alert(`🎉 Avaliações de ${nomeDisciplina} guardadas com sucesso na nuvem!`);
+            alert(` Avaliações de ${nomeDisciplina} guardadas com sucesso!`);
         } else {
             alert("❌ Erro ao guardar notas: " + dados.mensagem);
         }
@@ -936,7 +901,7 @@ function sincronizarPainelEIndicadoresProf() {
             // Alimenta dinamicamente o Seletor de Classes para Trabalho
             const seletor = document.getElementById('filtro-classe');
             if (seletor && dados.turmas && dados.turmas.length > 0) {
-                let htmlOpcoes = '<option value="">-- Selecione uma Classe Ativa --</option>';
+                let htmlOpcoes = '<option value=""> Selecione uma Classe</option>';
                 dados.turmas.forEach(t => {
                     htmlOpcoes += `<option value="${t}">${t}</option>`;
                 });
@@ -988,10 +953,21 @@ function enviarLivroNuvem(event) {
     .finally(() => {
         if (btnSubmit) {
             btnSubmit.disabled = false;
-            btnSubmit.innerText = "Publicar Livro Digital 🚀";
+            btnSubmit.innerText = "Publicar Livro Digital";
         }
     });
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1043,7 +1019,7 @@ function popularFiltroClasses() {
     fetch("obter_pauta_prof.php?acao=indicadores")
         .then(response => response.json())
         .then(dados => {
-            selectClasse.innerHTML = '<option value="">-- Selecione uma Classe Ativa --</option>';
+            selectClasse.innerHTML = '<option value=""> Selecione uma Classe </option>';
             
             if (dados.sucesso && dados.turmas && dados.turmas.length > 0) {
                 dados.turmas.forEach(turma => {
@@ -1056,7 +1032,7 @@ function popularFiltroClasses() {
                     }
                 });
             } else {
-                console.warn("Nenhuma turma ativa foi devolvida pelo banco de dados.");
+                console.warn("Nenhuma turma ativa foi devolvida.");
             }
         })
         .catch(error => console.error("Erro ao popular seletor de classes:", error));
@@ -1107,7 +1083,7 @@ function carregarPautaGlobalProf() {
                 <td style="padding: 12px; text-align: right;">
                     <button class="btn" style="margin:0; padding: 6px 12px; font-size:11px; width:auto; background: var(--brand-blue);" 
                         onclick="abrirCadernetaIndividualDoAluno(${aluno.id_utilizador}, '${aluno.nome.replace(/'/g, "\\'")}', '${encodeURIComponent(aluno.curso || "")}')">
-                        Editar Notas 📁
+                        Editar Notas
                     </button>
                 </td>
             `;
@@ -1117,8 +1093,7 @@ function carregarPautaGlobalProf() {
     .catch(err => console.error("Erro ao listar alunos:", err));
 }
 
-// 📝 2. CLICOU EM "EDITAR NOTAS": Desdobra todas as disciplinas daquele aluno com os inputs de preenchimento
-// 📝 2. CLICOU EM "EDITAR NOTAS": Desdobra todas as disciplinas daquele aluno de forma blindada
+
 function abrirCadernetaIndividualDoAluno(idUtilizador, nomeAluno, cursoCodificado) {
     // Fixação segura na memória global
     alunoFocoIdUtilizador = idUtilizador;
@@ -1133,7 +1108,7 @@ function abrirCadernetaIndividualDoAluno(idUtilizador, nomeAluno, cursoCodificad
     let cursoStr = decodeURIComponent(cursoCodificado);
     let disciplinasArr = [];
 
-    // 🌟 CORREÇÃO CIRÚRGICA: Trata o Regex capturando a string exata no índice 1 do match!
+
     if (cursoStr.includes('[') && cursoStr.indexOf('Inscrição') === -1) {
         const match = cursoStr.match(/\[(.*?)\]/);
         if (match && match[1]) {
@@ -1190,7 +1165,7 @@ function abrirCadernetaIndividualDoAluno(idUtilizador, nomeAluno, cursoCodificad
     })
     .catch(err => {
         console.error("Erro ao puxar notas:", err);
-        tabelaNotas.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:15px; color:#ef4444;">⚠️ Falha ao ler avaliações da nuvem.</td></tr>`;
+        tabelaNotas.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:15px; color:#ef4444;">⚠️ Falha ao ler avaliações.</td></tr>`;
     });
 }
 
@@ -1209,7 +1184,7 @@ function salvarPautaCompletaDoAluno() {
     const btnSalvarGeral = document.querySelector("#painel-pauta-individual-aluno .btn") || document.querySelector("button[onclick='salvarPautaCompletaDoAluno()']");
     if (btnSalvarGeral) {
         btnSalvarGeral.disabled = true;
-        btnSalvarGeral.innerText = "⏳ A sincronizar com o Banco Central da Aiven...";
+        btnSalvarGeral.innerText = "⏳ A sincronizar...";
     }
 
     const pacoteNotas = [];
@@ -1238,12 +1213,12 @@ function salvarPautaCompletaDoAluno() {
         })
     })
     .then(res => {
-        if (!res.ok) throw new Error("Erro na rede do Render");
+        if (!res.ok) throw new Error("Erro na rede");
         return res.json();
     })
     .then(dados => {
         if (dados.sucesso) {
-            alert("🎉 Perfeito! A pauta de todas as disciplinas foi guardada e sincronizada com sucesso no Render!");
+            alert("🎉 Perfeito! A pauta de todas as disciplinas foi guardada e sincronizada com sucesso!");
             
             // 🌟 MANUTENÇÃO DE TELA ATIVA: Garante que o painel lateral continua aberto ('block')
             const painelIndividual = document.getElementById("painel-pauta-individual-aluno");
@@ -1322,7 +1297,7 @@ function salvarPautaCompletaDoAluno() {
             bdEstudantes[idxAluno].disciplinas[idxDisc].estatuto = linha.querySelector('.txt-estatuto').innerText.trim();
         });
         localStorage.setItem('bd_estudantes', JSON.stringify(bdEstudantes));
-        alert("🎉 CADERNETA SALVA!\nNotas integradas com sucesso na conta dos estudantes.");
+        alert(" CADERNETA SALVA!\nNotas integradas com sucesso na conta dos estudantes.");
         carregarPautaGlobalProf();
     }
 
@@ -1356,64 +1331,11 @@ function eliminarDicaPedagogica(index) {
         localStorage.setItem('bd_dicas_estudo', JSON.stringify(dicas));
         
         renderizarHistoricoDicas(); // Atualiza o histórico do professor na hora
-        alert("✨ Publicação removida com sucesso da base de dados local!");
+        alert(" Publicação removida com sucesso da base de dados local!");
     }
 }
 
-    // 📚 ENVIAR E INJETAR LIVROS AUTOMATICAMENTE SEGUNDO AS DISCIPLINAS
-    function enviarLivroParaAlunos(event) {
-        event.preventDefault();
-        sincronizarMemoria();
-
-        const titulo = document.getElementById('upload-titulo').value.trim();
-        const autor = document.getElementById('upload-autor').value.trim();
-        const disciplinaAlvo = document.getElementById('upload-disciplina').value.trim();
-        const inputFicheiro = document.getElementById('upload-ficheiro-real');
-
-        if (!inputFicheiro.files || inputFicheiro.files.length === 0) {
-            alert("⚠️ Por favor, selecione um ficheiro de livro no armazenamento do seu telefone.");
-            return;
-        }
-
-        const ficheiroSelecionado = inputFicheiro.files[0];
-
-        // Usa o leitor de ficheiros nativo do navegador do telemóvel
-        const leitor = new FileReader();
-        leitor.readAsDataURL(ficheiroSelecionado);
-
-        leitor.onload = function() {
-            // O ficheiro real convertido numa String binária segura para a base de dados local
-            const ficheiroCodificado = leitor.result;
-            let totalContemplados = 0;
-
-            // Vasculha a base local e injeta o manual e o ficheiro real na prateleira certa
-            bdEstudantes.forEach(aluno => {
-                const temDisciplina = aluno.disciplinas.some(d => d.nome.toLowerCase() === disciplinaAlvo.toLowerCase());
-                if (temDisciplina) {
-                    if (!aluno.livros) aluno.livros = [];
-                    aluno.livros.push({ 
-                        titulo: titulo, 
-                        autor: autor,
-                        dadosFicheiro: ficheiroCodificado // O conteúdo real do livro vai aqui dentro de forma dinâmica!
-                    });
-                    totalContemplados++;
-                }
-            });
-
-            if (totalContemplados > 0) {
-                localStorage.setItem('bd_estudantes', JSON.stringify(bdEstudantes));
-                alert(`🎉 LIVRO SINCRONIZADO!\nO ficheiro do livro "${titulo}" foi carregado com sucesso do seu telemóvel e distribuído para ${totalContemplados} estudantes.`);
-                document.getElementById('form-upload-livro').reset();
-            } else {
-                alert(`⚠️ Alerta: Nenhum estudante tem a disciplina "${disciplinaAlvo}" ativa para receber este livro no momento.`);
-            }
-        };
-
-        leitor.onerror = function() {
-            alert("❌ Erro ao ler o ficheiro do armazenamento do telemóvel. Tente novamente.");
-        };
-    }
-
+   
     // 💬 GESTÃO CENTRALIZADA DO CHAT ACADÉMICO GLOBAL
     if (!localStorage.getItem('bd_chat_global')) {
         localStorage.setItem('bd_chat_global', JSON.stringify([]));
@@ -1535,7 +1457,7 @@ function publicarDicaPedagogica(event) {
     .then(res => res.json())
     .then(resposta => {
         if (resposta.sucesso) {
-            alert(`🎯 SUCESSO NA NUVEM!\nA orientação "${titulo}" foi gravada no mural global.`);
+            alert(` SUCESSO !\nA orientação "${titulo}" foi gravada no mural global.`);
             
             // Reseta o formulário
             document.getElementById('form-publicar-dica').reset();
@@ -1550,7 +1472,7 @@ function publicarDicaPedagogica(event) {
     })
     .catch(erro => {
         console.error("Erro ao publicar:", erro);
-        alert("❌ Falha de rede. Verifique a ligação ao servidor Aiven.");
+        alert("❌ Falha de rede. Verifique a ligação ao servidor .");
     });
 }
     </script>
