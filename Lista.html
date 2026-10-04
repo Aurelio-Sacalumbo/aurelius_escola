@@ -9,81 +9,156 @@
     <style>
         body { font-family: sans-serif; background: #060b19; color: #fff; padding: 20px; text-align: center; }
         h1 { color: #eab308; }
-        table { width: 90%; max-width: 1000px; margin: 30px auto; border-collapse: collapse; background: #0d1527; text-align: center; }
-        th, td { padding: 12px; border: 1px solid #1e293b; }
-        th { background: #111c35; color: #eab308; }
+        .nav-container { margin-bottom: 25px; }
+        .form-input {
+            width: 90%; max-width: 500px; padding: 10px; margin: 10px auto; 
+            background: #0d1527; color: #fff; border: 1px solid #1e293b; border-radius: 6px; font-size: 14px;
+        }
+        .container-acordeon { width: 90%; max-width: 1000px; margin: 20px auto; text-align: left; }
+        
+        /* Estilos do Cabeçalho do Aluno */
+        .aluno-header-gatilho {
+            display: grid; grid-template-columns: 2fr 1fr 1fr; padding: 14px 15px;
+            background: #0d1527; border: 1px solid #1e293b; margin-top: 8px;
+            border-radius: 6px; cursor: pointer; transition: 0.2s ease-in-out; font-size: 14px;
+        }
+        .aluno-header-gatilho:hover { background: #111c35; border-color: #eab308; }
+        
+        /* Painel Oculto Detalhado */
+        .painel-detalhes-oculto {
+            display: none; background: #070b14; padding: 15px;
+            border: 1px dashed rgba(234, 179, 8, 0.3); border-top: none; border-radius: 0 0 6px 6px;
+        }
+        
+        /* Tabela Interna de Módulos */
+        .tabela-interna { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 5px; }
+        .tabela-interna th { color: #eab308; padding: 8px; border-bottom: 1px solid #1e293b; text-align: left; }
+        .tabela-interna td { padding: 10px 8px; border-bottom: 1px dashed rgba(255,255,255,0.05); text-align: left; }
         .badge { padding: 3px 6px; font-size: 11px; font-weight: bold; border-radius: 3px; text-transform: uppercase; color: #000; }
     </style>
 </head>
 
 <body>
 
-    <nav style="margin-bottom: 20px;">
+    <nav class="nav-container">
         <a href="Principal.html" style="
-            display: inline-block;
-            color: #eab308;
-            border: 1px solid #1e293b;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            background-color: #0d1527;
-            transition: all 0.3s ease;
+            display: inline-block; color: #eab308; border: 1px solid #1e293b;
+            padding: 10px 20px; text-decoration: none; border-radius: 6px;
+            font-weight: bold; background-color: #0d1527; transition: all 0.3s ease;
         " onmouseover="this.style.backgroundColor='#111c35'; this.style.borderColor='#eab308';" 
           onmouseout="this.style.backgroundColor='#0d1527'; this.style.borderColor='#1e293b';">
             Home
         </a>
     </nav>
+
+    <h1>Horário Geral de Turmas Ocupadas</h1>
+    <p style="color: #94a3b8; font-size: 13px;">Clique no nome do estudante para expandir e verificar as categorias completas.</p>
     
-  
-    <table>
-        <thead>
-            <tr>
-                <th>Nome do Aluno</th>
-                <th>Classe</th>
-                <th>Período</th>
-                <th>Hora</th>
-                <th>Disciplina</th>
-                <th>Professor</th>
-                <th>Estatuto</th>
-            </tr>
-        </thead>
-        <tbody id="listaPublica">
-            <!-- Dados puros carregados localmente aqui -->
-        </tbody>
-    </table>
+    <!-- Caixa de busca rápida -->
+    <input type="text" id="campo_busca_alunos" class="form-input" placeholder="🔍 Digite o nome do aluno para pesquisar na lista..." oninput="filtrarAcordeonPublico(this.value)">
+
+    <!-- Guia de Orientação Visual -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; width: 90%; max-width: 1000px; margin: 20px auto 0 auto; padding: 10px 15px; font-weight: bold; font-size: 11px; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #1e293b; text-align: left;">
+        <div>Nome do Aluno</div>
+        <div>Classe Alocada</div>
+        <div>Período Atual</div>
+    </div>
+
+    <!-- Contentor dos Blocos Expandíveis -->
+    <div id="listaPublicaAcordeon" class="container-acordeon"></div>
 
 <script>
-    // 🧠 SINCRONIZAÇÃO COMPLETA COM A BASE LOCAL DO PROFESSOR
     document.addEventListener("DOMContentLoaded", () => {
-        const tbody = document.getElementById('listaPublica');
-        if (!tbody) return;
-
-        // Captura os mesmos dados que o professor acabou de salvar
-        const dadosLocais = JSON.parse(localStorage.getItem('bd_pautas_professor')) || [];
-        tbody.innerHTML = "";
-
-        if (dadosLocais.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:#94a3b8;">Nenhuma turma operacional registada no momento.</td></tr>`;
-            return;
-        }
-
-        // Renderiza os dados na tabela pública
-        dadosLocais.forEach(row => {
-            let badgeColor = row.estado === 'aprovado' ? '#10b981' : (row.estado === 'rejeitado' ? '#ef4444' : '#f59e0b');
-            tbody.innerHTML += `
-                <tr>
-                    <td><b>${row.nome_aluno}</b></td>
-                    <td>${row.classe}</td>
-                    <td>${row.periodo}</td>
-                    <td><code>${row.hora}</code></td>
-                    <td>${row.disciplina}</td>
-                    <td>${row.professor}</td>
-                    <td><span class="badge" style="background:${badgeColor};">${row.estado}</span></td>
-                </tr>
-            `;
-        });
+        carregarListaPublicaBancoNuvem();
     });
+
+    function carregarListaPublicaBancoNuvem() {
+        const container = document.getElementById('listaPublicaAcordeon');
+        if (!container) return;
+
+        // Faz o fetch dinâmico para a rota de professores atualizada
+        fetch('obter_pauta_prof.php')
+            .then(res => res.json())
+            .then(resposta => {
+                if (!resposta.sucesso || resposta.dados.length === 0) {
+                    container.innerHTML = `<div style="text-align:center; padding:30px; color:#94a3b8;">Nenhuma turma operacional ou estudante registado no momento.</div>`;
+                    return;
+                }
+
+                let htmlAcordeon = '';
+
+                resposta.dados.forEach(aluno => {
+                    let linhasTabela = '';
+
+                    // Constrói as linhas internas de disciplinas/professores/estatutos
+                    if (aluno.modulos && aluno.modulos.length > 0) {
+                        aluno.modulos.forEach(m => {
+                            let badgeColor = m.estatuto.toLowerCase() === 'aprovado' ? '#10b981' : (m.estatuto.toLowerCase() === 'pendente' ? '#f59e0b' : '#64748b');
+                            linhasTabela += `
+                                <tr>
+                                    <td><b>📖 ${m.disciplina}</b></td>
+                                    <td><code>${m.horario}</code></td>
+                                    <td>👨‍🏫 ${m.professor}</td>
+                                    <td><span class="badge" style="background:${badgeColor};">${m.estatuto}</span></td>
+                                </tr>
+                            `;
+                        });
+                    } else {
+                        linhasTabela = `<tr><td colspan="4" style="text-align:center; color:#64748b;">Nenhuma disciplina vinculada nesta matrícula.</td></tr>`;
+                    }
+
+                    // Gera o bloco em acordeão
+                    htmlAcordeon += `
+                        <div class="bloco-estudante-lista" data-nome="${aluno.nome.toLowerCase()}">
+                            <div class="aluno-header-gatilho" onclick="alternarVisibilidadeListaPublica(${aluno.id})">
+                                <div style="font-weight: bold; color: #fff;">👤 ${aluno.nome}</div>
+                                <div style="color: #eab308;">${aluno.classe}</div>
+                                <div style="color: #38bdf8;">${aluno.periodo}</div>
+                            </div>
+                            <div id="painel_publico_${aluno.id}" class="painel-detalhes-oculto">
+                                <table class="tabela-interna">
+                                    <thead>
+                                        <tr>
+                                            <th>Disciplina</th>
+                                            <th>Horário</th>
+                                            <th>Professor</th>
+                                            <th>Estatuto</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${linhasTabela}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = htmlAcordeon;
+            })
+            .catch(err => {
+                console.error("Erro de ligação à nuvem:", err);
+                container.innerHTML = `<div style="text-align:center; padding:30px; color:#ef4444;">⚠️ Falha de comunicação com o servidor central do Render.</div>`;
+            });
+    }
+
+    // Função para abrir/fechar as categorias do aluno ao clicar
+    function alternarVisibilidadeListaPublica(idAluno) {
+        const painel = document.getElementById(`painel_publico_${idAluno}`);
+        if (painel) {
+            const painelAberto = painel.style.display === 'block';
+            painel.style.display = painelAberto ? 'none' : 'block';
+        }
+    }
+
+    // Filtro instantâneo sem recarregar a tela
+    function filtrarAcordeonPublico(termo) {
+        const textoBusca = termo.toLowerCase().trim();
+        document.querySelectorAll('.bloco-estudante-lista').forEach(bloco => {
+            const nomeAluno = bloco.getAttribute('data-nome');
+            bloco.style.display = nomeAluno.includes(textoBusca) ? 'block' : 'none';
+        });
+    }
 </script>
 
 <script>
