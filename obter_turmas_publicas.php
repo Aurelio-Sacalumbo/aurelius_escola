@@ -1,55 +1,79 @@
 <?php
-// 🚀 ENDPOINT DE HORÁRIOS PÚBLICOS REALINHADO - ACADEMIA AURÉLIUS
-header('Content-Type: application/json; charset=utf-8');
+// 🚀 ENDPOINT DE HORÁRIOS PÚBLICOS CENTRALIZADO (PADRÃO PDO) — ACADEMIA AURÉLIUS
 header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Methods: GET");
+header('Content-Type: application/json; charset=utf-8');
+
 require_once 'conexao.php';
 
 try {
-    // Garante que o Render usa a base correta da escola
-    mysqli_select_db($conexao_aurelius, "aurelius_escola");
+    $termo = isset($_GET['termo']) ? trim($_GET['termo']) : '';
 
-    // 🔍 1. Agrupa os registos na tabela pública por aluno para evitar nomes repetidos no acordeão
-    $queryEstudantes = "SELECT DISTINCT nome_aluno, classe, periodo FROM matriculas_turmas ORDER BY nome_aluno ASC";
-    $resultEstudantes = mysqli_query($conexao_aurelius, $queryEstudantes);
-    
-    $dadosAgrupados = [];
-    $idVirtual = 1;
-
-    if ($resultEstudantes) {
-        while ($aluno = mysqli_fetch_assoc($resultEstudantes)) {
-            $nome = $aluno['nome_aluno'];
-            $nomeFiltrado = mysqli_real_escape_string($conexao_aurelius, $nome);
-
-            // 🔍 2. Procura todas as disciplinas, professores e turnos deste aluno específico
-            $queryLinhas = "SELECT id_matricula, hora, disciplina, professor, estado FROM matriculas_turmas WHERE nome_aluno = '$nomeFiltrado'";
-            $resultLinhas = mysqli_query($conexao_aurelius, $queryLinhas);
-            
-            $modulos = [];
-            while ($linha = mysqli_fetch_assoc($resultLinhas)) {
-                $modulos[] = [
-                    'disciplina' => $linha['disciplina'],
-                    'horario'    => !empty($linha['hora']) ? $linha['hora'] : 'Horário Geral',
-                    'professor'  => !empty($linha['professor']) ? $linha['professor'] : 'Docente Responsável',
-                    'estatuto'   => !empty($linha['estado']) ? $linha['estado'] : 'pendente'
-                ];
-            }
-
-            // Adiciona o bloco estruturado ao array de envio
-            $dadosAgrupados[] = [
-                'id'      => $idVirtual++,
-                'nome'    => $nome,
-                'classe'  => !empty($aluno['classe']) ? $aluno['classe'] : 'Ensino Regular',
-                'periodo' => !empty($aluno['periodo']) ? $aluno['periodo'] : 'Turno Ativo',
-                'modulos' => $modulos
-            ];
-        }
+    if (empty($termo)) {
+        echo json_encode(['sucesso' => true, 'dados' => []]);
+        exit;
     }
 
-    // Retorna a resposta JSON no formato exato esperado pela Lista.html
-    echo json_encode(['sucesso' => true, 'dados' => $dadosAgrupados], JSON_UNESCAPED_UNICODE);
+    // 🔍 1. Busca o estudante ativo na tabela utilizadores (Garante que o aluno existe)
+    $stmt = $pdo->prepare("SELECT nome, telefone FROM utilizadores 
+                           WHERE (id_unico_escolar = ? OR nome LIKE ? OR telefone = ?) 
+                           AND nivel = 'estudante' LIMIT 1");
+    
+    $stmt->execute([$termo, "%$termo%", $termo]);
+    $aluno = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($aluno) {
+        $nomeAlunoReal = $aluno['nome'];
+        $disciplinasEstruturadas = [];
+
+        // 🔍 2. LEITURA EXCLUSIVA: Procura APENAS as linhas gravadas na tabela Horario
+        $stmtHorario = $pdo->prepare("SELECT id_matricula, classe, periodo, hora, disciplina, professor, estado FROM Horario WHERE nome_aluno = ? ORDER BY id_horario ASC");
+        $stmtHorario->execute([$nomeAlunoReal]);
+        $linhasHorario = $stmtHorario->fetchAll(PDO::FETCH_ASSOC);
+
+        // Se o professor eliminou tudo, as variáveis de cabeçalho vêm do cadastro base
+        $classeLimpa = "12ª Classe";
+        $periodoLimpo = !empty($aluno['periodo']) ? $aluno['periodo'] : 'Noite';
+
+        if (!empty($linhasHorario)) {
+            foreach ($linhasHorario as $h) {
+                $classeLimpa  = !empty($h['classe']) ? trim($h['classe']) : $classeLimpa;
+                $periodoLimpo = !empty($h['periodo']) ? trim($h['periodo']) : $periodoLimpo;
+
+                $disciplinasEstruturadas[] = [
+                    'disciplina' => trim($h['disciplina']),
+                    'horario'    => !empty($h['hora']) ? $h['hora'] : "19:00 - 20:00",
+                    'professor'  => !empty($h['professor']) ? $h['professor'] : "Docente Alocado",
+                    'estatuto'   => !empty($h['estado']) ? strtolower(trim($h['estado'])) : 'pendente'
+                ];
+            }
+        }
+
+        // 🌟 RETORNO SEGURO: Só monta o acordeão se existirem disciplinas reais na tabela Horario
+        if (!empty($disciplinasEstruturadas)) {
+            echo json_encode([
+                'sucesso' => true,
+                'dados' => [[
+                    'id'       => 1,
+                    'nome'     => $nomeAlunoReal,
+                    'telefone' => !empty($aluno['telefone']) ? trim($aluno['telefone']) : 'Sem Número',
+                    'classe'   => $classeLimpa,
+                    'periodo'  => $periodoLimpo,
+                    'modulos'  => $disciplinasEstruturadas
+                ]]
+            ], JSON_UNESCAPED_UNICODE);
+        } else {
+            // Se foi tudo eliminado no banco, retorna vazio para limpar o ecrã público instantaneamente!
+            echo json_encode(['sucesso' => true, 'dados' => []]);
+        }
+
+    } else {
+        echo json_encode(['sucesso' => true, 'dados' => []]);
+    }
 
 } catch (Exception $e) {
-    echo json_encode(['sucesso' => false, 'mensagem' => 'Erro ao processar pautas públicas: ' . $e->getMessage()]);
+    echo json_encode(['sucesso' => false, 'mensagem' => 'Erro: ' . $e->getMessage()]);
 }
 exit;
+?>
