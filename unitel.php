@@ -60,13 +60,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($aluno) {
                 $id_user = $aluno['id_utilizador'];
                 $saldo_atual_banco = floatval($aluno['saldo_propina']);
+// =========================================================================
+// 💸 AJUSTE UNIFICADO E DINÂMICO DE MENSALIDADE PARA TODAS AS CLASSES
+// =========================================================================
+// O sistema assume o preço base dinâmico vindo do cálculo das disciplinas
+$precoMensalidadeLiquida = $precoTotalOriginal; 
 
-                // Preço padrão das 6 disciplinas com desconto da Unitel (8000,00 AKZ)
-                $precoMensalidadeLiquida = 8000.00;
-                if (strpos($aluno['curso'], '12ª Classe') !== false) {
-                    $precoMensalidadeLiquida = 8400.00; // Ajuste dinâmico para preçário de 12ª classe
-                }
-
+// Se preferir manter um teto fixo padrão com desconto para qualquer classe com 6 disciplinas:
+if ($contagemCadeiras >= 6) {
+    $precoMensalidadeLiquida = 8000.00; // Preço padrão promocional aplicado a todas as turmas
+} else {
+    // Caso queira aplicar uma taxa dinâmica proporcional por cadeira para qualquer classe
+    $precoMensalidadeLiquida = $precoTotalOriginal; 
+}
                 // 🧮 2. Cálculo do Stock Futuro livre de estouro numérico (Overflow)
                 $custoEfetivoCaixa = $precoMensalidadeLiquida - $saldoAbatido;
                 $sobraStock = $valor_pago - $custoEfetivoCaixa;
@@ -126,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // =========================================================================
-// 🔍 ROTA 2: PROCESSAMENTO GET (MÓDULOS REAIS E DESCONTO SINCRONIZADO)
+// 🔍 ROTA 2: PROCESSAMENTO GET (MÓDULOS REAIS E PREÇOS DINÂMICOS DO BANCO)
 // =========================================================================
 if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     header('Content-Type: application/json; charset=utf-8');
@@ -142,39 +148,45 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
         if ($aluno) {
             $cursoBruto = !empty($aluno['curso']) ? $aluno['curso'] : "";
             
-            $tabelaPrecos = [
-                'Língua Portuguesa' => 1500.00, 'Ling. Portuguesa' => 1500.00, 'Ling. Potuguesa' => 1500.00,
-                'Matemática'        => 1500.00, 'Matematica'        => 1500.00,
-                'História'          => 1500.00, 'Historia'          => 1500.00,
-                'Física'            => 1500.00, 'Fisica'            => 1500.00,
-                'Química'           => 1500.00, 'Quimica'           => 1500.00,
-                'Inglês'            => 1500.00, 'Ingles'            => 1500.00,
-                'Biologia'          => 1500.00
-            ];
-            
             $disciplinasEstruturadas = [];
             $precoTotalOriginal = 0;
             
             if (!empty($cursoBruto)) {
-                $limpaCurso = str_replace(['[Inscrição]', '[', ']'], '', $cursoBruto);
-                $partes = explode(',', $limpaCurso);
+                // Remove marcações comuns como [Inscrição], colchetes e limpa espaços
+                $limpaCurso = str_ireplace(['[Inscrição]', '[', ']'], '', $cursoBruto);
                 
-                foreach ($partes as $parte) {
-                    $nomeCadeira = trim($parte);
-                    if (empty($nomeCadeira)) continue;
+                // Divide por vírgula, ponto e vírgula ou quebras de linha para garantir a captura
+                $partes = preg_split('/[,;\n\r]+/', $limpaCurso);
+                $nomesCadeiras = array_filter(array_map('trim', $partes));
+                
+                if (!empty($nomesCadeiras)) {
+                    // Prepara os placeholders dinâmicos para o SQL IN
+                    $placeholders = implode(',', array_fill(0, count($nomesCadeiras), '?'));
                     
-                    $precoCadeira = isset($tabelaPrecos[$nomeCadeira]) ? $tabelaPrecos[$nomeCadeira] : 1500.00;
-                    $precoTotalOriginal += $precoCadeira;
+                    $stmtPreco = $pdo->prepare("SELECT nome, preco_base FROM cursos_disciplinas WHERE nome IN ($placeholders)");
+                    $stmtPreco->execute(array_values($nomesCadeiras));
+                    $precosDoBanco = $stmtPreco->fetchAll(PDO::FETCH_KEY_PAIR);
                     
-                    $disciplinasEstruturadas[] = [
-                        'nome' => $nomeCadeira,
-                        'preco' => $precoCadeira
-                    ];
+                    foreach ($nomesCadeiras as $nomeCadeira) {
+                        if (empty($nomeCadeira)) continue;
+                        
+                        // Busca o preço real na tabela. Se não achar, usa a média do ensino regular (650) como fallback
+                        $precoCadeira = isset($precosDoBanco[$nomeCadeira]) ? floatval($precosDoBanco[$nomeCadeira]) : 650.00;
+                        $precoTotalOriginal += $precoCadeira;
+                        
+                        $disciplinasEstruturadas[] = [
+                            'nome' => $nomeCadeira,
+                            'preco' => $precoCadeira
+                        ];
+                    }
                 }
             }
 
+            // Contagem real das cadeiras extraídas
             $contagemCadeiras = count($disciplinasEstruturadas);
-            $descontoCortesia = ($contagemCadeiras >= 4) ? 2000.00 : 0.00; // Alinhado com a regra de 20% OFF do seu ecrã
+            
+            // Regra de faturamento: Se tiver 4 ou mais disciplinas, ganha 20% de desconto real
+            $descontoCortesia = ($contagemCadeiras >= 4) ? ($precoTotalOriginal * 0.20) : 0.00; 
             $totalAPagarFinal = $precoTotalOriginal - $descontoCortesia;
             
             $saldoReal = ($aluno['saldo_propina'] > 0) ? floatval($aluno['saldo_propina']) : 0;
@@ -185,6 +197,7 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
                 'telefone' => $aluno['telefone'],
                 'turma' => 'Turma Única A',
                 'classe' => $cursoBruto,
+                'total_disciplinas' => $contagemCadeiras, // Retorna a quantidade exata
                 'saldo_interno' => $saldoReal,
                 'preco_total' => $precoTotalOriginal,
                 'desconto' => $descontoCortesia,
@@ -436,50 +449,22 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
 
 
    
-
-<!-- O SCRIPT DEVE COMECAR EXATAMENTE AQUI -->
 <script>
-// 📦 1. REPOSITÓRIO DE PREÇOS EXPANDIDO E REAL (HUAMBO 2026)
-const dbAcademica = {
-    regular: [
-        { id: '1c', nome: '1ª Classe (Primário)', sala: 'Sala nº 1', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}] },
-        { id: '2c', nome: '2ª Classe (Primário)', sala: 'Sala nº 2', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}] },
-        { id: '3c', nome: '3ª Classe (Primário)', sala: 'Sala nº 3', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}] },
-        { id: '4c', nome: '4ª Classe (Primário)', sala: 'Sala nº 4', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 1000}] },
-        { id: '5c', nome: '5ª Classe (Primário)', sala: 'Sala nº 5', disciplinas: [{n: 'Língua Portuguesa', p: 1000}, {n: 'Matemática', p: 1000}, {n: 'Estudo do Meio', p: 1000}] },
-        { id: '6c', nome: '6ª Classe (Primário)', sala: 'Sala nº 6', disciplinas: [{n: 'Língua Portuguesa', p: 1000}, {n: 'Matemática', p: 1000}, {n: 'Ciências da Natureza', p: 1000}] },
-        { id: '7c', nome: '7ª Classe (I Ciclo)', sala: 'Sala nº 7', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'Química', p: 1500}, {n: 'Física', p: 1500}] },
-        { id: '8c', nome: '8ª Classe (I Ciclo)', sala: 'Sala nº 8', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'Química', p: 1500}, {n: 'Física', p: 1500}] },
-        { id: '9c', nome: '9ª Classe (I Ciclo)', sala: 'Sala nº 9', disciplinas: [{n: 'Língua Portuguesa', p: 1500}, {n: 'Matemática', p: 1500}, {n: 'História', p: 1500}, {n: 'Geografia', p: 1500}] },
-        { id: '10c', nome: '10ª Classe (II Ciclo)', sala: 'Sala nº 10', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}, {n: 'Física', p: 2000}] },
-        { id: '11c', nome: '11ª Classe (II Ciclo)', sala: 'Sala nº 11', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}, {n: 'Química', p: 2000}] },
-        { id: '12c', nome: '12ª Classe (II Ciclo)', sala: 'Sala nº 12', disciplinas: [{n: 'Língua Portuguesa', p: 2000}, {n: 'Matemática', p: 2000}, {n: 'Filosofia', p: 2000}] },
-        { id: '13c', nome: '13ª Classe (Técnico)', sala: 'Sala nº 13', disciplinas: [{n: 'Matemática Aplicada', p: 2500}, {n: 'Física Avançada', p: 2500}, {n: 'Estágio Prático', p: 2500}] }
-    ],
-    superior: {
-        Economia: [
-            { id: 'eco1', nome: 'Economia - 1º Ano', disciplinas: [{n: 'Introdução à Economia', p: 5000}, {n: 'Análise Matemática I', p: 5500}] }
-        ],
-        Informatica: [
-            { id: 'inf1', nome: 'Informática - 1º Ano', disciplinas: [{n: 'Algorítmo e Lógica de Programação', p: 6000}, {n: 'Matemática Discreta', p: 6500}] }
-        ]
-    }
-};
-
-// 🔒 VARIÁVEIS GLOBAIS EXIGIDAS PELO SEU SISTEMA DE RECIBO
+// 🔒 VARIÁVEIS GLOBAIS DO SISTEMA ACADEMIA AURÉLIUS
 let nomeEstudanteAtivo = "";
 let dadosAlunoAtivo = {
+    id_utilizador: 0,
     divida: 0, 
     saldo_interno: 0, 
     custo_cadeiras: 0, 
     total_necessario: 0, 
-    total_caixa: 0, 
     desconto_ganho: 0,
     classe_real: "",
-    turma: "Turma Única A"
+    turma: "Turma Única A",
+    disciplinas_reais: []
 };
 
-// 🎯 2. FUNÇÃO DE BUSCA SÍNCRONA CONTRA A ROTA GET DO BANCO DE DADOS
+// 🎯 1. MOTOR DE BUSCA SÍNCRONA CONTRA O BANCO DE DADOS
 function buscarAlunoSincronizado(valorDigitado) {
     const termo = valorDigitado.trim();
     const blocoOculto = document.getElementById("bloco_faturamento_oculto");
@@ -490,25 +475,28 @@ function buscarAlunoSincronizado(valorDigitado) {
         return;
     }
 
-    // Consulta em tempo real na Rota 2 do seu próprio PHP (unitel.php)
     fetch(`unitel.php?pesquisa_automatica_cliente=1&termo=${encodeURIComponent(termo)}`)
         .then(res => res.json())
         .then(dados => {
             if (dados.status === 'encontrado') {
                 if (blocoOculto) blocoOculto.style.display = "block";
                 
-                // Mapeia o contacto registado no ecrã
-                const telInput = document.getElementById("telefone_input");
-                if (telInput) telInput.value = dados.telefone || "";
+                // Popula inputs básicos escondidos e visíveis
+                if (document.getElementById("telefone_input")) document.getElementById("telefone_input").value = dados.telefone || "";
+                if (document.getElementById("id_utilizador_hidden")) document.getElementById("id_utilizador_hidden").value = dados.id_utilizador || "";
+                if (document.getElementById("saldo_propina_atual_hidden")) document.getElementById("saldo_propina_atual_hidden").value = dados.saldo_interno || 0;
                 
-                // Popula os objetos globais mantendo a compatibilidade do sistema
+                // Guarda os dados no estado global da aplicação
                 nomeEstudanteAtivo = dados.nome;
+                dadosAlunoAtivo.id_utilizador = dados.id_utilizador;
                 dadosAlunoAtivo.classe_real = dados.classe; 
-                dadosAlunoAtivo.divida = parseFloat(dados.divida) || 0;
                 dadosAlunoAtivo.saldo_interno = parseFloat(dados.saldo_interno) || 0;
-                dadosAlunoAtivo.turma = dados.turma || "Turma Única A";
+                dadosAlunoAtivo.custo_cadeiras = parseFloat(dados.preco_total) || 0;
+                dadosAlunoAtivo.desconto_ganho = parseFloat(dados.desconto) || 0;
+                dadosAlunoAtivo.total_necessario = parseFloat(dados.total_a_pagar) || 0;
+                dadosAlunoAtivo.disciplinas_reais = dados.disciplinas || [];
 
-                // 🌟 FIX CIRÚRGICO: Injeta e exibe imediatamente o Stock Real na label do topo
+                // Exibe o Stock Total na conta
                 const linhaSaldoTotal = document.getElementById("linha_saldo_total_banco");
                 const txtSaldoTotal = document.getElementById("f_saldo_total_banco");
                 if (linhaSaldoTotal && txtSaldoTotal) {
@@ -516,170 +504,124 @@ function buscarAlunoSincronizado(valorDigitado) {
                     txtSaldoTotal.innerText = dadosAlunoAtivo.saldo_interno.toFixed(2).replace(".", ",") + " AKZ";
                 }
 
-                console.log("✔️ Aluno reconhecido com Stock de:", dadosAlunoAtivo.saldo_interno);
-                
-                // Dispara o motor de cálculo reativo
+                // 🔄 SINCRONIZAÇÃO AUTOMÁTICA DO SELECT DE QUANTIDADE
+                const selectQtd = document.getElementById("qtd_disciplinas");
+                if (selectQtd) {
+                    selectQtd.value = dados.total_disciplinas >= 1 && dados.total_disciplinas <= 6 ? dados.total_disciplinas : "1";
+                }
+
+                // 📚 INJEÇÃO AUTOMÁTICA DAS DISCIPLINAS NO COMPONENTE
+                const containerDetalhe = document.getElementById("detalhe_disciplinas_cliente");
+                if (containerDetalhe && dados.disciplinas) {
+                    containerDetalhe.style.display = "block";
+                    containerDetalhe.innerHTML = `<label style="font-weight:bold; display:block; margin-bottom:5px; color:#94a3b8;"> Módulos e Preços :</label>`;
+                    
+                    dados.disciplinas.forEach(disc => {
+                        const precoFmt = parseFloat(disc.preco).toFixed(2).replace(".", ",") + " AKZ";
+                        containerDetalhe.innerHTML += `
+                            <div style="display:flex; justify-content:space-between; padding:3px 5px; font-size:13px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <span>${disc.nome}</span>
+                                <span style="color:#38bdf8;">${precoFmt}</span>
+                            </div>
+                        `;
+                    });
+                }
+
+                // Executa o reprocessamento visual dos valores
                 recalcularFaturamentoEscolar();
             } else {
                 if (blocoOculto) blocoOculto.style.display = "none";
             }
         })
-        .catch(err => console.error("Erro na rota de busca:", err));
+        .catch(err => console.error("Erro no motor de faturamento dinâmico:", err));
 }
 
-function calcularTrocoECredito(valorDigitado) {
-    // 🌟 CORREÇÃO CIRÚRGICA: Converte o texto digitado num número real válido
-    var valorEntregue = parseFloat(valorDigitado) || 0;
-
-    // Captura os valores reais calculados no motor financeiro
-    var precoTotalCadeirasReal = dadosAlunoAtivo.custo_cadeiras || 0;
-    var desconto = dadosAlunoAtivo.desconto_ganho || 0;
-    var subTotalFatura = precoTotalCadeirasReal - desconto;
-    var stockDisponivel = dadosAlunoAtivo.saldo_interno || 0;
-    
-    // Quanto foi abatido do stock interno existente
-    var saldoAbatidoAutomático = stockDisponivel >= subTotalFatura ? subTotalFatura : stockDisponivel;
-    var totalLiquidoFinalNoCaixa = subTotalFatura - saldoAbatidoAutomático;
-
-    var lblTroco = document.getElementById("lbl_troco_caixa");
-    var lblCredito = document.getElementById("lbl_credito_futuro");
-    var linhaTroco = document.getElementById("linha_troco_caixa");
-    var linhaCredito = document.getElementById("linha_credito_futuro");
-
-    // 🔄 CASO 1: O saldo interno já cobriu tudo (Total Líquido = 0)
-    if (totalLiquidoFinalNoCaixa === 0 && valorEntregue > 0) {
-        // Todo o dinheiro físico entregue vira Crédito Futuro (Guardado em Stock)
-        if (linhaTroco) linhaTroco.style.display = "none";
-        if (linhaCredito) linhaCredito.style.display = "flex";
-        
-        if (lblTroco) lblTroco.innerText = "0,00 AKZ";
-        if (lblCredito) lblCredito.innerText = valorEntregue.toFixed(2).replace(".", ",") + " AKZ";
-    } 
-    // 🔄 CASO 2: O aluno ainda tinha saldo a pagar no caixa e deu dinheiro a mais
-    else if (totalLiquidoFinalNoCaixa > 0 && valorEntregue > totalLiquidoFinalNoCaixa) {
-        var diferenca = valorEntregue - totalLiquidoFinalNoCaixa;
-        if (linhaTroco) linhaTroco.style.display = "flex";
-        if (linhaCredito) linhaCredito.style.display = "none";
-        
-        if (lblTroco) lblTroco.innerText = diferenca.toFixed(2).replace(".", ",") + " AKZ";
-        if (lblCredito) lblCredito.innerText = "0,00 AKZ";
-    } 
-    // 🔄 CASO 3: O pagamento foi exato ou insuficiente
-    else {
-        if (linhaTroco) linhaTroco.style.display = "none";
-        if (linhaCredito) Richmond; linhaCredito.style.display = "none";
-        if (lblTroco) lblTroco.innerText = "0,00 AKZ";
-        if (lblCredito) lblCredito.innerText = "0,00 AKZ";
-    }
-}
+// 🔄 2. MOTOR DE CÁLCULO E RENDERIZAÇÃO DA INTERFACE
 function recalcularFaturamentoEscolar() {
-    if (!nomeEstudanteAtivo) return;
+    const custoBase = dadosAlunoAtivo.custo_cadeiras;
+    const desconto = dadosAlunoAtivo.desconto_ganho;
+    const totalLiquido = dadosAlunoAtivo.total_necessario;
+    const stockExistente = dadosAlunoAtivo.saldo_interno;
 
-    const stringCursoCompleto = dadosAlunoAtivo.classe_real || "";
-    const matchDisciplinas = stringCursoCompleto.match(/\[(.*?)\]/);
-    let listaDisciplinasDoAluno = [];
+    // Injeta os valores base formatados nas labels nativas
+    if (document.getElementById("f_servico")) document.getElementById("f_servico").innerText = custoBase.toFixed(2).replace(".", ",") + " AKZ";
     
-    if (matchDisciplinas && matchDisciplinas[1]) {
-        listaDisciplinasDoAluno = matchDisciplinas[1].split(",").map(d => d.trim()).filter(d => d !== "");
+    // Controla a exibição da linha do desconto VIP
+    const linhaDesc = document.getElementById("linha_desconto_vip");
+    const txtDesc = document.getElementById("txt_desc_vip");
+    if (linhaDesc && txtDesc) {
+        if (desconto > 0) {
+            linhaDesc.style.display = "flex";
+            txtDesc.innerText = "-" + desconto.toFixed(2).replace(".", ",") + " AKZ";
+        } else {
+            linhaDesc.style.display = "none";
+        }
     }
 
-    if (listaDisciplinasDoAluno.length === 0) {
-        const selectQtd = document.getElementById("qtd_disciplinas");
-        const qtdManual = selectQtd ? parseInt(selectQtd.value) : 1;
-        for (let i = 1; i <= qtdManual; i++) {
-            listaDisciplinasDoAluno.push(`Cadeira Regular ${i}`);
+    // Calcula e desconta automaticamente se o aluno já tiver Stock guardado na conta
+    const linhaSaldoUsado = document.getElementById("linha_saldo_existing") || document.getElementById("linha_saldo_existente");
+    const labelSaldoUsado = document.getElementById("f_saldo_usado");
+    let saldoAbatido = 0;
+
+    if (stockExistente > 0) {
+        saldoAbatido = Math.min(stockExistente, totalLiquido);
+        if (linhaSaldoUsado && labelSaldoUsado) {
+            linhaSaldoUsado.style.display = "flex";
+            labelSaldoUsado.innerText = "-" + saldoAbatido.toFixed(2).replace(".", ",") + " AKZ";
         }
     } else {
-        const selectQtd = document.getElementById("qtd_disciplinas");
-        if (selectQtd) selectQtd.value = listaDisciplinasDoAluno.length;
+        if (linhaSaldoUsado) linhaSaldoUsado.style.display = "none";
     }
 
-    // Mostra o Stock Total do Aluno na linha do topo
-    const linhaSaldoTotal = document.getElementById("linha_saldo_total_banco");
-    const txtSaldoTotal = document.getElementById("f_saldo_total_banco");
-    if (linhaSaldoTotal && txtSaldoTotal) {
-        linhaSaldoTotal.style.display = "flex";
-        txtSaldoTotal.innerText = dadosAlunoAtivo.saldo_interno.toFixed(2).replace(".", ",") + " AKZ";
+    // Define o valor final que deve ser pago em caixa na label
+    const totalFinalCaixa = totalLiquido - saldoAbatido;
+    if (document.getElementById("txt_total_liquido")) {
+        document.getElementById("txt_total_liquido").innerText = totalFinalCaixa.toFixed(2).replace(".", ",") + " AKZ";
     }
 
-    // Calcula os preços reais mapeados
-    let precoTotalCadeirasReal = 0;
-    let detalheArray = [];
-    const nomeNivelLimpo = stringCursoCompleto.split("[")[0].trim();
-
-    const nivelConfig = dbAcademica.regular.find(r => r.nome.toLowerCase() === nomeNivelLimpo.toLowerCase());
-    let bancoDisciplinas = nivelConfig ? nivelConfig.disciplinas : [];
-
-    listaDisciplinasDoAluno.forEach(nomeDisc => {
-        const configDisc = bancoDisciplinas.find(d => d.n.trim().toLowerCase() === nomeDisc.toLowerCase());
-        const precoVerdadeiro = configDisc ? configDisc.p : 1500; // Padrão 1500 se não achar
-        precoTotalCadeirasReal += precoVerdadeiro;
-        detalheArray.push({ nome: nomeDisc, preco: precoVerdadeiro });
-    });
-
-    dadosAlunoAtivo.custo_cadeiras = precoTotalCadeirasReal;
-
-    // Desconto VIP de 20% se houver 4 ou mais disciplinas
-    let desconto = listaDisciplinasDoAluno.length >= 4 ? precoTotalCadeirasReal * 0.20 : 0;
-    dadosAlunoAtivo.desconto_ganho = desconto;
-    
-    const linhaDesc = document.getElementById("linha_desconto_vip");
-    if (linhaDesc) linhaDesc.style.display = desconto > 0 ? "flex" : "none";
-
-    let subTotalFatura = precoTotalCadeirasReal - desconto;
-
-    // Abatimento automático de stock
-    let stockDisponivel = dadosAlunoAtivo.saldo_interno;
-    let saldoAbatidoAutomático = stockDisponivel >= subTotalFatura ? subTotalFatura : stockDisponivel;
-
-    const linhaSaldo = document.getElementById("linha_saldo_existente");
-    if (linhaSaldo) linhaSaldo.style.display = saldoAbatidoAutomático > 0 ? "flex" : "none";
-
-    let totalLiquidoFinalNoCaixa = (subTotalFatura + dadosAlunoAtivo.divida) - saldoAbatidoAutomático;
-    if (totalLiquidoFinalNoCaixa < 0) totalLiquidoFinalNoCaixa = 0;
-    dadosAlunoAtivo.total_caixa = totalLiquidoFinalNoCaixa;
-
-    // Injeção de valores na tela
-    document.getElementById("f_servico").innerText = precoTotalCadeirasReal.toFixed(2).replace(".", ",") + " AKZ";
-    document.getElementById("f_divida").innerText = dadosAlunoAtivo.divida.toFixed(2).replace(".", ",") + " AKZ";
-    if (document.getElementById("txt_desc_vip")) document.getElementById("txt_desc_vip").innerText = "-" + desconto.toFixed(2).replace(".", ",") + " AKZ";
-    if (document.getElementById("f_saldo_usado")) document.getElementById("f_saldo_usado").innerText = "-" + saldoAbatidoAutomático.toFixed(2).replace(".", ",") + " AKZ";
-    document.getElementById("txt_total_liquido").innerText = totalLiquidoFinalNoCaixa.toFixed(2).replace(".", ",") + " AKZ";
-
-    // 📋 EXIBE AS DISCIPLINAS E OS SEUS PREÇOS EXATOS
-    renderizarListaDeCadeirasCliente(detalheArray);
-    
-    const valorAtualInput = parseFloat(document.getElementById("valor_entregue_input").value) || 0;
-    calcularTrocoECredito(valorAtualInput);
+    // Atualiza a matemática do troco baseado no input digitado
+    const inputEntregue = document.getElementById("valor_entregue_input");
+    if (inputEntregue) {
+        calcularTrocoECredito(parseFloat(inputEntregue.value) || 0);
+    }
 }
 
-// 👁️ COMPONENTE VISUAL DAS CADEIRAS (Injeta as disciplinas detalhadamente)
-function renderizarListaDeCadeirasCliente(disciplinas) {
-    var containerDetalhe = document.getElementById("detalhe_disciplinas_cliente");
-    if (!containerDetalhe) return;
+// 💵 3. GERENCIADOR DE TROCO E CRÉDITO FUTURO (Protegido contra o Bug dos Triliões)
+function calcularTrocoECredito(valorDigitado) {
+    const entregue = parseFloat(valorDigitado) || 0;
+    
+    // Obtém o valor líquido correto subtraindo o stock já consumido
+    const totalLiquido = dadosAlunoAtivo.total_necessario;
+    const saldoAbatido = Math.min(dadosAlunoAtivo.saldo_interno, totalLiquido);
+    const totalFinalCaixa = totalLiquido - saldoAbatido;
 
-    if (disciplinas.length === 0) {
-        containerDetalhe.style.display = "none";
-        return;
+    let troco = 0;
+    let creditoFuturo = 0;
+
+    if (entregue > totalFinalCaixa) {
+        // Se o operador preferir guardar o excedente em Stock para os meses seguintes
+        creditoFuturo = entregue - totalFinalCaixa;
     }
 
-    containerDetalhe.style.display = "block";
-    
-    var htmlGerado = '<div style="font-size: 11px; font-weight: bold; color: var(--brand-gold); text-transform: uppercase; margin-bottom: 6px;"> Módulos e Preços Individuais:</div>';
-    
-    disciplinas.forEach(function(item) {
-        var precoFormatado = item.preco.toFixed(2).replace(".", ",");
-        htmlGerado += '<div style="display: flex; justify-content: space-between; font-size: 12.5px; color: #f59e0b; margin-bottom: 4px;">' +
-                      '<span> ' + item.nome + '</span>' + 
-                      '<span style="font-weight: bold; color: #fff;">' + precoFormatado + ' AKZ</span>' +
-                      '</div>';
-    });
+    // Renderiza a linha de "Guardado em Stock"
+    const linhaCredito = document.getElementById("linha_credito_futuro");
+    const lblCredito = document.getElementById("lbl_credito_futuro");
+    if (linhaCredito && lblCredito) {
+        if (creditoFuturo > 0) {
+            linhaCredito.style.display = "flex";
+            lblCredito.innerText = "+" + creditoFuturo.toFixed(2).replace(".", ",") + " AKZ";
+        } else {
+            linhaCredito.style.display = "none";
+        }
+    }
 
-    containerDetalhe.innerHTML = htmlGerado;
+    // Mantém o controle do campo Troco a Devolver zerado (já que o excedente acumula como Stock)
+    const linhaTroco = document.getElementById("linha_troco_caixa");
+    const lblTroco = document.getElementById("lbl_troco_caixa");
+    if (linhaTroco && lblTroco) {
+        linhaTroco.style.display = "none";
+    }
 }
-
-
-
 
 function gerarFaturaDigital(event) {
     if (event) event.preventDefault();
@@ -689,18 +631,28 @@ function gerarFaturaDigital(event) {
         return;
     }
 
-    const mes = document.getElementById('mes_referencia').value;
-    const entregue = parseFloat(document.getElementById('valor_entregue_input').value) || 0;
-    const telefoneAluno = document.getElementById('telefone_input').value;
-    const txtTotal = document.getElementById("txt_total_liquido").innerText;
-    const totalLiquido = parseFloat(txtTotal.replace(" AKZ", "").replace(".", "").replace(",", ".")) || 0;
+    // Captura segura de dados do ecrã
+    const mesSelect = document.getElementById('mes_referencia');
+    const mes = mesSelect ? mesSelect.value : "Janeiro";
+    const telefoneAluno = document.getElementById('telefone_input')?.value || "";
+    const entregue = parseFloat(document.getElementById('valor_entregue_input')?.value) || 0;
 
-    if (entregue < totalLiquido) {
-        alert("Calma:  Mantenha calma meu Amigo/a,  o seu valor Monetário é inferior ao valor estipulado pelas Disciplinas/Cursos..., por Favor Pague o Valor certo, e..,    aproveitando a situação:      Minha Dica é: Se pretendes fazer um Pagamento adiantado de ( 1, 2, 3, ou mais Meses), para que os próximo meses não tenhas que pagar novamente, podes ir em frente pois o sistema desconta e lhe mostra na tela todo dinheiro adiantado, para que tenhas o controle de suas saídas de cada Pagamento mensal, SAUDAÇÕES .");
+    // 🌟 MATEMÁTICA PURA PROTEGIDA: Puxa os dados calculados diretamente do banco (Fim total dos triliões)
+    const custoBase = dadosAlunoAtivo.custo_cadeiras;
+    const totalDesconto = dadosAlunoAtivo.desconto_ganho;
+    const totalLiquido = dadosAlunoAtivo.total_necessario;
+    const stockExistente = dadosAlunoAtivo.saldo_interno;
+
+    // Calcula se existia saldo para abater e o valor final que era exigido em caixa
+    const saldoAbatido = Math.min(stockExistente, totalLiquido);
+    const totalFinalCaixa = totalLiquido - saldoAbatido;
+
+    if (entregue < totalFinalCaixa) {
+        alert("Calma: Mantenha calma meu Amigo/a, o seu valor Monetário é inferior ao valor estipulado pelas Disciplinas/Cursos..., por Favor Pague o Valor certo, e.., aproveitando a situação: Minha Dica é: Se pretendes fazer um Pagamento adiantado de ( 1, 2, 3, ou mais Meses), para que os próximo meses não tenhas que pagar novamente, podes ir em frente pois o sistema desconta e lhe mostra na tela todo dinheiro adiantado, para que tenhas o controle de suas saídas de cada Pagamento mensal, SAUDAÇÕES .");
         return;
     }
 
-    // 📅 GERAÇÃO DINÂMICA DA DATA EXIGIDA NO RECIBO HTML
+    // 📅 GERAÇÃO DA DATA DE EMISSÃO DO RECIBO
     const dataAtual = new Date();
     const dia = String(dataAtual.getDate()).padStart(2, '0');
     const mesesAno = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
@@ -708,64 +660,61 @@ function gerarFaturaDigital(event) {
     const ano = dataAtual.getFullYear();
     const dataFormatada = `${dia} de ${nomeMes} de ${ano}`;
 
-    // 📋 INJEÇÃO DOS DADOS NO RECIBO VISUAL DO PORTAL
+    // 📋 INJEÇÃO DE DADOS NO BLOCO IMPERIAL DO PORTAL
     if (document.getElementById('rec_nome')) document.getElementById('rec_nome').innerText = nomeEstudanteAtivo;
     if (document.getElementById('rec_tel')) document.getElementById('rec_tel').innerText = telefoneAluno;
     if (document.getElementById('rec_mes')) document.getElementById('rec_mes').innerText = mes;
     if (document.getElementById('rec_data')) document.getElementById('rec_data').innerText = dataFormatada;
-    if (document.getElementById('rec_qtd')) document.getElementById('rec_qtd').innerText = document.getElementById('qtd_disciplinas').value + " Disciplina(s)";
-    if (document.getElementById('rec_turma')) document.getElementById('rec_turma').innerText = dadosAlunoAtivo.turma || "Geral";
-    
-    // Recupera os valores de preço calculados no ecrã para o recibo
-    const fServicoTxt = document.getElementById("f_servico").innerText;
-    const fSaldoUsadoTxt = document.getElementById("f_saldo_usado") ? document.getElementById("f_saldo_usado").innerText : "-0,00 AKZ";
+    if (document.getElementById('rec_turma')) document.getElementById('rec_turma').innerText = dadosAlunoAtivo.turma || "Turma Única A";
 
-    if (document.getElementById('rec_custo')) document.getElementById('rec_custo').innerText = fServicoTxt;
+    // Mostra a contagem exata e real de disciplinas
+    const qtdRealDisciplinas = dadosAlunoAtivo.disciplinas_reais ? dadosAlunoAtivo.disciplinas_reais.length : 0;
+    if (document.getElementById('rec_qtd')) document.getElementById('rec_qtd').innerText = `${qtdRealDisciplinas} Disciplina(s)`;
+    if (document.getElementById('rec_custo')) document.getElementById('rec_custo').innerText = custoBase.toFixed(2).replace(".", ",") + " AKZ";
 
-    // Sincroniza o detalhamento das cadeiras do ecrã para o recibo de impressão
-    const containerDetalheEcra = document.getElementById("detalhe_disciplinas_cliente");
+    // 📚 SINCRONIZAÇÃO DAS DISCIPLINAS NO CORPO DO RECIBO DE IMPRESSÃO
     const containerDetalheRecibo = document.getElementById("rec_detalhe_lista_cadeiras");
-    if (containerDetalheEcra && containerDetalheRecibo) {
-        containerDetalheRecibo.innerHTML = containerDetalheEcra.innerHTML.replace("📚 Módulos e Preços Reais:", "<b>Discriminação dos Módulos:</b>");
+    if (containerDetalheRecibo && dadosAlunoAtivo.disciplinas_reais) {
+        containerDetalheRecibo.innerHTML = "<b>Discriminação dos Módulos:</b><br>";
+        dadosAlunoAtivo.disciplinas_reais.forEach(disc => {
+            const precoFmt = parseFloat(disc.preco).toFixed(2).replace(".", ",") + " AKZ";
+            containerDetalheRecibo.innerHTML += `
+                <div style="display:flex; justify-content:space-between; font-size:12px; padding:2px 0; border-bottom:1px dashed rgba(0,0,0,0.1); color:#000;">
+                    <span>• ${disc.nome}</span>
+                    <span>${precoFmt}</span>
+                </div>
+            `;
+        });
     }
 
-    // Estrutura visual de Desconto VIP no recibo
-    if (dadosAlunoAtivo.desconto_ganho > 0) {
+    // Linha visual do Desconto
+    if (totalDesconto > 0) {
         if (document.getElementById('rec_linha_desc')) document.getElementById('rec_linha_desc').style.display = 'flex';
-        if (document.getElementById('rec_desc')) document.getElementById('rec_desc').innerText = document.getElementById("txt_desc_vip").innerText;
+        if (document.getElementById('rec_desc')) document.getElementById('rec_desc').innerText = "-" + totalDesconto.toFixed(2).replace(".", ",") + " AKZ";
     } else { 
         if (document.getElementById('rec_linha_desc')) document.getElementById('rec_linha_desc').style.display = 'none'; 
     }
 
-    // Estrutura visual de Saldo Abatido no recibo
-    const saldoUsadoValor = parseFloat(fSaldoUsadoTxt.replace("-", "").replace(" AKZ", "").replace(".", "").replace(",", ".")) || 0;
-    if (saldoUsadoValor > 0) {
+    // Linha visual de Saldo Abatido (Stock consumido)
+    if (saldoAbatido > 0) {
         if (document.getElementById('rec_linha_saldo_usado')) document.getElementById('rec_linha_saldo_usado').style.display = 'flex';
-        if (document.getElementById('rec_saldo_usado')) document.getElementById('rec_saldo_usado').innerText = fSaldoUsadoTxt;
+        if (document.getElementById('rec_saldo_usado')) document.getElementById('rec_saldo_usado').innerText = "-" + saldoAbatido.toFixed(2).replace(".", ",") + " AKZ";
     } else {
         if (document.getElementById('rec_linha_saldo_usado')) document.getElementById('rec_linha_saldo_usado').style.display = 'none';
     }
 
-    // Estrutura visual de Dívidas Acumuladas no recibo
-    if (dadosAlunoAtivo.divida > 0) {
-        if (document.getElementById('rec_linha_divida')) document.getElementById('rec_linha_divida').style.display = 'flex';
-        if (document.getElementById('rec_divida')) document.getElementById('rec_divida').innerText = '+' + dadosAlunoAtivo.divida.toLocaleString('pt-PT') + " AKZ";
-    } else { 
-        if (document.getElementById('rec_linha_divida')) document.getElementById('rec_linha_divida').style.display = 'none'; 
-    }
-
-    // Estrutura de Stock Adiantado (Se o valor entregue superou o líquido final do caixa)
-    const sobraStock = entregue - totalLiquido;
+    // Linha de Crédito Adiantado / Sobra de Stock
+    const sobraStock = entregue - totalFinalCaixa;
     if (sobraStock > 0) {
         if (document.getElementById('rec_linha_stock')) document.getElementById('rec_linha_stock').style.display = 'flex';
-        if (document.getElementById('rec_stock')) document.getElementById('rec_stock').innerText = '+' + sobraStock.toLocaleString('pt-PT') + " AKZ";
+        if (document.getElementById('rec_stock')) document.getElementById('rec_stock').innerText = '+' + sobraStock.toFixed(2).replace(".", ",") + " AKZ";
     } else { 
         if (document.getElementById('rec_linha_stock')) document.getElementById('rec_linha_stock').style.display = 'none'; 
     }
 
-    if (document.getElementById('rec_total')) document.getElementById('rec_total').innerText = entregue.toLocaleString('pt-PT') + " AKZ";
+    if (document.getElementById('rec_total')) document.getElementById('rec_total').innerText = entregue.toFixed(2).replace(".", ",") + " AKZ";
 
-    // 🚀 ENVIO SEGURO EM FORMATO JSON COMPATÍVEL COM O RENDER
+    // 🚀 ENVIO SEGURO CENTRALIZADO PARA O BACKEND PHP
     fetch("unitel.php", {
         method: "POST",
         headers: {
@@ -773,10 +722,12 @@ function gerarFaturaDigital(event) {
         },
         body: JSON.stringify({
             acao_financeira: 'registar_pagamento',
+            id_utilizador: dadosAlunoAtivo.id_utilizador,
             telefone: telefoneAluno,
             valor_pago: entregue,
             mes_pago: mes,
-            saldo_abatido: saldoUsadoValor
+            saldo_abatido: saldoAbatido,
+            credito_guardado: sobraStock > 0 ? sobraStock : 0
         })
     })
     .then(res => {
@@ -787,19 +738,22 @@ function gerarFaturaDigital(event) {
         if (resposta.sucesso) {
             console.log("🎉 Sincronização concluída no MySQL central via Render.");
             
-            // Torna o bloco do recibo imperial visível e faz scroll suave
+            // Ativa visualmente o bloco da fatura e desce com scroll suave
             const blocoFatura = document.getElementById('bloco_fatura_recibo');
             if (blocoFatura) {
                 blocoFatura.style.display = 'block';
                 window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
             }
         } else {
-            alert("Não Pode pagar Uma disciplina se não fez a Matrícula : " + resposta.mensagem);
+            alert("Informação do Caixa: " + resposta.mensagem);
         }
     })
     .catch(err => {
         console.error("Erro capturado:", err);
-        alert("⚠️ Falha de comunicação: O recibo foi montado na tela mas os dados não puderam ser transmitidos para o servidor Render.");
+        // Exibe o recibo mesmo com erro de rede local para não travar o operador
+        const blocoFatura = document.getElementById('bloco_fatura_recibo');
+        if (blocoFatura) blocoFatura.style.display = 'block';
+        alert("⚠️ O recibo foi montado no ecrã com sucesso, mas os dados não puderam ser transmitidos de imediato para o servidor central.");
     });
 }
 </script>
