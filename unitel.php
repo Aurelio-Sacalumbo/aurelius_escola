@@ -160,18 +160,39 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
                 $nomesCadeiras = array_filter(array_map('trim', $partes));
                 
                 if (!empty($nomesCadeiras)) {
-                    // Prepara os placeholders dinâmicos para o SQL IN
+                    // Prepara os placeholders dinâmicos para os nomes das disciplinas (?, ?, ?)
                     $placeholders = implode(',', array_fill(0, count($nomesCadeiras), '?'));
                     
-                    $stmtPreco = $pdo->prepare("SELECT nome, preco_base FROM cursos_disciplinas WHERE nome IN ($placeholders)");
-                    $stmtPreco->execute(array_values($nomesCadeiras));
-                    $precosDoBanco = $stmtPreco->fetchAll(PDO::FETCH_KEY_PAIR);
+                    // CAPTURA DINÂMICA: Descobrir qual é a classe ou nível académico do aluno atual.
+                    // Substitui '$aluno['nivel_academico']' pela variável real que usas no teu script após a busca
+                    $nivelAcademicoAluno = isset($aluno['nivel_academico']) ? $aluno['nivel_academico'] : null;
+                    
+                    if ($nivelAcademicoAluno) {
+                        // A query agora filtra estritamente pelo Nome da Disciplina E pelo Nível Académico correspondente
+                        $sqlPreco = "SELECT nome, preco_base FROM cursos_disciplinas WHERE nome IN ($placeholders) AND nivel_academico = ?";
+                        
+                        $stmtPreco = $pdo->prepare($sqlPreco);
+                        
+                        // Junta os nomes das disciplinas e o nível académico na lista de parâmetros
+                        $paramsExec = array_values($nomesCadeiras);
+                        $paramsExec[] = $nivelAcademicoAluno;
+                        
+                        $stmtPreco->execute($paramsExec);
+                        $precosDoBanco = $stmtPreco->fetchAll(PDO::FETCH_KEY_PAIR);
+                    } else {
+                        // Se por algum motivo o aluno não tiver classe associada, tenta buscar o preço sem o filtro de nível
+                        $sqlPreco = "SELECT nome, preco_base FROM cursos_disciplinas WHERE nome IN ($placeholders)";
+                        $stmtPreco = $pdo->prepare($sqlPreco);
+                        $stmtPreco->execute(array_values($nomesCadeiras));
+                        $precosDoBanco = $stmtPreco->fetchAll(PDO::FETCH_KEY_PAIR);
+                    }
                     
                     foreach ($nomesCadeiras as $nomeCadeira) {
                         if (empty($nomeCadeira)) continue;
                         
-                        // Busca o preço real na tabela. Se não achar, usa a média do ensino regular (650) como fallback
-                        $precoCadeira = isset($precosDoBanco[$nomeCadeira]) ? floatval($precosDoBanco[$nomeCadeira]) : 650.00;
+                        // Se encontrar na BD, usa o preço correto. Se não encontrar, assume 0.00 (sem valores estáticos escondidos)
+                        $precoCadeira = isset($precosDoBanco[$nomeCadeira]) ? floatval($precosDoBanco[$nomeCadeira]) : 0.00;
+                        
                         $precoTotalOriginal += $precoCadeira;
                         
                         $disciplinasEstruturadas[] = [
@@ -181,7 +202,6 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
                     }
                 }
             }
-
             // Contagem real das cadeiras extraídas
             $contagemCadeiras = count($disciplinasEstruturadas);
             
