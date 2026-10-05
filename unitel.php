@@ -221,7 +221,7 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
     <title>Faturamento de Propinas - Academia Aurélius</title>
     <style>
         :root {
-            --bg-main: #060b19;
+            --bg-main: grey;
             --bg-surface: #111a2e;
             --brand-gold: #eab308;
             --brand-success: #22c55e;

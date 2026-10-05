@@ -137,10 +137,10 @@
              ========================================================================= -->
              <nav>
                     <ul class="menu-horizontal-top">
-                       
-                        <li><a href="Lista.html"> Lista</a></li>
-                        <li><a href="estudante.html"> Aluno</a></li>
-                        <li><a href="unitel.php"> Factura</a></li>
+            <li><a href="unitel.php"> Factura</a></li>
+             <li><a href="Lista.html"> Lista</a></li>
+             <li><a href="estudante.html"> Entrar</a></li>
+            
                     </ul>
                 </nav>
        <!-- Botão Customizado Interativo para Instalar a Aplicação no Telemóvel -->
@@ -568,6 +568,61 @@
          ⚙️ MOTOR LOGÍSTICO JAVASCRIPT UNIFICADO E COMPACTO (AURELIUS 2026)
          ========================================================================= -->
     <script>
+
+
+   // 📱 MOTOR DE INSTALAÇÃO DO PWA (GATILHO NATIVO)
+   let gatilhoInstalacaoPWA = null;
+
+window.addEventListener('beforeinstallprompt', (event) => {
+    // Impede o navegador de mostrar a barra padrão cinzenta de forma abrupta
+    event.preventDefault();
+    // Guarda o evento para ser disparado pelo nosso botão customizado
+    gatilhoInstalacaoPWA = event;
+
+    // Procura o botão de instalação no seu HTML (certifique-se de ter um elemento com este ID)
+    const btnInstalar = document.getElementById('btn-instalar-pwa');
+    if (btnInstalar) {
+        btnInstalar.style.display = 'inline-block'; // Mostra o botão apenas se o app for instalável
+    }
+});
+
+
+// Função que é chamada ao clicar no seu botão customizado de Instalar
+function executarInstalacaoPWA() {
+    if (!gatilhoInstalacaoPWA) {
+        alert("🎯 A Academia Aurélius já se encontra instalada no seu dispositivo ou o navegador não suporta a instalação direta.");
+        return;
+    }
+
+    // Mostra a caixinha oficial do sistema perguntando "Deseja instalar?"
+    gatilhoInstalacaoPWA.prompt();
+
+    // Captura a escolha do utilizador (Se aceitou ou cancelou)
+    gatilhoInstalacaoPWA.userChoice.then((escolha) => {
+        if (escolha.outcome === 'accepted') {
+            console.log('🎉 O utilizador aceitou instalar o PWA da Academia.');
+            const btnInstalar = document.getElementById('btn-instalar-pwa');
+            if (btnInstalar) btnInstalar.style.display = 'none'; // Oculta após instalar
+        }
+        gatilhoInstalacaoPWA = null;
+    });
+}
+
+// 🔄 REGISTO DO SERVICE WORKER (Se ainda não tiver na página)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('⚡ Service Worker ativo via cache v6:', reg.scope))
+        .catch(err => console.error('❌ Falha ao registar SW:', err));
+    });
+}
+
+
+
+
+
+
+
         // 🔐 VERIFICAÇÃO DE SESSÃO VITALÍCIA CONTRA DADOS FANTASMA
 document.addEventListener("DOMContentLoaded", function() {
     // Recupera o identificador guardado localmente (pode ser o ID ou o Telefone)
@@ -762,55 +817,6 @@ document.addEventListener("DOMContentLoaded", function() {
         
         proximaTela(2);
     }
-
-
-
-   // 📱 MOTOR DE INSTALAÇÃO DO PWA (GATILHO NATIVO)
-let gatilhoInstalacaoPWA = null;
-
-window.addEventListener('beforeinstallprompt', (event) => {
-    // Impede o navegador de mostrar a barra padrão cinzenta de forma abrupta
-    event.preventDefault();
-    // Guarda o evento para ser disparado pelo nosso botão customizado
-    gatilhoInstalacaoPWA = event;
-
-    // Procura o botão de instalação no seu HTML (certifique-se de ter um elemento com este ID)
-    const btnInstalar = document.getElementById('btn-instalar-pwa');
-    if (btnInstalar) {
-        btnInstalar.style.display = 'inline-block'; // Mostra o botão apenas se o app for instalável
-    }
-});
-
-// Função que é chamada ao clicar no seu botão customizado de Instalar
-function executarInstalacaoPWA() {
-    if (!gatilhoInstalacaoPWA) {
-        alert("🎯 A Academia Aurélius já se encontra instalada no seu dispositivo ou o navegador não suporta a instalação direta.");
-        return;
-    }
-
-    // Mostra a caixinha oficial do sistema perguntando "Deseja instalar?"
-    gatilhoInstalacaoPWA.prompt();
-
-    // Captura a escolha do utilizador (Se aceitou ou cancelou)
-    gatilhoInstalacaoPWA.userChoice.then((escolha) => {
-        if (escolha.outcome === 'accepted') {
-            console.log('🎉 O utilizador aceitou instalar o PWA da Academia.');
-            const btnInstalar = document.getElementById('btn-instalar-pwa');
-            if (btnInstalar) btnInstalar.style.display = 'none'; // Oculta após instalar
-        }
-        gatilhoInstalacaoPWA = null;
-    });
-}
-
-// 🔄 REGISTO DO SERVICE WORKER (Se ainda não tiver na página)
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('⚡ Service Worker ativo via cache v6:', reg.scope))
-        .catch(err => console.error('❌ Falha ao registar SW:', err));
-    });
-}
-
 
 
 
