@@ -982,6 +982,20 @@ function renderizarLivrosAluno(classeBruta) {
     const container = document.getElementById('contentor-livros-aluno');
     if (!container) return;
 
+    // 🎯 BLOQUEIO DE SEGURANÇA: Se for apenas inscrição inicial, tranca o ecrã com o cadeado
+    const cursoNormalizado = (classeBruta || "").toLowerCase().trim();
+    if (cursoNormalizado.includes("inscrição inicial") || cursoNormalizado.includes("pendente") || cursoNormalizado === "") {
+        container.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 20px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 8px; width: 100%; box-sizing: border-box; font-family: sans-serif;">
+                <p style="color: #f87171; font-size: 13px; font-weight: bold; margin: 0;">🔒 Biblioteca Bloqueada</p>
+                <p style="color: #94a3b8; font-size: 12px; margin-top: 6px; line-height: 1.4;">
+                    Os teus manuais digitais serão libertados automaticamente assim que a tua Matrícula for confirmada e as disciplinas validadas pela Direção Pedagógica.
+                </p>
+            </div>
+        `;
+        return;
+    }
+
     const termoEstudante = localStorage.getItem("nome_estudante") || localStorage.getItem("id_unico_estudante") || "";
 
     if (termoEstudante === "") {
@@ -989,11 +1003,13 @@ function renderizarLivrosAluno(classeBruta) {
         return;
     }
 
+    container.innerHTML = `<p style="font-size: 11px; color: #64748b; padding: 15px;">🔄 A ler prateleira de manuais...</p>`;
+
     // Consulta o endpoint unificado passando o termo do aluno logado
-    fetch(`obter_turmas_publicas.php?termo=${encodeURIComponent(termoEstudante)}`)
+    fetch("obter_turmas_publicas.php?termo=" + encodeURIComponent(termoEstudante))
         .then(res => res.json())
         .then(resposta => {
-            let htmlGrelha = '<div class="lista-livros-grid">';
+            let htmlGrelha = '<div class="lista-livros-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; width:100%;">';
             let modulosAtivos = [];
 
             if (resposta.sucesso && resposta.dados && resposta.dados.length > 0) {
@@ -1005,7 +1021,12 @@ function renderizarLivrosAluno(classeBruta) {
                     let nomeLimpo = m.disciplina.replace(/.*?Classe.*?(II Ciclo)?\]?/g, "").replace(/[\[\]]/g, "").trim();
                     if (nomeLimpo === "" || nomeLimpo.toLowerCase() === "inscrição") return;
 
-                    // Se não houver arquivo PDF carregado na tabela livros para este módulo
+                    let nomeFicheiroLimpo = m.pdf_url.split('/').pop().split('\\').pop().trim();
+                    
+                    // Força o browser a procurar sempre na pasta 'uploads/manuais/' onde o teu painel faz o upload real
+                    let linkDownloadFinal = "uploads/manuais/" + nomeFicheiroLimpo;
+
+                    // Desenha o lindo design de Pastas Quadradas apontando para o link real
                     if (!m.pdf_url || m.pdf_url === "") {
                         htmlGrelha += `
                             <div class="gaveta-livro-card" style="opacity: 0.6;">
@@ -1018,7 +1039,6 @@ function renderizarLivrosAluno(classeBruta) {
                             </div>
                         `;
                     } else {
-                        // Desenha o lindo design de Pastas Quadradas apontando para o link encriptado real
                         htmlGrelha += `
                             <div class="gaveta-livro-card">
                                 <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
@@ -1026,7 +1046,8 @@ function renderizarLivrosAluno(classeBruta) {
                                     <div class="livro-titulo-box">${nomeLimpo}</div>
                                     <div class="livro-autor-box">Autor: ${m.autor}</div>
                                 </div>
-                                <a href="${m.pdf_url}" target="_blank" class="btn-baixar-mini">
+                                <!-- 🌟 ROTA UNIFICADA FIXA: Abre o PDF direto da pasta de uploads de forma segura -->
+                                <a href="${linkDownloadFinal}" target="_blank" class="btn-baixar-mini" style="text-decoration: none; text-align: center; display: block;">
                                     BAIXAR PDF
                                 </a>
                             </div>

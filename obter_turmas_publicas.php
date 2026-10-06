@@ -28,7 +28,12 @@ try {
         $disciplinasEstruturadas = [];
 
         // 🔍 2. Lê as disciplinas alocadas para ele na tabela Horario
-        $stmtHorario = $pdo->prepare("SELECT classe, periodo, hora, disciplina, professor, estado FROM Horario WHERE nome_aluno = ? ORDER BY id_horario ASC");
+        // 🎯 CORREÇÃO CRÍTICA: GROUP BY impede que a mesma disciplina apareça duplicada no horário do aluno
+        $stmtHorario = $pdo->prepare("SELECT classe, periodo, hora, disciplina, professor, estado 
+                                      FROM Horario 
+                                      WHERE nome_aluno = ? 
+                                      GROUP BY disciplina 
+                                      ORDER BY id_horario ASC");
         $stmtHorario->execute([$nomeAlunoReal]);
         $linhasHorario = $stmtHorario->fetchAll(PDO::FETCH_ASSOC);
 
@@ -48,21 +53,33 @@ try {
                 $stmtLivro->execute([$nomeCadeira]);
                 $dadosLivro = $stmtLivro->fetch(PDO::FETCH_ASSOC);
 
-                // Se houver registo no banco usa o PDF encriptado, senão deixa vazio de salvaguarda
-                $linkPdfReal = $dadosLivro ? trim($dadosLivro['categoria_curso']) : "";
-                $autorReal   = $dadosLivro && !empty($dadosLivro['autor']) ? trim($dadosLivro['autor']) : "Corpo Docente";
+                $autorReal = $dadosLivro && !empty($dadosLivro['autor']) ? trim($dadosLivro['autor']) : "Corpo Docente";
+                $linkPdfReal = "";
+
+                if ($dadosLivro && !empty($dadosLivro['categoria_curso'])) {
+                    // 🎯 ALINHAMENTO AUTOMÁTICO PERMANENTE:
+                    // Captura o caminho exatamente como o teu sistema de upload grava no banco (ex: uploads/manuais/xxxx.pdf)
+                    $caminhoBanco = trim($dadosLivro['categoria_curso']);
+                    
+                    // Isola o nome encriptado do ficheiro limpo
+                    $nomeFicheiroReal = basename(str_replace('\\', '/', $caminhoBanco));
+                    
+                    // Força a leitura a partir da pasta real de uploads que o teu sistema usa
+                    $linkPdfReal = "uploads/manuais/" . $nomeFicheiroReal;
+                }
 
                 $disciplinasEstruturadas[] = [
                     'disciplina' => $nomeCadeira,
                     'horario'    => !empty($h['hora']) ? $h['hora'] : "19:00 - 20:00",
                     'professor'  => !empty($h['professor']) ? $h['professor'] : "Docente Alocado",
                     'estatuto'   => !empty($h['estado']) ? strtolower(trim($h['estado'])) : 'pendente',
-                    'pdf_url'    => $linkPdfReal, // Caminho real: uploads/manuais/xxxx.pdf
+                    'pdf_url'    => $linkPdfReal, // Devolve a rota automatica 'uploads/manuais/hash.pdf'
                     'autor'      => $autorReal
                 ];
             }
         }
 
+        // 🎯 ESTRUTURA ORIGINAL RESTAURADA: Mantém o array dados[0] intacto para o JavaScript ler
         echo json_encode([
             'sucesso' => true,
             'dados' => [[
@@ -74,6 +91,7 @@ try {
                 'modulos'  => $disciplinasEstruturadas
             ]]
         ], JSON_UNESCAPED_UNICODE);
+        exit;
 
     } else {
         echo json_encode(['sucesso' => true, 'dados' => []]);
@@ -83,4 +101,5 @@ try {
     echo json_encode(['sucesso' => false, 'mensagem' => 'Erro: ' . $e->getMessage()]);
 }
 exit;
+?>
 ?>
