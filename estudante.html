@@ -195,32 +195,34 @@
                 </div>
 
                 <form id="form-login" onsubmit="processarAcesso(event)">
-                        <div style="margin-bottom: 16px;">
-                            <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
-                                ID ou Nº de Telefone:
-                            </label>
-                            <input type="text" id="login-identificador" class="form-input" required>
-                        </div>
-                    
-                        <div style="margin-bottom: 10px;">
-                            <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
-                                Código de Validação / Senha:
-                            </label>
-                            <input type="password" id="login-senha" class="form-input" style="font-family: monospace; letter-spacing: 2px;" required>
-                        </div>
-                    
-                        <!-- 🔑 LINK DE RECUPERAÇÃO DE SENHA -->
-                        <div style="text-align: right; margin-bottom: 15px;">
-                            <a href="recuperar.php" style="font-size: 12px; color: var(--brand-gold, #eab308); text-decoration: none; font-weight: 600; transition: color 0.2s;" onmouseover="this.style.color='#facc15'" onmouseout="this.style.color='var(--brand-gold, #eab308)'">
-                                Esqueceu a palavra-passe ?
-                            </a>
-                        </div>
-                    
-                        <!-- 🛑 ELEMENTO ADICIONADO: Contentor para exibir as mensagens de erro dinâmicas do PHP -->
-                        <div id="mensagem-erro" style="display: none; color: #f87171; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 15px; font-weight: 500;"></div>
-                    
-                        <button type="submit" class="btn">Entrar</button>
-                    </form>
+                    <!-- 📱 CAMPO APENAS PARA TELEFONE -->
+                    <div style="margin-bottom: 16px;">
+                        <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
+                            Telefone:
+                        </label>
+                        <input type="tel" id="login_telefone" class="form-input" placeholder="Ex: 925347372" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
+                    </div>
+                
+                    <!-- 🔑 CAMPO APENAS PARA PALAVRA-PASSE -->
+                    <div style="margin-bottom: 10px;">
+                        <label style="font-size: 12px; color: #cbd5e1; font-weight: bold; display: block; margin-bottom: 6px;">
+                            Palavra-passe:
+                        </label>
+                        <input type="password" id="login_senha" class="form-input" style="font-family: monospace; letter-spacing: 2px;" placeholder="••••••" required>
+                    </div>
+                
+                    <!-- 🔑 LINK DE RECUPERAÇÃO DE SENHA -->
+                    <div style="text-align: right; margin-bottom: 15px;">
+                        <a href="recuperar.php" style="font-size: 12px; color: var(--brand-gold, #eab308); text-decoration: none; font-weight: 600; transition: color 0.2s;" onmouseover="this.style.color='#facc15'" onmouseout="this.style.color='var(--brand-gold, #eab308)'">
+                            Esqueceu a sua senha?
+                          </a>
+                    </div>
+                
+                    <!-- 🛑 ELEMENTO ADICIONADO: Contentor para exibir as mensagens de erro dinâmicas do PHP -->
+                    <div id="mensagem-erro" style="display: none; color: #f87171; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 15px; font-weight: 500;"></div>
+                
+                    <button type="submit" class="btn">Entrar no Sistema</button>
+                </form>
             </div>
         </div>
 
@@ -391,9 +393,10 @@
             const isSucesso = resposta.sucesso || resposta.status === "sucesso" || resposta.status === true;
     
             if (isSucesso) {
-                // 🌟 RECONHECIMENTO COM SUCESSO: Captura os dados oficiais e imutáveis vindos do banco de dados
-                const idOficial = resposta.id_unico_escolar;
-                const senhaOficial = resposta.senha_gerada;
+                // 🌟 PADRÃO UX: Captura exclusivamente o Telefone e a Palavra-passe vindos do PHP
+                // Fallbacks seguros caso o backend envie propriedades com nomes diferentes
+                const telefoneOficial = resposta.id_estudante || resposta.telefone || telefone;
+                const senhaOficial = resposta.codigo_validacao || resposta.senha || resposta.senha_gerada;
     
                 // 📋 INJEÇÃO EM TEMPO REAL NA FATURA VISUAL COM OS DADOS REAIS DO BANCO
                 try {
@@ -402,8 +405,10 @@
                     if (document.getElementById("rec_mes")) document.getElementById("rec_mes").innerText = "Inscrição Inicial";
                     if (document.getElementById("rec_turma")) document.getElementById("rec_turma").innerText = periodo;
                     if (document.getElementById("rec_qtd")) document.getElementById("rec_qtd").innerText = classe;
-                    if (document.getElementById("rec_id_escolar")) document.getElementById("rec_id_escolar").innerText = idOficial;
-                    if (document.getElementById("rec_codigo_val")) document.getElementById("rec_codigo_val").innerText = senhaOficial;
+                    
+                    // Remove referências a IDs e códigos de validação na fatura impressa
+                    if (document.getElementById("rec_id_escolar")) document.getElementById("rec_id_escolar").innerText = telefoneOficial;
+                    if (document.getElementById("rec_codigo_val")) document.getElementById("rec_codigo_val").innerText = "••••••";
     
                     if (document.getElementById("rec_data")) {
                         const d = new Date();
@@ -417,15 +422,15 @@
                     console.warn("Aviso visual do recibo:", erroDom);
                 }
     
-                // Exibe o Alerta Imperial com os dados estáveis do MySQL
-                alert(`🎉 Inscrição integrada com sucesso!\n\nEstudante: ${nome}\nID Único: ${idOficial}\nCódigo Validação / Senha: ${senhaOficial}\n\nObrigado pela incrinção, guarda estes códigos, que dá-te acesso a sua turma, e.., já podes fazer matrícula`);
+                // Alerta simplificado e inteligível em conformidade com as regras de UX
+                alert(`🎉 Inscrição integrada com sucesso!\n\nEstudante: ${nome}\nTelefone de Acesso: ${telefoneOficial}\nPalavra-passe: ${senhaOficial}\n\nJá podes entrar no sistema utilizando o teu número de telefone e a senha gerada.`);
                 
-                // 📋 PREENCHIMENTO AUTOMÁTICO DO FORMULÁRIO DE LOGIN
-                const campoID = document.getElementById("campo_login_id") || document.getElementById("login-id") || document.getElementById("login_id") || document.getElementById("identificador");
-                const campoSenha = document.getElementById("campo_login_senha") || document.getElementById("login-senha") || document.getElementById("login_senha") || document.getElementById("senha");
+                // 📋 PREENCHIMENTO AUTOMÁTICO DO NOVO FORMULÁRIO DE LOGIN SIMPLIFICADO
+                const campoTelefoneLogin = document.getElementById("login_telefone");
+                const campoSenhaLogin = document.getElementById("login_senha");
                 
-                if (campoID) campoID.value = idOficial;
-                if (campoSenha) campoSenha.value = senhaOficial;
+                if (campoTelefoneLogin) campoTelefoneLogin.value = telefoneOficial;
+                if (campoSenhaLogin) campoSenhaLogin.value = senhaOficial;
     
                 // 🔄 MUDANÇA DE ABA AUTOMÁTICA
                 if (typeof alternarTela === "function") {
@@ -445,29 +450,27 @@
                         }
                     });
                 }
-    
-                if (window.location.href.includes('#')) {
-                    window.history.pushState("", document.title, window.location.pathname);
-                }
-                
-                if (document.getElementById("form-cadastro")) {
-                    document.getElementById("form-cadastro").reset();
-                }
-                
-                window.scrollTo({ top: 0, behavior: "smooth" });
             } else {
-                alert(`⚠️ Atenção: O servidor processou, mas retornou um aviso: ${resposta.mensagem}`);
+                alert(resposta.mensagem || "⚠️ Erro ao processar inscrição.");
             }
         })
-        .catch(err => {
-            console.error("Erro no fetch:", err);
-            alert("❌ Erro de Execução: Não foi possível alcançar a base académica central.");
+        .catch(erro => {
+            // 🔓 Reativa IMEDIATAMENTE o botão para o utilizador poder clicar de novo assim que o Render acordar
+            if (btnAceder) {
+                btnAceder.disabled = false;
+                btnAceder.innerText = "Aceder à Plataforma ➔";
+            }
+            
+            // UX Inteligente: Avisa que o servidor está a acordar (Padrão Render gratuito)
+            if (erroDiv) {
+                erroDiv.style.display = "block";
+                erroDiv.innerHTML = "⏳ <b>O servidor central está a acordar...</b><br>Por favor, aguarde 10 segundos e clique novamente em 'Aceder à Plataforma'.";
+            } else {
+                alert("⏳ O servidor académico do Render está a iniciar. Por favor, tente clicar novamente dentro de momentos.");
+            }
+            console.error("Falha física de rede:", erro);
         });
-    
-        return false;
     }
-    
-
 
 
     let intervaloChatEstudante = null;
@@ -806,18 +809,21 @@ function carregarCadernoNotasEstudante(idUnicoEscolar) {
 
 
 
+
 function processarAcesso(event) {
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
 
-    const inputIdentificador = document.getElementById('login-identificador');
-    const inputSenha = document.getElementById('login-senha');
+    // 📱 Captura inteligente: Tenta o ID novo com (_) underscore, se não achar, tenta o antigo com (-) hífen
+    const inputIdentificador = document.getElementById('login_telefone') || document.getElementById('login-identificador');
+    const inputSenha = document.getElementById('login_senha') || document.getElementById('login-senha');
     const erroDiv = document.getElementById('mensagem-erro');
 
+    // Se mesmo com o plano B não encontrar os campos no HTML, avisa sem travar permanentemente
     if (!inputIdentificador || !inputSenha) {
-        alert("⚠️ Erro Crítico: Elementos do formulário de login não foram localizados.");
+        alert("⚠️ Erro de Interface: Os campos de Telefone ou Palavra-passe não foram localizados na página.");
         return false;
     }
 
@@ -827,7 +833,9 @@ function processarAcesso(event) {
     if (identificador === "" || senhaInserida === "") {
         if (erroDiv) {
             erroDiv.style.display = "block";
-            erroDiv.innerText = "⚠️ Por favor, preencha todos os campos obrigatórios!";
+            erroDiv.innerText = "⚠️ Por favor, preencha o número de telefone e a palavra-passe!";
+        } else {
+            alert("⚠️ Por favor, preencha o número de telefone e a palavra-passe!");
         }
         return false;
     }
@@ -836,87 +844,87 @@ function processarAcesso(event) {
 
 
 
+ // 🚀 Desativa o botão para evitar múltiplos cliques em conexões lentas no Huambo
+ const btnAceder = event.target.querySelector('button[type="submit"]');
+ if (btnAceder) {
+     btnAceder.disabled = true;
+     btnAceder.innerText = "A autenticar o estudante...";
+ }
 
+ // Altera a captura das variáveis para focar no campo do número de telefone
+ const telefoneInserido = document.getElementById('login_telefone') ? document.getElementById('login_telefone').value.trim() : identificador;
 
+ // Envia o payload limpo em formato JSON para o back-end do Render
+ fetch("login_estudante.php", {
+     method: "POST",
+     headers: {
+         "Content-Type": "application/json; charset=utf-8"
+     },
+     body: JSON.stringify({
+         telefone: telefoneInserido, // Propriedade atualizada de acordo com o PHP
+         senha: senhaInserida
+     })
+ })
+ .then(res => {
+     if (!res.ok) throw new Error("Erro na rede ou servidor instável");
+     return res.json();
+ })
+ .then(dados => {
+     if (dados.sucesso) {
+         if (typeof erroDiv !== 'undefined' && erroDiv) erroDiv.style.display = "none";
 
+         // 💾 Persistência de Sessão Segura para evitar o efeito fantasma
+         localStorage.setItem("id_unico_estudante", dados.estudante.id_unico_escolar);
+         localStorage.setItem("nome_estudante", dados.estudante.nome);
 
-    
-    // 🚀 Desativa o botão para evitar múltiplos cliques em conexões lentas no Huambo
-    const btnAceder = event.target.querySelector('button[type="submit"]');
-    if (btnAceder) {
-        btnAceder.disabled = true;
-        btnAceder.innerText = "A autenticar no Banco Central...";
-    }
+         // 🏛️ INJEÇÃO REATIVA DE DADOS NO PAINEL PRINCIPAL (view-dashboard)
+         if (document.getElementById('txt-nome-aluno')) {
+             document.getElementById('txt-nome-aluno').innerText = dados.estudante.nome;
+         }
+         if (document.getElementById('txt-id-escolar')) {
+             document.getElementById('txt-id-escolar').innerText = dados.estudante.id_unico_escolar;
+         }
+         if (document.getElementById('txt-turma-aluno')) {
+             document.getElementById('txt-turma-aluno').innerText = dados.estudante.turma || "Turma Única A";
+         }
+         if (document.getElementById('txt-classe-aluno')) {
+             document.getElementById('txt-classe-aluno').innerText = dados.estudante.classe;
+         }
+         if (document.getElementById('txt-periodo-aluno')) {
+             document.getElementById('txt-periodo-aluno').innerText = dados.estudante.periodo;
+         }
 
-    // Envia o payload limpo em formato JSON para o back-end do Render
-    fetch("login_estudante.php", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
-        },
-        body: JSON.stringify({
-            identificador: identificador,
-            senha: senhaInserida
-        })
-    })
-    .then(res => {
-        if (!res.ok) throw new Error("Erro na rede ou servidor instável");
-        return res.json();
-    })
-    .then(dados => {
-        if (dados.sucesso) {
-            if (erroDiv) erroDiv.style.display = "none";
+         // 📅 1. Renderiza a Pauta reativa com base no curso/disciplinas do aluno
+         const corpoTabela = document.getElementById('corpo-tabela-pauta');
+         if (corpoTabela) {
+             // Isola as disciplinas de dentro dos colchetes se existirem
+             let disciplinas = [];
+             if (dados.estudante.classe.includes('[')) {
+                 const match = dados.estudante.classe.match(/\[(.*?)\]/);
+                 if (match && match[1]) disciplinas = match[1].split(',');
+             } else {
+                 disciplinas = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
+             }
 
-            // 💾 Persistência de Sessão Segura para evitar o efeito fantasma
-            localStorage.setItem("id_unico_estudante", dados.estudante.id_unico_escolar);
-            localStorage.setItem("nome_estudante", dados.estudante.nome);
-
-            // 🏛️ INJEÇÃO REATIVA DE DADOS NO PAINEL PRINCIPAL (view-dashboard)
-            if (document.getElementById('txt-nome-aluno')) {
-                document.getElementById('txt-nome-aluno').innerText = dados.estudante.nome;
-            }
-            if (document.getElementById('txt-id-escolar')) {
-                document.getElementById('txt-id-escolar').innerText = dados.estudante.id_unico_escolar;
-            }
-            if (document.getElementById('txt-turma-aluno')) {
-                document.getElementById('txt-turma-aluno').innerText = dados.estudante.turma || "Turma Única A";
-            }
-            if (document.getElementById('txt-classe-aluno')) {
-                document.getElementById('txt-classe-aluno').innerText = dados.estudante.classe;
-            }
-            if (document.getElementById('txt-periodo-aluno')) {
-                document.getElementById('txt-periodo-aluno').innerText = dados.estudante.periodo;
-            }
-
-            // 📅 1. Renderiza a Pauta reativa com base no curso/disciplinas do aluno
-            const corpoTabela = document.getElementById('corpo-tabela-pauta');
-            if (corpoTabela) {
-                // Isola as disciplinas de dentro dos colchetes se existirem
-                let disciplinas = [];
-                if (dados.estudante.classe.includes('[')) {
-                    const match = dados.estudante.classe.match(/\[(.*?)\]/);
-                    if (match && match[1]) disciplinas = match[1].split(',');
-                } else {
-                    disciplinas = ['Língua Portuguesa', 'Matemática', 'História', 'Geografia', 'Inglês', 'Biologia'];
-                }
-
-                let htmlPauta = "";
-                disciplinas.forEach(disc => {
-                    const nomeDisc = disc.replace('Inscrição', '').trim();
-                    if (nomeDisc === "") return;
-                    htmlPauta += `
-                        <tr>
-                            <td><b>${nomeDisc}</b></td>
-                            <td style="text-align: center; color: #94a3b8;">-</td>
-                            <td style="text-align: center; color: #94a3b8;">-</td>
-                            <td style="text-align: center; color: #94a3b8;">-</td>
-                            <td style="text-align: center; color: #94a3b8;">0</td>
-                            <td style="text-align: right; color: var(--brand-success, #22c55e); font-weight: bold;">Avaliação</td>
-                        </tr>
-                    `;
-                });
-                corpoTabela.innerHTML = htmlPauta;
-            }
+             let htmlPauta = "";
+             disciplinas.forEach(disc => {
+                 const nomeDisc = disc.replace('Inscrição', '').trim();
+                 if (nomeDisc === "") return;
+                 htmlPauta += `
+                     <tr>
+                         <td><b>${nomeDisc}</b></td>
+                         <td style="text-align: center; color: #94a3b8;">-</td>
+                         <td style="text-align: center; color: #94a3b8;">-</td>
+                         <td style="text-align: center; color: #94a3b8;">-</td>
+                         <td style="text-align: center; color: #94a3b8;">0</td>
+                         <td style="text-align: right; color: var(--brand-success, #22c55e); font-weight: bold;">Avaliação</td>
+                     </tr>
+                 `;
+             });
+             corpoTabela.innerHTML = htmlPauta;
+         }
+         
+        
 
             // 💬 2. Inicializa o Chat Académico Sincronizado
             if (typeof iniciarChatEstudante === "function") {

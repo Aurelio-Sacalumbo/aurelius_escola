@@ -15,56 +15,63 @@ $inputRaw = file_get_contents('php://input');
 $dadosJson = json_decode($inputRaw, true);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($dadosJson)) {
-    $identificador = isset($dadosJson['identificador']) ? trim($dadosJson['identificador']) : '';
+    // 📱 CORREÇÃO: Captura dinamicamente tanto 'telefone' (novo) como 'identificador' (antigo) para não quebrar
+    $identificador = isset($dadosJson['telefone']) ? trim($dadosJson['telefone']) : (isset($dadosJson['identificador']) ? trim($dadosJson['identificador']) : '');
     $senhaInserida = isset($dadosJson['senha']) ? trim($dadosJson['senha']) : '';
 
     if (empty($identificador) || empty($senhaInserida)) {
-        echo json_encode(['sucesso' => false, 'mensagem' => '⚠️ Preencha o ID/Telefone e a senha de acesso.']);
+        echo json_encode(['sucesso' => false, 'mensagem' => '⚠️ Preencha o número de telefone e a palavra-passe de acesso.']);
         exit;
     }
 
     try {
-        // 🔍 1. Procura o estudante na base utilizando o $pdo correto (Suporta ID AUR ou Telefone)
+        // 🔍 REGRA DE MÚLTIPLOS FILHOS: Procuramos todos os registos com este contacto (Sem LIMIT 1)
         $stmt = $pdo->prepare("SELECT id_utilizador, nome, telefone, curso, periodo, id_unico_escolar, senha, email 
                                FROM utilizadores 
-                               WHERE (id_unico_escolar = ? OR telefone = ? OR email = ?) 
-                               AND nivel = 'estudante' LIMIT 1");
+                               WHERE (telefone = ? OR id_unico_escolar = ? OR email = ?) 
+                               AND nivel = 'estudante'");
         $stmt->execute([$identificador, $identificador, $identificador]);
-        $aluno = $stmt->fetch(PDO::FETCH_ASSOC);
+        $alunosEncontrados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($aluno) {
-            $senhaBanco = trim($aluno['senha']);
-            $emailBanco = trim($aluno['email']);
-            $senhaValida = false;
+        $alunoValido = null;
 
-            // 🔐 2. COMPARAÇÃO FLEXÍVEL: Valida texto limpo ou MD5 histórico do banco
-            if ($senhaBanco === $senhaInserida || $senhaBanco === md5($senhaInserida) || $emailBanco === $senhaInserida) {
-                $senhaValida = true;
-            }
+        // 🔐 Varre a lista de filhos para encontrar aquele que bate com a senha digitada
+        foreach ($alunosEncontrados as $aluno) {
+            $senhaBanco = isset($aluno['senha']) ? trim($aluno['senha']) : '';
+            $emailBanco = isset($aluno['email']) ? trim($aluno['email']) : ''; // Plano B para senhas na coluna email
 
-            if ($senhaValida) {
-                $classeFormatada = !empty($aluno['curso']) ? $aluno['curso'] : '12ª Classe [Inscrição]';
-
-                echo json_encode([
-                    'sucesso' => true,
-                    'mensagem' => '🎉 Acesso autorizado com sucesso!',
-                    'estudante' => [
-                        'id_utilizador' => $aluno['id_utilizador'],
-                        'nome' => $aluno['nome'],
-                        'id_unico_escolar' => !empty($aluno['id_unico_escolar']) ? $aluno['id_unico_escolar'] : $identificador,
-                        'classe' => $classeFormatada,
-                        'periodo' => !empty($aluno['periodo']) ? $aluno['periodo'] : 'Noite',
-                        'turma' => 'Turma Única A'
-                    ]
-                ], JSON_UNESCAPED_UNICODE);
-                exit;
+            if (
+                (!empty($senhaBanco) && ($senhaBanco === $senhaInserida || $senhaBanco === md5($senhaInserida))) ||
+                (!empty($emailBanco) && ($emailBanco === $senhaInserida || $emailBanco === md5($senhaInserida)))
+            ) {
+                $alunoValido = $aluno;
+                break; // Encontrou o filho correto, interrompe o loop
             }
         }
 
-        echo json_encode(['sucesso' => false, 'mensagem' => '❌ Aluno não localizado na base académica do Huambo. Verifique as credenciais.']);
+        if ($alunoValido) {
+            $classeFormatada = !empty($alunoValido['curso']) ? $alunoValido['curso'] : '12ª Classe [Inscrição]';
+
+            echo json_encode([
+                'sucesso' => true,
+                'mensagem' => '🎉 Acesso autorizado com sucesso!',
+                'estudante' => [
+                    'id_utilizador' => $alunoValido['id_utilizador'],
+                    'nome' => $alunoValido['nome'],
+                    'id_unico_escolar' => !empty($alunoValido['id_unico_escolar']) ? $alunoValido['id_unico_escolar'] : $identificador,
+                    'classe' => $classeFormatada,
+                    'periodo' => !empty($alunoValido['periodo']) ? $alunoValido['periodo'] : 'Noite',
+                    'turma' => 'Turma Única A'
+                ]
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        // Se passar pelo loop e não achar a senha correspondente de nenhum filho
+        echo json_encode(['sucesso' => false, 'mensagem' => '❌ O número de telefone ou a senha de acesso está incorreta. Verifique as credenciais.']);
         
     } catch (Exception $e) {
-        echo json_encode(['sucesso' => false, 'mensagem' => 'Erro crítico no servidor de acessos: ' . $e->getMessage()]);
+        echo json_encode(['sucesso' => false, 'mensagem' => 'O número de telefone ou a senha de acesso está incorreta.']);
     }
     exit;
 }

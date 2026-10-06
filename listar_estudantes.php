@@ -1,5 +1,5 @@
 <?php
-// 🗄️ LISTADOR DE ESTUDANTES PARA O CHAT - ACADEMIA AURÉLIUS
+// 🗄️ LISTADOR DE ESTUDANTES PARA O CHAT E INDICADORES - ACADEMIA AURÉLIUS
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
@@ -15,7 +15,7 @@ $resposta = ['sucesso' => false, 'alunos' => []];
 $acao = isset($_GET['acao']) ? $_GET['acao'] : 'listar';
 
 try {
-    // 🔍 NOVA AÇÃO: VERIFICA SE O NÚMERO DE TELEFONE JÁ EXISTE ANTES DA MATRÍCULA
+    // 🔍 VERIFICA SE O NÚMERO DE TELEFONE JÁ EXISTE ANTES DA MATRÍCULA
     if ($acao === 'verificar_telefone') {
         $telefone = isset($_GET['telefone']) ? trim($_GET['telefone']) : '';
         
@@ -24,40 +24,21 @@ try {
             exit;
         }
 
-        // Verifica se há algum registo na tabela utilizadores com o número fornecido
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM utilizadores WHERE telefone = ?");
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM utilizadores WHERE telefone = ? AND nivel = 'estudante'");
         $stmt->execute([$telefone]);
         $existe = $stmt->fetchColumn() > 0;
 
-        echo json_encode([
-            'sucesso' => true,
-            'existe' => $existe
-        ]);
-        exit;
-    }
-    if ($acao === 'verificar_telefone') {
-        $telefone = isset($_GET['telefone']) ? trim($_GET['telefone']) : '';
-        
-        if (empty($telefone)) {
-            echo json_encode(['sucesso' => true, 'existe' => false]);
-            exit;
-        }
-
-        // Correção de Regra: Garante que o telefone pertence a um estudante com ID Único ativo
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM utilizadores WHERE telefone = ? AND nivel = 'estudante' AND id_unico_escolar IS NOT NULL AND id_unico_escolar != ''");
-        $stmt->execute([$telefone]);
-        $existe = $stmt->fetchColumn() > 0;
-
-        echo json_encode([
-            'sucesso' => true,
-            'existe' => $existe
-        ]);
+        echo json_encode(['sucesso' => true, 'existe' => $existe]);
         exit;
     }
 
-    // 🗃️ AÇÃO PADRÃO: LISTAGEM ANTIGA DO CHAT
-    // Puxa apenas utilizadores com perfil de estudante que tenham ID escolar gerado
-    $query = "SELECT IFNULL(id_unico_escolar, telefone) AS id_unico_escolar, nome FROM utilizadores WHERE nome IS NOT NULL AND nome != '' ORDER BY nome ASC";
+    // 🗃️ AÇÃO PADRÃO: LISTAGEM PARA O CHAT E INDICADORES DO PROFESSOR
+    // 🌟 ADICIONADAS AS COLUNAS: nivel, curso, periodo e saldo_propina para alimentar os contadores visuais
+    $query = "SELECT IFNULL(id_unico_escolar, telefone) AS id_unico_escolar, nome, nivel, curso, periodo, saldo_propina 
+              FROM utilizadores 
+              WHERE nome IS NOT NULL AND nome != '' AND nivel = 'estudante' 
+              ORDER BY nome ASC";
+              
     $stmt = $pdo->prepare($query);
     $stmt->execute();
     
@@ -70,3 +51,4 @@ try {
 
 echo json_encode($resposta);
 exit;
+?>

@@ -152,63 +152,47 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
             $precoTotalOriginal = 0;
             
             if (!empty($cursoBruto)) {
-                // Remove marcações comuns como [Inscrição], colchetes e limpa espaços
-                $limpaCurso = str_ireplace(['[Inscrição]', '[', ']'], '', $cursoBruto);
+                $limpaCurso = str_ireplace(['[Inscrição]', '[', ']', '[Inscrição Inicial]'], '', $cursoBruto);
                 
-                // Divide por vírgula, ponto e vírgula ou quebras de linha para garantir a captura
+                // 🎯 Identifica a gaveta exata do aluno (Ex: "1ª Classe (Primário)" ou "8ª Classe (I Ciclo)")
+                $gavetaClasse = "8ª Classe (I Ciclo)"; // Fallback padrão seguro
+                if (preg_match('/^([^\[]+)/', $cursoBruto, $matches)) {
+                    $gavetaClasse = trim($matches[0]); 
+                }
+
                 $partes = preg_split('/[,;\n\r]+/', $limpaCurso);
                 $nomesCadeiras = array_filter(array_map('trim', $partes));
                 
-                if (!empty($nomesCadeiras)) {
-                    // Prepara os placeholders dinâmicos para os nomes das disciplinas (?, ?, ?)
-                    $placeholders = implode(',', array_fill(0, count($nomesCadeiras), '?'));
-                    
-                    // CAPTURA DINÂMICA: Descobrir qual é a classe ou nível académico do aluno atual.
-                    // Substitui '$aluno['nivel_academico']' pela variável real que usas no teu script após a busca
-                    $nivelAcademicoAluno = isset($aluno['nivel_academico']) ? $aluno['nivel_academico'] : null;
-                    
-                    if ($nivelAcademicoAluno) {
-                        // A query agora filtra estritamente pelo Nome da Disciplina E pelo Nível Académico correspondente
-                        $sqlPreco = "SELECT nome, preco_base FROM cursos_disciplinas WHERE nome IN ($placeholders) AND nivel_academico = ?";
-                        
-                        $stmtPreco = $pdo->prepare($sqlPreco);
-                        
-                        // Junta os nomes das disciplinas e o nível académico na lista de parâmetros
-                        $paramsExec = array_values($nomesCadeiras);
-                        $paramsExec[] = $nivelAcademicoAluno;
-                        
-                        $stmtPreco->execute($paramsExec);
-                        $precosDoBanco = $stmtPreco->fetchAll(PDO::FETCH_KEY_PAIR);
-                    } else {
-                        // Se por algum motivo o aluno não tiver classe associada, tenta buscar o preço sem o filtro de nível
-                        $sqlPreco = "SELECT nome, preco_base FROM cursos_disciplinas WHERE nome IN ($placeholders)";
-                        $stmtPreco = $pdo->prepare($sqlPreco);
-                        $stmtPreco->execute(array_values($nomesCadeiras));
-                        $precosDoBanco = $stmtPreco->fetchAll(PDO::FETCH_KEY_PAIR);
+                foreach ($nomesCadeiras as $nomeCadeira) {
+                    if (empty($nomeCadeira)) continue;
+
+                    // 🎯 TRATAMENTO DE ACENTOS: Se a cadeira contiver "Portuguesa", força a busca pelo termo exato do banco
+                    $buscaNome = $nomeCadeira;
+                    if (strpos(strtolower($nomeCadeira), 'portuguesa') !== false) {
+                        $buscaNome = 'Língua Portuguesa';
                     }
+
+                    // BUSCA NA GAVETA EXATA: Procura pelo nome tratado dentro do nível do aluno!
+                    $stmtPreco = $pdo->prepare("SELECT preco_base FROM cursos_disciplinas 
+                                               WHERE (nome = ? OR nome LIKE ?) AND nivel_academico = ? 
+                                               LIMIT 1");
+                    $stmtPreco->execute([$buscaNome, $buscaNome . "%", $gavetaClasse]);
+                    $precoCadeira = $stmtPreco->fetchColumn();
                     
-                    foreach ($nomesCadeiras as $nomeCadeira) {
-                        if (empty($nomeCadeira)) continue;
-                        
-                        // Se encontrar na BD, usa o preço correto. Se não encontrar, assume 0.00 (sem valores estáticos escondidos)
-                        $precoCadeira = isset($precosDoBanco[$nomeCadeira]) ? floatval($precosDoBanco[$nomeCadeira]) : 0.00;
-                        
-                        $precoTotalOriginal += $precoCadeira;
-                        
-                        $disciplinasEstruturadas[] = [
-                            'nome' => $nomeCadeira,
-                            'preco' => $precoCadeira
-                        ];
-                    }
-                }
-            }
-            // Contagem real das cadeiras extraídas
-            $contagemCadeiras = count($disciplinasEstruturadas);
+                    // Se não encontrar na gaveta, assume 0.00 para não misturar valores
+                    $valorFinalCadeira = $precoCadeira ? floatval($precoCadeira) : 0.00;
+                    $precoTotalOriginal += $valorFinalCadeira;
+                    
+                    $disciplinasEstruturadas[] = [
+                        'nome' => $nomeCadeira,
+                        'preco' => $valorFinalCadeira
+                    ];
+                } // Fim do foreach
+            } // Fim do if (!empty($cursoBruto))
             
-            // Regra de faturamento: Se tiver 4 ou mais disciplinas, ganha 20% de desconto real
+            $contagemCadeiras = count($disciplinasEstruturadas);
             $descontoCortesia = ($contagemCadeiras >= 4) ? ($precoTotalOriginal * 0.20) : 0.00; 
             $totalAPagarFinal = $precoTotalOriginal - $descontoCortesia;
-            
             $saldoReal = ($aluno['saldo_propina'] > 0) ? floatval($aluno['saldo_propina']) : 0;
 
             echo json_encode([
@@ -217,13 +201,13 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
                 'telefone' => $aluno['telefone'],
                 'turma' => 'Turma Única A',
                 'classe' => $cursoBruto,
-                'total_disciplinas' => $contagemCadeiras, // Retorna a quantidade exata
+                'total_disciplinas' => $contagemCadeiras,
                 'saldo_interno' => $saldoReal,
                 'preco_total' => $precoTotalOriginal,
                 'desconto' => $descontoCortesia,
                 'total_a_pagar' => $totalAPagarFinal,
                 'disciplinas' => $disciplinasEstruturadas
-            ]);
+            ], JSON_UNESCAPED_UNICODE);
         } else {
             echo json_encode(['status' => 'nao_encontrado']);
         }

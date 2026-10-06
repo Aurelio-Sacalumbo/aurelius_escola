@@ -1,5 +1,5 @@
 <?php
-// 🗄️ PROCESSADOR DE INSCRIÇÕES - ACADEMIA AURÉLIUS
+// 🗄️ PROCESSADOR DE INSCRIÇÕES - ACADEMIA AURÉLIUS (UX SIMPLIFICADO)
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
@@ -13,12 +13,19 @@ require_once 'conexao.php'; // Ligação dinâmica ao MySQL (XAMPP ou Render)
 
 $resposta = ['sucesso' => false, 'mensagem' => ''];
 
-// 🛑 AQUI: Falta esta linha no seu código para abrir o bloco POST corretamente!
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome = isset($_POST['nome']) ? trim($_POST['nome']) : '';
     $telefone = isset($_POST['telefone']) ? trim($_POST['telefone']) : '';
     $classe = isset($_POST['classe']) ? trim($_POST['classe']) : '';
     $periodo = isset($_POST['periodo']) ? trim($_POST['periodo']) : '';
+    
+    // Captura a senha definida pelo utilizador no formulário
+    $senhaInserida = isset($_POST['senha']) ? trim($_POST['senha']) : '';
+
+    // Se o teu formulário não tiver o campo de senha ainda, geramos uma baseada no telefone para não quebrar o UX
+    if (empty($senhaInserida)) {
+        $senhaInserida = substr($telefone, -6); // Usa os últimos 6 dígitos do telefone como senha padrão
+    }
 
     if (empty($nome) || empty($telefone)) {
         $resposta['mensagem'] = '⚠️ Nome e telefone são obrigatórios!';
@@ -27,52 +34,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        // 🔍 NOVA VALIDAÇÃO: Bloqueia apenas se o MESMO FILHO (Nome) já estiver associado a este Telefone
+        // 🔍 REGRA EXCLUSIVA: Permite o mesmo telefone para vários filhos, mas bloqueia se o NOME for idêntico sob o mesmo número
         $check = $pdo->prepare("SELECT id_utilizador FROM utilizadores WHERE nome = ? AND telefone = ? LIMIT 1");
         $check->execute([$nome, $telefone]);
+        
         if ($check->fetch()) {
-            $resposta['mensagem'] = '⚠️ Erro: Este estudante já se encontra matriculado com este número de telefone!';
-            echo json_encode($resposta);
+            echo json_encode(['sucesso' => false, 'mensagem' => '⚠️ Este filho(a) já se encontra inscrito com este número de telefone!']);
             exit;
         }
-
-        // Gera o ID Único Escolar padrão (Ex: AUR-123456) e a senha padrão temporária (Ex: 123456)
-        $numAleatorio = rand(100000, 900000);
-        $novoID = "AUR-" . $numAleatorio;
-        $codigoValidacao = rand(100000, 999999); // Senha numérica simples de 6 dígitos
-
-        // 🌟 ALINHAMENTO COM O SEU PHPMYADMIN: 
-        // Ordem dos ?: 1.nome, 2.telefone, 3.email, 4.id_unico_escolar, 5.nivel, 6.periodo
+    
+        // Cada filho terá uma senha definida (ou gerada), permitindo diferenciar o acesso
         $query = "INSERT INTO utilizadores (nome, telefone, email, senha, id_unico_escolar, nivel, periodo, saldo_propina) 
-                  VALUES (?, ?, ?, 'estudante', ?, ?, ?, 0.00)";
+                  VALUES (?, ?, null, ?, ?, ?, ?, 0.00)";
         
         $stmt = $pdo->prepare($query);
-        
-        // A ordem exata das variáveis adaptada para os pontos de interrogação:
         $resultado = $stmt->execute([
-            $nome,            // 1º ? -> nome
-            $telefone,        // 2º ? -> telefone
-            $codigoValidacao, // 3º ? -> email (onde guarda o código)
-            $novoID,          // 4º ? -> id_unico_escolar
-            $classe,          // 5º ? -> nivel
-            $periodo          // 6º ? -> periodo
+            $nome,
+            $telefone,
+            $senhaInserida, // A senha será a chave para abrir a conta de cada filho individualmente
+            $telefone,      // Armazenado como referência estrutural
+            $classe,
+            $periodo
         ]);
-
+    
         if ($resultado) {
-            $resposta['sucesso'] = true;
-            $resposta['id_estudante'] = $novoID;
-            $resposta['codigo_validacao'] = $codigoValidacao;
-            $resposta['mensagem'] = '🎉 Inscrição guardada no banco com sucesso!';
-        } else {
-            $resposta['mensagem'] = '⚠️ Erro interno ao inserir no banco de dados.';
+            echo json_encode([
+                'sucesso' => true,
+                'id_estudante' => $telefone,
+                'codigo_validacao' => $senhaInserida,
+                'mensagem' => "🎉 Inscrição de " . $nome . " realizada com sucesso sob o contacto do encarregado!"
+            ]);
         }
-
+        exit;
     } catch (Exception $e) {
-        $resposta['mensagem'] = '⚠️ Erro no servidor: ' . $e->getMessage();
+        echo json_encode(['sucesso' => false, 'mensagem' => 'Erro: ' . $e->getMessage()]);
+        exit;
     }
-} else {
-    $resposta['mensagem'] = 'Método de requisição inválido.';
-}
-
-echo json_encode($resposta);
-exit;

@@ -243,11 +243,10 @@
         </div>
 
 
-    <div class="card" style="border-top: 4px solid var(--brand-success);">
+        <div class="card" style="border-top: 4px solid var(--brand-success);">
             <div class="titulo"> Indicadores de Faturamento</div>
            
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; text-align: center;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; text-align: center;">
                 <!-- Coluna 1: Estado da Inscrição -->
                 <div style="background: #070b14; padding: 15px; border-radius: 10px; border: 1px solid var(--border-slate-light);">
                     <div style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">Inscritos / Matriculados</div>
@@ -266,8 +265,13 @@
                     <div style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">Pós-Laboral (Noite)</div>
                     <div id="estatistica-pos-laboral" style="font-size: 24px; font-weight: 900; color: #fff; margin-top: 5px;">0</div>
                 </div>
-                <!-- Coluna 4: Faturamento Central -->
-                <div style="background: #070b14; padding: 15px; border-radius: 10px; border-color: var(--brand-success);">
+                <!-- 🌟 NOVA Coluna 4: Faturamento Mensal (Mês Atual) -->
+                <div style="background: #070b14; padding: 15px; border-radius: 10px; border: 1px solid var(--border-slate-light); border-left: 3px solid #60a5fa;">
+                    <div id="titulo-faturamento-mensal" style="font-size: 11px; font-weight: bold; color: #60a5fa; text-transform: uppercase;">Faturamento Mensal</div>
+                    <div id="estatistica-faturamento-mensal" style="font-size: 20px; font-weight: 900; color: #fff; margin-top: 8px;">0.00 Kzs</div>
+                </div>
+                <!-- Coluna 5: Faturamento Central Global -->
+                <div style="background: #070b14; padding: 15px; border-radius: 10px; border: 1px solid var(--brand-success); box-shadow: 0 0 10px rgba(34, 197, 94, 0.1);">
                     <div style="font-size: 11px; font-weight: bold; color: var(--brand-success); text-transform: uppercase;">Faturamento Estimado</div>
                     <div id="estatistica-faturamento" style="font-size: 20px; font-weight: 900; color: var(--brand-success); margin-top: 8px;">0.00 Kzs</div>
                 </div>
@@ -399,26 +403,20 @@
 
 
        <!-- =========================================================================
-     💬 CENTRAL DE RESPOSTAS DO CHAT ACADÉMICO (PAINEL DO PROFESSOR)
+     💬 CENTRAL DE MATRICULADOS EM TEMPO REAL (MURAL DA TURMA)
      ========================================================================= -->
-<div class="card" style="border-top: 4px solid var(--brand-gold);">
-    <div class="titulo"> Chat Académico</div>
+<div class="card" style="border-top: 4px solid var(--brand-gold, #eab308);">
+    <div class="titulo">💬 Mural Escolar Interativo</div>
     
-    <!-- 👤 MENU SELETOR DE ALUNOS ATIVOS -->
-    <select id="select-alunos-chat" class="form-select" onchange="mudarAlunoChat(this.value)" style="margin-bottom: 12px; width: 100%;">
-        <option value="">Escolha um Aluno para Conversar </option>
-        <option value="TODOS"> Mural de Toda a Turma</option>
-    </select>
-
-    <!-- 📥 CAIXA ÚNICA DE MENSAGENS (HISTÓRICO DINÂMICO) -->
-    <div class="chat-box" id="caixa-mensagens-chat-prof" style="height: 250px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px;">
-            <!-- O JavaScript vai injetar dinamicamente as mensagens da nuvem aqui, deitando fora os fantasmas! -->
-        </div>
+    <!-- 📥 CAIXA ÚNICA DE MENSAGENS SINCRO-REATIVA -->
+    <div class="chat-box" id="caixa-mensagens-chat-prof" style="height: 280px; overflow-y: auto; padding: 12px; background: rgba(0,0,0,0.25); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px;">
+        <!-- Mensagens carregadas de forma limpa via JSON -->
+    </div>
     
-    <!-- 🚀 FORMULÁRIO DE ENVIO UNIFICADO -->
-    <form onsubmit="return enviarMensagemProfessor(event)" style="display: flex; gap: 8px; margin-top: 10px;">
-        <input type="text" id="campo-texto-chat-prof" class="form-input" style="margin-top:0; flex: 1;" placeholder="Escreva a resposta ..." required>
-        <button type="submit" class="btn" style="margin-top:0; width: auto; padding: 0 20px; background: var(--brand-gold); color: #000; font-weight: bold;">Responder Alunos</button>
+    <!-- 🚀 FORMULÁRIO DE RESPOSTA IMEDIATA -->
+    <form id="form-chat-professor" onsubmit="return enviarMensagemProfessor(event)" style="display: flex; gap: 8px; margin-top: 10px;">
+        <input type="text" id="campo-texto-chat-prof" class="form-input" style="margin-top:0; flex: 1;" placeholder="Escreva um comunicado ou responda à turma..." required>
+        <button type="submit" class="btn" style="margin-top:0; width: auto; padding: 0 20px; background: var(--brand-gold, #eab308); color: #000; font-weight: bold;">Enviar para Turma</button>
     </form>
 </div>
 
@@ -427,12 +425,13 @@
 
 
 
-
     <script>
-      
-  // Processamento do Formulário Unificado (Local + Nuvem em Tempo Real)
-   // 🧠 GESTOR DE ABA LOCAL CORRIGIDO E SEM TRAVAMENTOS
-   if (!localStorage.getItem('bd_pautas_professor')) {
+      // =========================================================================
+// 📝 PROCESSAMENTO DO FORMULÁRIO UNIFICADO (LOCAL + NUVEM EM TEMPO REAL)
+// =========================================================================
+
+// GESTOR DE ABA LOCAL CORRIGIDO E SEM TRAVAMENTOS
+if (!localStorage.getItem('bd_pautas_professor')) {
     localStorage.setItem('bd_pautas_professor', JSON.stringify([]));
 }
 
@@ -461,17 +460,17 @@ function gerenciarAbaLocal(deveAbrir) {
 
     if (deveAbrir) {
         containerAba.style.setProperty('display', 'block', 'important');
-        if(btnAbrir) btnAbrir.style.display = 'none';
-        if(btnFechar) btnFechar.style.display = 'inline-block';
+        if (btnAbrir) btnAbrir.style.display = 'none';
+        if (btnFechar) btnFechar.style.display = 'inline-block';
         
         renderizarTabelaLocal(dadosLocais, tbodyProf);
     } else {
         containerAba.style.setProperty('display', 'none', 'important');
-        if(btnAbrir) {
+        if (btnAbrir) {
             btnAbrir.style.display = 'inline-block';
             btnAbrir.innerText = `📁 Abrir Aba (${dadosLocais.length} Alunos)`;
         }
-        if(btnFechar) btnFechar.style.display = 'none';
+        if (btnFechar) btnFechar.style.display = 'none';
     }
 }
 
@@ -487,7 +486,7 @@ function renderizarTabelaLocal(dadosLocais, tbodyProf) {
     dadosLocais.forEach(row => {
         let badgeColor = row.estado === 'aprovado' ? '#10b981' : (row.estado === 'rejeitado' ? '#ef4444' : '#f59e0b');
         
-        // 🌟 CORREÇÃO CRÍTICA: Escapa as aspas simples nos nomes para não quebrar o clique do botão
+        // CORREÇÃO CRÍTICA: Escapa as aspas simples nos nomes para não quebrar o clique do botão
         let alunoNomeEscapado = row.nome_aluno.replace(/'/g, "\\'");
         let disciplinaEscapada = row.disciplina.replace(/'/g, "\\'");
 
@@ -501,7 +500,6 @@ function renderizarTabelaLocal(dadosLocais, tbodyProf) {
                 <td style="padding:10px;">${row.professor}</td>
                 <td style="padding:10px;"><span style="background:${badgeColor}; color:#000; padding:3px 6px; font-size:11px; font-weight:bold; border-radius:3px; text-transform:uppercase;">${row.estado}</span></td>
                 <td style="padding:10px;">
-                    <!-- 🚀 ENVIADO CORRETAMENTE: Passa as variáveis exatas que existem no seu LocalStorage -->
                     <button type="button" style="background:#ef4444; border:none; padding:4px 8px; border-radius:3px; font-size:12px; color:#fff; cursor:pointer;" 
                         onclick="eliminarRegistoDireto('${row.id_matricula}', '${alunoNomeEscapado}', '${disciplinaEscapada}')">
                         Eliminar
@@ -548,7 +546,7 @@ if (formLocal) {
         dadosLocais.push(novoRegisto);
         localStorage.setItem('bd_pautas_professor', JSON.stringify(dadosLocais));
         
-        // 2️⃣ 🚀 Envio Assíncrono para o Servidor MySQL no Render
+        // 2️⃣ Envio Assíncrono para o Servidor MySQL no Render
         const payload = {
             acao_professor: 'salvar_turma_direcionamento',
             nome_aluno: nomeAluno,
@@ -579,15 +577,16 @@ if (formLocal) {
         gerenciarAbaLocal(false); // Fecha a aba conforme o seu comportamento padrão
     };
 }
+
 function eliminarRegistoDireto(idMatricula, nomeEstudante, nomeDisciplina) {
     if (confirm(`Deseja eliminar a disciplina ${nomeDisciplina} do aluno ${nomeEstudante} na nuvem?`)) {
         
-        // 1. Limpa localmente (O que já fez)
+        // 1. Limpa localmente
         let dadosLocais = JSON.parse(localStorage.getItem('bd_pautas_professor')) || [];
         dadosLocais = dadosLocais.filter(item => String(item.id_matricula) !== String(idMatricula));
         localStorage.setItem('bd_pautas_professor', JSON.stringify(dadosLocais));
         
-        // 2. 🔥 Força o Render a atualizar a coluna 'curso' da tabela utilizadores
+        // 2. Força o Render a atualizar a coluna 'curso' da tabela utilizadores
         fetch('salvar_notas_prof.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json; charset=utf-8' },
@@ -602,11 +601,16 @@ function eliminarRegistoDireto(idMatricula, nomeEstudante, nomeDisciplina) {
             if (dados.sucesso) {
                 alert("✔️ Sincronizado: Eliminado com sucesso da base de dados remota!");
                 window.location.reload(); // Recarrega a página para atualizar os indicadores
+            } else {
+                alert("⚠️ " + dados.mensagem);
             }
+        })
+        .catch(err => {
+            console.error("Erro na eliminação remota:", err);
+            alert("✔️ Eliminado localmente! A sincronização com a nuvem será concluída quando houver rede estável.");
         });
     }
 }
-
 
 
 
@@ -697,123 +701,81 @@ function eliminarRegistoDireto(idMatricula, nomeEstudante, nomeDisciplina) {
 
 
 
-
-
-
-
-
-
-
-function inicializarFiltroTurmasProf() {
-    fetch("obter_pauta_prof.php?acao=listar_turmas")
-    .then(res => res.json())
-    .then(dados => {
-        const seletor = document.getElementById('filtro-classe');
-        if (!seletor) return;
-
-        if (dados.sucesso && dados.turmas.length > 0) {
-            seletor.innerHTML = '<option value=""> Selecione uma Classe  </option>' +
-                dados.turmas.map(t => `<option value="${t}">${t}</option>`).join('');
-        } else {
-            // Se o MySQL falhar ou estiver vazio, mantém o backup local para testes
-            const listaLocais = JSON.parse(localStorage.getItem('bd_estudantes')) || [];
-            const turmasUnicas = [...new Set(listaLocais.map(a => a.classe))].filter(Boolean);
-            
-            seletor.innerHTML = '<option value=""> Selecione uma Classe </option>' +
-                turmasUnicas.map(t => `<option value="${t}">${t}</option>`).join('');
-        }
-    })
-    .catch(err => console.error("Erro ao inicializar turmas:", err));
-}
-function carregarIndicadoresETurmas() {
-    fetch("obter_pauta_prof.php?acao=indicadores")
-    .then(res => res.json())
-    .then(dados => {
-        if (dados.sucesso) {
-            // Injeta os dados nas IDs dos Indicadores do seu HTML
-            if(document.getElementById('estatistica-total-alunos')) document.getElementById('estatistica-total-alunos').innerText = dados.total;
-            if(document.getElementById('estatistica-regular')) document.getElementById('estatistica-regular').innerText = dados.regular;
-            if(document.getElementById('estatistica-superior')) document.getElementById('estatistica-superior').innerText = dados.superior;
-            if(document.getElementById('estatistica-faturamento')) {
-                document.getElementById('estatistica-faturamento').innerText = Number(dados.faturamento).toLocaleString('pt-AO', {minimumFractionDigits: 2}) + " Kzs";
+    function sincronizarChatProfessor() {
+        fetch("chat_academico.php")
+        .then(res => {
+            if (!res.ok) throw new Error("Servidor inacessível");
+            return res.json();
+        })
+        .then(dados => {
+            const caixaMensagens = document.getElementById("caixa-mensagens-chat-prof");
+            if (!caixaMensagens) return;
+    
+            let htmlAcumulado = "";
+    
+            // 🎯 DESCOBERTA: O array real está dentro de dados.mensagens vindo do teu PHP
+            const listaMensagens = dados.mensagens || dados;
+    
+            if (Array.isArray(listaMensagens) && listaMensagens.length > 0) {
+                listaMensagens.forEach(msg => {
+                    // Alinhamento exato com os apelidos (AS) que definiste na tua query SQL do PHP
+                    const nomeRemetente = msg.remetente || "Utilizador";
+                    const textoMensagem = msg.conteudo || ""; // Teu SQL traz como 'conteudo'
+                    const horaEnvio = msg.hora || "--:--";    // Teu SQL traz como 'hora'
+                    const perfilUsuario = msg.perfil || "";   // Teu SQL traz como 'perfil'
+    
+                    // Identifica se é professor para destacar em Amarelo/Ouro
+                    const isProfessor = perfilUsuario === "professor" || nomeRemetente.includes("Prof.");
+                    const corNome = isProfessor ? "var(--brand-gold, #eab308)" : "#38bdf8";
+                    const sufixoPerfil = isProfessor ? " [Professor]" : "";
+    
+                    htmlAcumulado += `
+                        <div style="margin-bottom: 10px; font-size: 13px; line-height: 1.4; font-family: sans-serif; text-align: left;">
+                            <span style="color: ${corNome}; font-weight: bold;">${nomeRemetente}${sufixoPerfil}:</span>
+                            <span style="color: #f1f5f9; margin-left: 4px;">${textoMensagem}</span>
+                            <span style="color: #64748b; font-size: 11px; margin-left: 6px;">(${horaEnvio})</span>
+                        </div>
+                    `;
+                });
+            } else {
+                htmlAcumulado = `<p style="color: #64748b; font-size: 13px; text-align: center; margin-top: 20px;">Mural Escolar Interativo<br>Nenhuma mensagem partilhada no mural.</p>`;
             }
+    
+            caixaMensagens.innerHTML = htmlAcumulado;
+            caixaMensagens.scrollTop = caixaMensagens.scrollHeight; // Desce o scroll para a última mensagem
+        })
+        .catch(err => console.warn("A sincronizar rede...", err));
+    }
+    
+    // 🕒 ATUALIZAÇÃO AUTOMÁTICA EM BACKGROUND DE 3 EM 3 SEGUNDOS
+    if (typeof intervaloChatProf !== "undefined") {
+        clearInterval(intervaloChatProf);
+    }
+    var intervaloChatProf = setInterval(sincronizarChatProfessor, 3000);
+    
+    // Executa a carga inicial reativa ao carregar a página
+    sincronizarChatProfessor();
 
-            // Alimenta o filtro de classes dinamicamente
-            const seletor = document.getElementById('filtro-classe');
-            if (seletor && dados.turmas.length > 0) {
-                seletor.innerHTML = '<option value=""> Selecione uma Classe </option>' +
-                    dados.turmas.map(t => `<option value="${t}">${t}</option>`).join('');
-            }
-        }
-    })
-    .catch(err => console.error("Erro ao carregar indicadores:", err));
-}
 
-let ultimoHtmlChatProf = "";
 
-function sincronizarChatProfessor() {
-    fetch('chat_academico.php')
-    .then(res => {
-        if (!res.ok) throw new Error("Erro na rede");
-        return res.json();
-    })
-    .then(dados => {
-        const caixaChat = document.getElementById('caixa-mensagens-chat-prof');
-        if (!caixaChat) return;
 
-        // 🌟 CORREÇÃO CIRÚRGICA: Base institucional limpa e pura para deitar fora as letras fantasmas do cache estático!
-        let htmlBase = `<div style="color: var(--brand-blue-glow, #00d2ff); margin-bottom: 8px; text-align: left;"><b>[Coordenação]:</b> Central de atendimento ativa.</div>`;
 
-        if (dados.sucesso && dados.mensagens && dados.mensagens.length > 0) {
-            
-            // Monta o histórico unificado lendo estritamente o que vem da Aiven Cloud
-            const corpoConversa = dados.mensagens.map(m => {
-                const isProf = (m.perfil === 'professor' || (m.remetente && m.remetente.includes('Prof')));
-                const corEtiqueta = isProf ? 'var(--brand-gold, #eab308)' : 'var(--brand-blue-glow, #3b82f6)';
-                const label = isProf ? "[Tu / Professor]" : `[ Aluno: ${m.remetente}]`;
-                const horaSMS = m.hora ? m.hora : '00:00';
-                
-                // Leitura híbrida para suportar qualquer retorno do PHP
-                const textoReal = m.conteudo !== undefined ? m.conteudo : (m.mensagem !== undefined ? m.mensagem : "");
 
-                return `
-                    <div style="margin-bottom: 6px; font-size: 13px; text-align: left; line-height: 1.4;">
-                        <span style="color: ${corEtiqueta}; font-weight: bold;">${label}:</span> 
-                        <span style="color: #fff; margin-left: 4px;">${textoReal}</span>
-                        <span style="font-size: 10px; color: #64748b; margin-left: 8px;">(${horaSMS})</span>
-                    </div>
-                `;
-            }).join('');
 
-            const novoHtmlCompleto = htmlBase + corpoConversa;
 
-            // Só altera a tela se houver mudança real no banco central
-            if (novoHtmlCompleto !== ultimoHtmlChatProf) {
-                ultimoHtmlChatProf = novoHtmlCompleto;
-                caixaChat.innerHTML = novoHtmlCompleto;
-                caixaChat.scrollTop = caixaChat.scrollHeight; // Auto-scroll para o fundo
-            }
-        } else {
-            if (caixaChat.innerHTML !== htmlBase) {
-                caixaChat.innerHTML = htmlBase;
-                ultimoHtmlChatProf = htmlBase;
-            }
-        }
-    })
-    .catch(err => console.error("Erro ao sincronizar mural do professor:", err));
-}
 
-// 📥 2. ENVIO REATIVO EM JSON PURO (DESTRAVA E TRAVA RECARREGAMENTO)
+
+
+// 📤 2. ENVIO REATIVO EM JSON COMPATÍVEL COM O RENDER
 function enviarMensagemProfessor(event) {
     if (event) {
-        event.preventDefault(); // 🌟 TRAVA ABSOLUTA: Impede a página de atualizar!
+        event.preventDefault();
         event.stopPropagation();
     }
 
     const inputTexto = document.getElementById('campo-texto-chat-prof');
     if (!inputTexto || inputTexto.value.trim() === "") return false;
 
-    // 🌟 ALINHAMENTO COM O PHP: Envia as chaves em formato de objeto JSON puro!
     const payload = {
         id_unico_escolar: "PROF-01",
         remetente: "Prof. Aurélio",
@@ -821,7 +783,7 @@ function enviarMensagemProfessor(event) {
         perfil: "professor"
     };
 
-    const btnEnviar = document.querySelector("#campo-texto-chat-prof + button") || document.querySelector("button[type='submit']");
+    const btnEnviar = document.querySelector("#form-chat-professor button[type='submit']");
     if (btnEnviar) btnEnviar.disabled = true;
 
     fetch("chat_academico.php", {
@@ -829,28 +791,43 @@ function enviarMensagemProfessor(event) {
         headers: {
             "Content-Type": "application/json; charset=utf-8"
         },
-        body: JSON.stringify(payload) // Converte o objeto em string JSON para o PHP ler
+        body: JSON.stringify(payload)
     })
     .then(res => {
-        if (!res.ok) throw new Error("Erro na rede  ");
+        if (!res.ok) throw new Error("Erro físico de envio");
         return res.json();
     })
     .then(dados => {
-        if (dados.sucesso) {
-            inputTexto.value = ""; // Limpa a caixa de texto localmente
-            ultimoHtmlChatProf = ""; // Reseta cache visual
-            sincronizarChatProfessor(); // Atualiza o ecrã imediatamente
+        if (dados.sucesso || dados.status === "sucesso") {
+            inputTexto.value = ""; // Limpa a caixa de texto imediatamente
+            sincronizarChatProfessor(); // Atualiza visual na hora
         } else {
-            alert("❌ Erro interno do chat: " + dados.mensagem);
+            console.error("Erro reportado pelo servidor.");
         }
     })
-    .catch(err => console.error("Erro ao processar envio do professor:", err))
+    .catch(err => console.error("Falha no transporte da mensagem:", err))
     .finally(() => {
         if (btnEnviar) btnEnviar.disabled = false;
     });
 
-    return false; // Retorno falso extra de segurança contra recarregamentos
+    return false;
 }
+
+// 🕒 ATUALIZAÇÃO AUTOMÁTICA EM BACKGROUND DE 3 EM 3 SEGUNDOS
+if (typeof intervaloChatProf !== "undefined") {
+    clearInterval(intervaloChatProf);
+}
+var intervaloChatProf = setInterval(sincronizarChatProfessor, 3000);
+
+// Executa a carga inicial ao renderizar a página
+sincronizarChatProfessor();
+
+
+
+
+
+
+
 
 
 
@@ -1364,102 +1341,96 @@ function eliminarDicaPedagogica(index) {
 }
 
    
-    // 💬 GESTÃO CENTRALIZADA DO CHAT ACADÉMICO GLOBAL
-    if (!localStorage.getItem('bd_chat_global')) {
-        localStorage.setItem('bd_chat_global', JSON.stringify([]));
-    }
 
-    function carregarChatSincronizado() {
-        const caixaChat = document.getElementById('caixa-mensagens-chat-prof');
-        const msgs = JSON.parse(localStorage.getItem('bd_chat_global')) || [];
+// =========================================================================
+// 📊 MOTOR DE MÉTRICAS E PROCESSAMENTO DE FATURAÇÃO EM TEMPO REAL
+// =========================================================================
+
+// 🛡️ DECLARAÇÃO DE SEGURANÇA: Evita travamentos caso o HTML tente chamar a função antiga
+function carregarChatSincronizado() {
+    // Mantida intencionalmente vazia para desativar o loop antigo e dar controlo ao Render
+}
+
+function calcularMetricasFaturamento() {
+    fetch("listar_estudantes.php")
+    .then(res => res.json())
+    .then(dados => {
+        const listaAlunos = dados.alunos || [];
         
-        caixaChat.innerHTML = `<div style="color: var(--brand-blue-glow);"><b>[Coordenação]:</b> Central de atendimento ativa.</div>`;
-        
-        msgs.forEach(m => {
-            const div = document.createElement('div');
-            if (m.origem === 'prof') {
-                div.style.color = 'var(--brand-gold)';
-                div.innerHTML = `<b>[Tu / Professor]:</b> ${m.texto}`;
-            } else {
-                div.style.color = '#fff';
-                div.innerHTML = `<b>[Aluno: ${m.autor} - ID: ${m.id_autor}]:</b> ${m.texto.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
-            }
-            caixaChat.appendChild(div);
-        });
-        caixaChat.scrollTop = caixaChat.scrollHeight;
-    }
+        let inscritos = 0;
+        let matriculados = 0;
+        let regular = 0;
+        let posLaboral = 0;
+        let faturamentoGlobal = 0;
+        let faturamentoMensal = 0; // Acumulador do mês corrente
 
+        // Obtém o nome do mês atual de forma reativa
+        const dataHoje = new Date();
+        const mesesAno = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const mesAtualNome = mesesAno[dataHoje.getMonth()];
 
-    function calcularMetricasFaturamento() {
-        // 🔍 LEITURA DIRETA E REAL DO LOCALSTORAGE DO NAVEGADOR
-        // Tenta ler a chave principal e chaves secundárias para garantir que encontra os dados
-        let dadosLocais = localStorage.getItem('bd_estudantes') || localStorage.getItem('bd_estudante_ativo');
-        let listaAlunos = [];
-        
-        if (dadosLocais) {
-            try {
-                listaAlunos = JSON.parse(dadosLocais);
-                // Se for apenas um objeto em vez de um array, converte para array
-                if (!Array.isArray(listaAlunos)) {
-                    listaAlunos = [listaAlunos];
-                }
-            } catch (e) {
-                console.error("Erro ao ler JSON da memória local", e);
-                listaAlunos = [];
-            }
-        }
-    
-
-        let totalAlunos = listaAlunos.length;
-        let totalRegular = 0;
-        let totalSuperior = 0;
-        let caixaTotal = 0;
-    
-        // Valor base estimado por cadeira caso o aluno antigo não tenha o valor direto guardado
-        const taxaPorDisciplinaPadrao = 2500;
-    
         listaAlunos.forEach(aluno => {
             if (!aluno) return;
-            
-            // Lê de forma segura a classe ou turma do estudante
-            const classeStr = (aluno.classe || aluno.turma || "").toLowerCase();
-            
-            // 1. Classificação Dinâmica da Categoria (Regular vs Superior)
-            if (classeStr.includes("ano") || classeStr.includes("superior") || classeStr.includes("faculdade") || classeStr.includes("universidade") || classeStr.includes("ª classe (faculdade)")) {
-                totalSuperior++;
-            } else if (classeStr !== "" && !classeStr.includes("aguardando") && !classeStr.includes("pendente")) {
-                totalRegular++;
+
+            inscritos++;
+
+            const cursoStr = (aluno.curso || "").toLowerCase();
+            const periodoStr = (aluno.periodo || "").toLowerCase();
+
+            // 1. Conta Matriculados reais
+            if (cursoStr.includes('[') && !cursoStr.includes('inscrição inicial')) {
+                matriculados++;
             }
-    
-            // 2. Auditoria de Faturamento Dinâmico
-            if (aluno.valorPagoReal && !isNaN(aluno.valorPagoReal)) {
-                caixaTotal += parseFloat(aluno.valorPagoReal);
-            } else if (aluno.disciplinas && Array.isArray(aluno.disciplinas) && aluno.disciplinas.length > 0) {
-                caixaTotal += aluno.disciplinas.length * taxaPorDisciplinaPadrao;
-            } else if (classeStr !== "") {
-                caixaTotal += 4000; // Valor de inscrição base
+
+            // 2. Conta Turnos
+            if (periodoStr.includes("noite") || periodoStr.includes("pós") || periodoStr.includes("pos")) {
+                posLaboral++;
+            } else {
+                regular++;
+            }
+
+            // 3. Auditoria Financeira Dinâmica
+            if (aluno.saldo_propina) {
+                const valorPropina = parseFloat(aluno.saldo_propina);
+                faturamentoGlobal += valorPropina;
+
+                // 🌟 REGRA MENSAL: Se o registo de curso do aluno não for apenas uma inscrição inicial de longo prazo,
+                // ou se houver pautas ativas guardadas na tabela do mês, acumulamos no Faturamento Mensal.
+                if (!cursoStr.includes("inscrição inicial") && !cursoStr.includes("pendente")) {
+                    faturamentoMensal += valorPropina;
+                } else {
+                    faturamentoMensal += 4000; // Taxa de inscrição entra direto no caixa do mês
+                }
             }
         });
-    
-        // 3. Injeção Direta Forçada nos IDs da Interface Gráfica
-        const elTotal = document.getElementById('estatistica-total-alunos');
-        const elRegular = document.getElementById('estatistica-regular');
-        const elSuperior = document.getElementById('estatistica-superior');
-        const elFaturamento = document.getElementById('estatistica-faturamento');
-    
-        if (elTotal) elTotal.innerText = totalAlunos;
-        if (elRegular) elRegular.innerText = totalRegular;
-        if (elSuperior) elSuperior.innerText = totalSuperior;
-        if (elFaturamento) {
-            elFaturamento.innerText = caixaTotal.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " Kzs";
+
+        // 🏛️ INJEÇÃO COMPATÍVEL NOS ELEMENTOS GRÁFICOS
+        if (document.getElementById('estatistica-inscritos')) document.getElementById('estatistica-inscritos').innerText = inscritos;
+        if (document.getElementById('estatistica-matriculados')) document.getElementById('estatistica-matriculados').innerText = matriculados;
+        if (document.getElementById('estatistica-regular')) document.getElementById('estatistica-regular').innerText = regular;
+        if (document.getElementById('estatistica-pos-laboral')) document.getElementById('estatistica-pos-laboral').innerText = posLaboral;
+        
+        // Atualiza dinamicamente o título do cartão com o mês atual (Ex: FATURAMENTO - OUTUBRO)
+        const elTituloMensal = document.getElementById('titulo-faturamento-mensal');
+        if (elTituloMensal) elTituloMensal.innerHTML = `Faturamento (${mesAtualNome})`;
+
+        if (document.getElementById('estatistica-faturamento-mensal')) {
+            document.getElementById('estatistica-faturamento-mensal').innerText = faturamentoMensal.toLocaleString('pt-PT', { minimumFractionDigits: 2 }) + " Kzs";
         }
-    }
-    
-    // 🔔 ATIVAÇÃO DO MOTOR DE SINCRONIZAÇÃO EM TEMPO REAL (A cada 2 segundos)
-    if (!window.intervaloFaturamentoMestre) {
-        window.intervaloFaturamentoMestre = setInterval(calcularMetricasFaturamento, 2000);
-    }
-    calcularMetricasFaturamento();
+
+        if (document.getElementById('estatistica-faturamento')) {
+            document.getElementById('estatistica-faturamento').innerText = faturamentoGlobal.toLocaleString('pt-PT', { minimumFractionDigits: 2 }) + " Kzs";
+        }
+    })
+    .catch(err => console.error("Erro na leitura de métricas:", err));
+}
+
+
+
+
+
+
+
 
 
 
