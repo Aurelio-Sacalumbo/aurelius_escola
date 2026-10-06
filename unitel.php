@@ -154,9 +154,9 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
             if (!empty($cursoBruto)) {
                 $limpaCurso = str_ireplace(['[Inscrição]', '[', ']', '[Inscrição Inicial]'], '', $cursoBruto);
                 
-                // 🎯 Identifica a gaveta exata do aluno (Ex: "1ª Classe (Primário)" ou "8ª Classe (I Ciclo)")
-                $gavetaClasse = "8ª Classe (I Ciclo)"; // Fallback padrão seguro
-                if (preg_match('/^([^\[]+)/', $cursoBruto, $matches)) {
+                // 🎯 1. IDENTIFICAÇÃO AUTOMÁTICA DA CLASSE/CURSO (DINÂMICO)
+                $gavetaClasse = ""; 
+                if (preg_match('/^([^\[\(\,;\n\r]+)/', $cursoBruto, $matches)) {
                     $gavetaClasse = trim($matches[0]); 
                 }
 
@@ -166,20 +166,40 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
                 foreach ($nomesCadeiras as $nomeCadeira) {
                     if (empty($nomeCadeira)) continue;
 
-                    // 🎯 TRATAMENTO DE ACENTOS: Se a cadeira contiver "Portuguesa", força a busca pelo termo exato do banco
-                    $buscaNome = $nomeCadeira;
+                    // 🎯 TRATAMENTO DE ACENTOS
+                    $buscaNome = trim($nomeCadeira);
                     if (strpos(strtolower($nomeCadeira), 'portuguesa') !== false) {
                         $buscaNome = 'Língua Portuguesa';
                     }
 
-                    // BUSCA NA GAVETA EXATA: Procura pelo nome tratado dentro do nível do aluno!
-                    $stmtPreco = $pdo->prepare("SELECT preco_base FROM cursos_disciplinas 
-                                               WHERE (nome = ? OR nome LIKE ?) AND nivel_academico = ? 
-                                               LIMIT 1");
-                    $stmtPreco->execute([$buscaNome, $buscaNome . "%", $gavetaClasse]);
-                    $precoCadeira = $stmtPreco->fetchColumn();
+                    $precoCadeira = false;
+
+                    // 🎯 2. TENTATIVA A: BUSCA NA GAVETA ESPECÍFICA DO ALUNO
+                    if (!empty($gavetaClasse)) {
+                        $stmtPreco = $pdo->prepare("SELECT preco_base FROM cursos_disciplinas 
+                                                   WHERE LOWER(nome) = LOWER(?) 
+                                                   AND (LOWER(nivel_academico) LIKE LOWER(?) OR LOWER(nivel_academico) LIKE LOWER(?))
+                                                   LIMIT 1");
+                        
+                        $gavetaVariacao = str_replace('ª', 'a', $gavetaClasse);
+                        $stmtPreco->execute([
+                            $buscaNome, 
+                            "%" . $gavetaClasse . "%",
+                            "%" . $gavetaVariacao . "%"
+                        ]);
+                        $precoCadeira = $stmtPreco->fetchColumn();
+                    }
                     
-                    // Se não encontrar na gaveta, assume 0.00 para não misturar valores
+                    // 🎯 3. TENTATIVA B: SE FALHAR OU NÃO TER GAVETA, BUSCA GLOBAL AUTOMÁTICA PELO NOME
+                    if ($precoCadeira === false) {
+                        $stmtPrecoGlobal = $pdo->prepare("SELECT preco_base FROM cursos_disciplinas 
+                                                         WHERE LOWER(nome) = LOWER(?) 
+                                                         ORDER BY id DESC LIMIT 1");
+                        $stmtPrecoGlobal->execute([$buscaNome]);
+                        $precoCadeira = $stmtPrecoGlobal->fetchColumn();
+                    }
+                    
+                    // Se mesmo assim não encontrar nada no banco inteiro, assume 0.00
                     $valorFinalCadeira = $precoCadeira ? floatval($precoCadeira) : 0.00;
                     $precoTotalOriginal += $valorFinalCadeira;
                     
@@ -189,6 +209,7 @@ if (isset($_GET['pesquisa_automatica_cliente']) && isset($_GET['termo'])) {
                     ];
                 } // Fim do foreach
             } // Fim do if (!empty($cursoBruto))
+
             
             $contagemCadeiras = count($disciplinasEstruturadas);
             $descontoCortesia = ($contagemCadeiras >= 4) ? ($precoTotalOriginal * 0.20) : 0.00; 
