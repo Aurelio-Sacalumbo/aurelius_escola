@@ -27,14 +27,15 @@ try {
         $nomeAlunoReal = $aluno['nome'];
         $disciplinasEstruturadas = [];
 
-        $stmt = $pdo->prepare("SELECT nome, telefone, curso, periodo FROM utilizadores 
-        WHERE (id_unico_escolar LIKE ? OR nome LIKE ? OR telefone LIKE ?) 
-        AND nivel = 'estudante' LIMIT 1");
-
-// Prepara o termo com as percentagens (%) para o LIKE encontrar correspondências parciais
-$termoLike = "%" . $termo . "%";
-$stmt->execute([$termoLike, $termoLike, $termoLike]);
-$aluno = $stmt->fetch(PDO::FETCH_ASSOC);
+        // 🔍 2. Lê as disciplinas alocadas para ele na tabela Horario (Filtrado estritamente por Nome)
+        // 🎯 O GROUP BY garante que mesmo que o professor clique duas vezes, a disciplina só aparece UMA vez no horário!
+        $stmtHorario = $pdo->prepare("SELECT classe, periodo, hora, disciplina, professor, estado 
+                                      FROM Horario 
+                                      WHERE nome_aluno = ? 
+                                      GROUP BY disciplina 
+                                      ORDER BY id_horario ASC");
+        $stmtHorario->execute([$nomeAlunoReal]);
+        $linhasHorario = $stmtHorario->fetchAll(PDO::FETCH_ASSOC);
 
 
         $classeLimpa = !empty($aluno['curso']) ? explode('[', $aluno['curso'])[0] : "12ª Classe";
