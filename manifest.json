@@ -1,16 +1,20 @@
 {
+  "id": "/academia-aurelius-pwa",
   "short_name": "Aurélius",
   "name": "Academia Aurélius",
+  "description": "Plataforma de Gestão Escolar e Faturamento - Academia Aurélius",
   "icons": [
     {
-      "src": "icone-192.png",
+      "src": "./icone-192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
-      "src": "icone-512.png",
+      "src": "./icone-512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": "./Principal.html",

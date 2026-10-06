@@ -1,5 +1,5 @@
 // ⚡ ATUALIZAÇÃO DE CACHE DA ACADEMIA AURÉLIUS
-const CACHE_NAME = 'aurelius-cache-v6'; // 🌟 Incrementado para v6 para forçar a limpeza em todos os telemóveis e navegadores
+const CACHE_NAME = 'aurelius-cache-v7'; // Incrementado para v7 para limpar instâncias antigas
 
 // 🌟 Lista de ficheiros estáticos para funcionamento Offline
 const ASSETS = [
@@ -18,10 +18,10 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
-  self.skipWaiting(); // Força o Service Worker novo a assumir o controlo imediatamente
+  self.skipWaiting();
 });
 
-// 🔄 2. ATIVAÇÃO - Limpa de forma permanente todos os caches antigos do ecossistema
+// 🔄 2. ATIVAÇÃO - Limpa caches antigos do ecossistema
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -33,7 +33,7 @@ self.addEventListener("activate", (event) => {
           }
         })
       );
-    }).then(() => self.clients.claim()) // Assume o controlo das abas ativas na hora
+    }).then(() => self.clients.claim())
   );
 });
 
@@ -41,33 +41,34 @@ self.addEventListener("activate", (event) => {
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
 
-  // 🌟 REGRA IMPERIAL: Se for chamada de base de dados ou chat PHP, busca SEMPRE na rede viva e NUNCA salva no cache!
+  // 🌟 REGRA IMPERIAL EXPANDIDA: Protege os scripts dinâmicos de faturamento e consulta para nunca congelarem dados
   if (
     url.includes('chat_academico.php') || 
     url.includes('buscar_notas.php') || 
     url.includes('lancar_nota.php') || 
     url.includes('buscar_livros.php') || 
     url.includes('guardar_livro.php') || 
-    url.includes('obter_pauta_prof.php')
+    url.includes('obter_pauta_prof.php') ||
+    url.includes('obter_turmas_publicas.php') ||
+    url.includes('unitel.php') ||
+    url.includes('faturamento.php')
   ) {
     event.respondWith(fetch(event.request));
-    return; // Encerra a interceção para este ficheiro dinâmico
+    return;
   }
 
-  // 📦 REGRA PARA FICHEIROS ESTÁTICOS: Tenta ler o Cache primeiro, se não achar, busca na rede
+  // 📦 REGRA PARA FICHEIROS ESTÁTICOS
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        return cachedResponse; // Retorna a cópia do cache estável
+        return cachedResponse;
       }
       
       return fetch(event.request).then((networkResponse) => {
-        // Valida se a resposta da rede é legítima antes de guardar
         if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
           return networkResponse;
         }
         
-        // Clona a resposta para guardar uma cópia no cache de navegação rápida
         const responseToCache = networkResponse.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, responseToCache);
@@ -76,8 +77,8 @@ self.addEventListener('fetch', (event) => {
         return networkResponse;
       });
     }).catch(() => {
-      // Se a rede falhar por completo e o ficheiro não estiver em cache, redireciona para a Home
-      return caches.match("Principal.html");
+      // 🎯 CORREÇÃO CRÍTICA: Corresponde exatamente à string registada na lista ASSETS
+      return caches.match("./Principal.html");
     })
   );
 });
