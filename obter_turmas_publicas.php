@@ -74,7 +74,7 @@ try {
             }
         }
 
-        // Devolve exatamente o mapeamento que a função renderizarLivrosAluno() espera ler no front-end
+        // 🎯 RETORNO SEGURO CORRIGIDO: Mantém os colchetes duplos [[ ]] para o front-end ler o length do array
         echo json_encode([
             'sucesso' => true,
             'dados' => [[
