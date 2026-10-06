@@ -1,9 +1,15 @@
 <?php
-// 🚀 ENDPOINT DE HORÁRIOS E LIVROS REAIS (PADRÃO PDO) — ACADEMIA AURÉLIUS
+// =========================================================================
+// 🚀 ENDPOINT DE HORÁRIOS E LIVROS REAIS — ACADEMIA AURÉLIUS (PRODUÇÃO)
+// =========================================================================
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Access-Control-Allow-Methods: GET");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
 header('Content-Type: application/json; charset=utf-8');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit(0);
+}
 
 require_once 'conexao.php';
 
@@ -15,7 +21,7 @@ try {
         exit;
     }
 
-    // 🔍 1. Busca o estudante ativo de forma flexível usando LIKE nos três parâmetros
+    // 🔍 1. Busca o estudante ativo de forma flexível usando LIKE nos três parâmetros de login
     $stmt = $pdo->prepare("SELECT nome, telefone, curso, periodo FROM utilizadores 
                            WHERE (id_unico_escolar LIKE ? OR nome LIKE ? OR telefone LIKE ?) 
                            AND nivel = 'estudante' LIMIT 1");
@@ -28,7 +34,7 @@ try {
         $nomeAlunoReal = $aluno['nome'];
         $disciplinasEstruturadas = [];
 
-        // 🔍 2. CORREÇÃO CRÍTICA LINUX: Nome da tabela mudado para 'horario' (minúsculas)
+        // 🔍 2. CORREÇÃO CRÍTICA LINUX: Nome da tabela em minúsculas ('horario')
         // 🎯 O GROUP BY disciplina garante que remove as linhas duplicadas do professor.html automaticamente!
         $stmtHorario = $pdo->prepare("SELECT classe, periodo, hora, disciplina, professor, estado 
                                       FROM horario 
@@ -38,8 +44,10 @@ try {
         $stmtHorario->execute([$nomeAlunoReal]);
         $linhasHorario = $stmtHorario->fetchAll(PDO::FETCH_ASSOC);
 
-        $classeLimpa = !empty($aluno['curso']) ? explode('[', $aluno['curso'])[0] : "3ª Classe";
-        $periodoLimpo = !empty($aluno['periodo']) ? $aluno['periodo'] : 'Manhã';
+        // 🎯 CORREÇÃO: Captura apenas a primeira parte do explode (Índice 0) para retornar string simples e não quebrar o script
+        $partesCurso = !empty($aluno['curso']) ? explode('[', $aluno['curso']) : ["3ª Classe"];
+        $classeLimpa = trim($partesCurso[0]);
+        $periodoLimpo = !empty($aluno['periodo']) ? trim($aluno['periodo']) : 'Manhã';
 
         if (!empty($linhasHorario)) {
             // Prepara a busca do link do PDF na tabela 'livros'
@@ -50,7 +58,7 @@ try {
                 $periodoLimpo = !empty($h['periodo']) ? trim($h['periodo']) : $periodoLimpo;
                 $nomeCadeira  = trim($h['disciplina']);
 
-                // 🔍 3. Procura o PDF correspondente
+                // 🔍 3. Procura o PDF correspondente à cadeira do aluno
                 $stmtLivro->execute([$nomeCadeira]);
                 $dadosLivro = $stmtLivro->fetch(PDO::FETCH_ASSOC);
 
@@ -58,6 +66,7 @@ try {
                 $linkPdfReal = "";
 
                 if ($dadosLivro && !empty($dadosLivro['categoria_curso'])) {
+                    // 🎯 ALINHAMENTO DE ROTA CONTRA 404: Isola apenas o nome real do hash do ficheiro
                     $caminhoBanco = trim($dadosLivro['categoria_curso']);
                     $nomeFicheiroReal = basename(str_replace('\\', '/', $caminhoBanco));
                     $linkPdfReal = "uploads/manuais/" . $nomeFicheiroReal;
@@ -68,13 +77,13 @@ try {
                     'horario'    => !empty($h['hora']) ? $h['hora'] : "07:00 - 08:00",
                     'professor'  => !empty($h['professor']) ? $h['professor'] : "Professor Alocado",
                     'estatuto'   => !empty($h['estado']) ? strtolower(trim($h['estado'])) : 'aprovado',
-                    'pdf_url'    => $linkPdfReal,
+                    'pdf_url'    => $linkPdfReal, // Devolve a rota estável uploads/manuais/hash.pdf
                     'autor'      => $autorReal
                 ];
             }
         }
 
-        // 🎯 RETORNO SEGURO CORRIGIDO: Mantém os colchetes duplos [[ ]] para o front-end ler o length do array
+        // 🎯 RETORNO MULTIDIMENSIONAL ALINHADO: Mantém os colchetes duplos [[ ]] que o teu JavaScript lê
         echo json_encode([
             'sucesso' => true,
             'dados' => [[
@@ -93,7 +102,7 @@ try {
     }
 
 } catch (Exception $e) {
-    echo json_encode(['sucesso' => false, 'mensagem' => 'Erro: ' . $e->getMessage()]);
+    echo json_encode(['sucesso' => false, 'mensagem' => 'Erro interno de servidor: ' . $e->getMessage()]);
 }
 exit;
 ?>
