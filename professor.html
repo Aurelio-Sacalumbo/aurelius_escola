@@ -1352,17 +1352,19 @@ function carregarChatSincronizado() {
 }
 
 function calcularMetricasFaturamento() {
+    // 🎯 BUSCA REAL NO BANCO DE DADOS DO RENDER
     fetch("listar_estudantes.php")
     .then(res => res.json())
     .then(dados => {
-        const listaAlunos = dados.alunos || [];
+        // Aceita se vier dinamicamente como array ou encapsulado na chave 'alunos'
+        const listaAlunos = dados.alunos || (Array.isArray(dados) ? dados : []);
         
         let inscritos = 0;
         let matriculados = 0;
         let regular = 0;
         let posLaboral = 0;
         let faturamentoGlobal = 0;
-        let faturamentoMensal = 0; // Acumulador do mês corrente
+        let faturamentoMensal = 0;
 
         // Obtém o nome do mês atual de forma reativa
         const dataHoje = new Date();
@@ -1370,47 +1372,46 @@ function calcularMetricasFaturamento() {
         const mesAtualNome = mesesAno[dataHoje.getMonth()];
 
         listaAlunos.forEach(aluno => {
-            if (!aluno) return;
+            if (!aluno || aluno.nivel !== 'estudante') return;
 
             inscritos++;
 
-            const cursoStr = (aluno.curso || "").toLowerCase();
-            const periodoStr = (aluno.periodo || "").toLowerCase();
+            // Normaliza o curso e o período para minúsculas
+            const cursoStr = (aluno.curso || aluno.classe || "").toLowerCase().trim();
+            const periodoStr = (aluno.periodo || "").toLowerCase().trim();
 
-            // 1. Conta Matriculados reais
-            if (cursoStr.includes('[') && !cursoStr.includes('inscrição inicial')) {
+            // 1. Conta Matriculados (se já tiver disciplinas libertadas no curso)
+            if (cursoStr.includes('[') && !cursoStr.includes('inscrição inicial') && !cursoStr.includes('pendente')) {
                 matriculados++;
             }
 
-            // 2. Conta Turnos
+            // 2. Conta os Regimes com base no Período real do Banco de Dados
             if (periodoStr.includes("noite") || periodoStr.includes("pós") || periodoStr.includes("pos")) {
                 posLaboral++;
             } else {
-                regular++;
+                regular++; // Se for Manhã, Tarde ou Geral entra no Regular
             }
 
-            // 3. Auditoria Financeira Dinâmica
-            if (aluno.saldo_propina) {
-                const valorPropina = parseFloat(aluno.saldo_propina);
-                faturamentoGlobal += valorPropina;
+            // 3. Auditoria Financeira Dinâmica Livre de Bloqueios
+            const valorPropina = aluno.saldo_propina ? parseFloat(aluno.saldo_propina) : 0;
+            faturamentoGlobal += valorPropina;
 
-                // 🌟 REGRA MENSAL: Se o registo de curso do aluno não for apenas uma inscrição inicial de longo prazo,
-                // ou se houver pautas ativas guardadas na tabela do mês, acumulamos no Faturamento Mensal.
-                if (!cursoStr.includes("inscrição inicial") && !cursoStr.includes("pendente")) {
-                    faturamentoMensal += valorPropina;
-                } else {
-                    faturamentoMensal += 4000; // Taxa de inscrição entra direto no caixa do mês
-                }
+            if (!cursoStr.includes("inscrição inicial") && !cursoStr.includes("pendente") && cursoStr !== "") {
+                // Se o aluno já tem disciplinas definitivas, soma a propina dele no mês
+                faturamentoMensal += valorPropina;
+            } else if (cursoStr !== "") {
+                // Se for Inscrição Inicial, a taxa base de 4000 Kzs entra direto no caixa do mês!
+                faturamentoMensal += 4000;
             }
         });
 
-        // 🏛️ INJEÇÃO COMPATÍVEL NOS ELEMENTOS GRÁFICOS
+        // 🏛️ INJEÇÃO COMPATÍVEL COM OS IDS DO TEU CARD HTML REAL
         if (document.getElementById('estatistica-inscritos')) document.getElementById('estatistica-inscritos').innerText = inscritos;
         if (document.getElementById('estatistica-matriculados')) document.getElementById('estatistica-matriculados').innerText = matriculados;
         if (document.getElementById('estatistica-regular')) document.getElementById('estatistica-regular').innerText = regular;
         if (document.getElementById('estatistica-pos-laboral')) document.getElementById('estatistica-pos-laboral').innerText = posLaboral;
         
-        // Atualiza dinamicamente o título do cartão com o mês atual (Ex: FATURAMENTO - OUTUBRO)
+        // Atualiza dinamicamente o título do cartão com o mês atual (Ex: Faturamento (Outubro))
         const elTituloMensal = document.getElementById('titulo-faturamento-mensal');
         if (elTituloMensal) elTituloMensal.innerHTML = `Faturamento (${mesAtualNome})`;
 
@@ -1425,7 +1426,14 @@ function calcularMetricasFaturamento() {
     .catch(err => console.error("Erro na leitura de métricas:", err));
 }
 
+// 🕒 ATcomponentE DO MOTOR DINÂMICO CÍCLICO
+if (window.intervaloFaturamentoMestre) {
+    clearInterval(window.intervaloFaturamentoMestre);
+}
+window.intervaloFaturamentoMestre = setInterval(calcularMetricasFaturamento, 3000);
 
+// Executa a primeira carga na inicialização
+calcularMetricasFaturamento();
 
 
 
