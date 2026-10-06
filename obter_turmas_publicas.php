@@ -34,17 +34,17 @@ try {
         $nomeAlunoReal = $aluno['nome'];
         $disciplinasEstruturadas = [];
 
-        // 🔍 2. CORREÇÃO CRÍTICA LINUX: Nome da tabela em minúsculas ('horario')
+        // 🔍 2. ALINHAMENTO COM O DBEAVER: Nome da tabela com 'H' maiúsculo ('Horario')
         // 🎯 O GROUP BY disciplina garante que remove as linhas duplicadas do professor.html automaticamente!
         $stmtHorario = $pdo->prepare("SELECT classe, periodo, hora, disciplina, professor, estado 
-                                      FROM horario 
+                                      FROM Horario 
                                       WHERE nome_aluno = ? 
                                       GROUP BY disciplina 
                                       ORDER BY id_horario ASC");
         $stmtHorario->execute([$nomeAlunoReal]);
         $linhasHorario = $stmtHorario->fetchAll(PDO::FETCH_ASSOC);
 
-        // 🎯 CORREÇÃO: Captura apenas a primeira parte do explode (Índice 0) para retornar string simples e não quebrar o script
+        // 🎯 CORREÇÃO CRÍTICA: Adicionado [0] para ler a string do array e não quebrar o servidor
         $partesCurso = !empty($aluno['curso']) ? explode('[', $aluno['curso']) : ["3ª Classe"];
         $classeLimpa = trim($partesCurso[0]);
         $periodoLimpo = !empty($aluno['periodo']) ? trim($aluno['periodo']) : 'Manhã';
@@ -66,7 +66,6 @@ try {
                 $linkPdfReal = "";
 
                 if ($dadosLivro && !empty($dadosLivro['categoria_curso'])) {
-                    // 🎯 ALINHAMENTO DE ROTA CONTRA 404: Isola apenas o nome real do hash do ficheiro
                     $caminhoBanco = trim($dadosLivro['categoria_curso']);
                     $nomeFicheiroReal = basename(str_replace('\\', '/', $caminhoBanco));
                     $linkPdfReal = "uploads/manuais/" . $nomeFicheiroReal;
@@ -77,7 +76,7 @@ try {
                     'horario'    => !empty($h['hora']) ? $h['hora'] : "07:00 - 08:00",
                     'professor'  => !empty($h['professor']) ? $h['professor'] : "Professor Alocado",
                     'estatuto'   => !empty($h['estado']) ? strtolower(trim($h['estado'])) : 'aprovado',
-                    'pdf_url'    => $linkPdfReal, // Devolve a rota estável uploads/manuais/hash.pdf
+                    'pdf_url'    => $linkPdfReal,
                     'autor'      => $autorReal
                 ];
             }
